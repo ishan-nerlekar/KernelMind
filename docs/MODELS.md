@@ -27,9 +27,10 @@ v2 score is the cleanest before/after evidence that the new tasks are harder.
 **Local model:** gpt-oss 20B needs roughly 16 GB of free memory. It will be slow, so run it with
 `--jobs 1`. It anchors the bottom of the table for free.
 
-**Optional additions** if budget allows: Claude Sonnet 5.5 (`claude-sonnet-5-5`, 2/10) and GPT-6.1
-Terra (`gpt-6.1-terra`, 1/5) show the price/score curve within each vendor. GLM-5.3 and Kimi K3 are
-strong open-weight alternatives, via OpenRouter (would need an `OPENROUTER_API_KEY`).
+**Calibration probes, not on the leaderboard:** Claude Sonnet 5.5 (`claude-sonnet-5-5`) and GPT-6.1
+Terra (`gpt-6.1-terra`) get one run per new task to set its tier (see SPEC.md, admission rule 3).
+Keeping them off the leaderboard means no ranked model influenced which tasks exist.
+GLM-5.3 and Kimi K3 are strong open-weight alternatives via OpenRouter (would need an `OPENROUTER_API_KEY`).
 
 ## Cost estimate (rough; replaced by measured numbers after the checkpoint)
 

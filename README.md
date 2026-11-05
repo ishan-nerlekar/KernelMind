@@ -7,8 +7,8 @@ tests, whether it found and fixed the root cause without breaking anything else.
 Tasks come from two sources: patterns from real production networking incidents (rewritten as
 original code, no proprietary material) and original bugs planted in purpose-built network systems.
 
-> **Status (Nov 5, 2026):** harness complete; 2 Tier 1 tasks ported from v1. Tier 2/3 tasks and
-> the first multi-model results are in progress. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status (Nov 5, 2026):** harness and [spec](docs/SPEC.md) complete; 2 Tier 1 tasks ported from v1.
+> Tier 2/3 tasks and the first multi-model results are in progress. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Results
 
@@ -22,7 +22,7 @@ kernelmind list
 kernelmind validate                         # every task: starter fails, fixes pass, wrong fixes fail
 kernelmind run --agent oracle               # pipeline check: must score 100%
 export ANTHROPIC_API_KEY=...                # or OPENAI_API_KEY, etc.
-kernelmind run --agent mini --model anthropic/<model> --attempts 3
+kernelmind run --agent mini --model claude-opus-5-5 --attempts 3 --max-cost 20   # see docs/MODELS.md
 kernelmind report results/<run-id>
 ```
 
@@ -55,7 +55,7 @@ the checks that target their mistakes. See [docs/TASK_FORMAT.md](docs/TASK_FORMA
 ```
 kernelmind/   harness: tasks, sandbox, validation, agents, scoring
 tasks/        one directory per task
-docs/         task format, spec, roadmap
+docs/         spec, task format, models, roadmap, changelog
 learning/     lessons written alongside the build
 results/      run outputs (not committed except published runs)
 ```
