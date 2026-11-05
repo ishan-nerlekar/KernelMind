@@ -25,3 +25,22 @@ identifiers; a 2,000-line codebase; single-site bugs readable in one file.
 
 **Next:** test hardening levers separately on prototypes (lexical-cue removal, runtime-only
 concurrency, multi-hop symptom), measure each with the probes, then build with what works.
+
+## 2026-11-05 · hardening experiments
+
+| Task | Lever | GPT-6 Luna | Claude Haiku 5.5 |
+|---|---|---|---|
+| x-lease-oblique | A: report in operator language, no code words | pass, 42 s, 11 cmds | pass, 25 s, 9 cmds |
+| x-push-lost-update | C: runtime-only concurrency bug | pass, 132 s, 14 cmds | pass, 58 s, 9 cmds |
+| frame-partial-read | multi-hop (symptom in controller, cause in agent) | pass, 80 s | pass, 44 s |
+
+Total cost $0.04. **No lever worked on its own.**
+
+**Why:** the models translate operator language into code concepts unaided ("router" → gateway,
+"name server" → DNS), and apnet has ~1,300 lines of non-test code, so they read every relevant file
+in two or three commands. The concurrency bug was spotted by reading `agent.go` top to bottom; no
+reproduction was needed. **The binding constraint is codebase size: when reading everything is
+cheap, localization (the hard part of debugging) disappears.**
+
+**Decision:** build Tier 2/3 on a large real networking codebase where reading everything is
+impossible, and keep apnet's tasks as Tier 1. Candidate: GoBGP (BGP daemon, ~113k lines of non-test Go).
