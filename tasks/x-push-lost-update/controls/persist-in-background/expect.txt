@@ -1,0 +1,2 @@
+# Keeps the lock but writes the file from a goroutine, so write failures are never reported
+TestPersistFailureRejects

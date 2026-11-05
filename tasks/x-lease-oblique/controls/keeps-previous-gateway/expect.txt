@@ -1,0 +1,2 @@
+# Publishes gateway and DNS from the previous lease instead of the server's reply
+TestRenewPublishesNewGateway

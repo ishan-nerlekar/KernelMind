@@ -1,5 +1,5 @@
 id = "config-override-precedence"
-tier = 2
+tier = 1
 root_cause = "rule-precedence"
 origin = "incident-pattern"
 language = "go"

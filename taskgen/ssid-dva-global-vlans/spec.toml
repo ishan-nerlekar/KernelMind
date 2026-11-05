@@ -1,5 +1,5 @@
 id = "ssid-dva-global-vlans"
-tier = 2
+tier = 1
 root_cause = "config-vs-operational-state"
 origin = "incident-pattern"
 language = "go"

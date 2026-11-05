@@ -1,0 +1,124 @@
+id = "x-lease-oblique"
+tier = 2
+root_cause = "stale-state-on-update"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "DHCP interface-metadata rewrite incident (pattern only; original code)"
+summary = "Experiment (lever A, no lexical cues): same bug as lease-renew-gateway, report written in operator terms."
+starter_fails_on = ["TestRenewPublishesNewGateway", "TestRenewPublishesNewDNS"]
+
+[limits]
+agent_timeout_sec = 1800
+
+# ---------------------------------------------------------------- the bug
+[[bug]]
+file = "internal/lease/lease.go"
+old = '''// (half the lease duration, as in RFC 2131). A renewal may change any field: the server can
+// move the AP to a new gateway or resolver without changing its address.
+'''
+new = '''// (half the lease duration, as in RFC 2131).
+'''
+
+[[bug]]
+file = "internal/lease/lease.go"
+old = '''// Renew extends the current lease. The server's reply replaces every field of the lease.
+'''
+new = '''// Renew extends the current lease.
+'''
+
+[[bug]]
+file = "internal/lease/lease.go"
+old = '''	c.Store.Update(c.Iface, func(i *store.Iface) {
+		i.Up = true
+		i.Addr = o.Addr
+		i.Gateway = o.Gateway
+		i.DNS = append([]netip.Addr(nil), o.DNS...)
+		i.LeaseEnd = now.Add(o.duration())
+	})
+	return nil
+}
+
+// Current'''
+new = '''	// The address can move on renewal; refresh it along with the lease timer.
+	c.Store.Update(c.Iface, func(i *store.Iface) {
+		i.Up = true
+		i.Addr = o.Addr
+		i.LeaseEnd = now.Add(o.duration())
+	})
+	return nil
+}
+
+// Current'''
+
+# ---------------------------------------------------------------- a different valid fix
+[[alternative]]
+name = "shared-publish-helper"
+[[alternative.edit]]
+file = "internal/lease/lease.go"
+old = '''	// The address can move on renewal; refresh it along with the lease timer.
+	c.Store.Update(c.Iface, func(i *store.Iface) {
+		i.Up = true
+		i.Addr = o.Addr
+		i.LeaseEnd = now.Add(o.duration())
+	})
+	return nil
+}
+'''
+new = '''	c.publish(o, now)
+	return nil
+}
+
+// publish writes every field of the lease to the interface store.
+func (c *Client) publish(o Offer, now time.Time) {
+	dns := make([]netip.Addr, len(o.DNS))
+	copy(dns, o.DNS)
+	c.Store.Update(c.Iface, func(i *store.Iface) {
+		*i = store.Iface{Name: i.Name, Up: true, Addr: o.Addr, Gateway: o.Gateway, DNS: dns,
+			LeaseEnd: now.Add(o.duration())}
+	})
+}
+'''
+
+# ---------------------------------------------------------------- plausible wrong fixes
+[[control]]
+name = "gateway-only"
+comment = "Fixes the reported gateway but still leaves the old DNS resolvers"
+expect = ["TestRenewPublishesNewDNS"]
+[[control.edit]]
+file = "internal/lease/lease.go"
+old = '''		i.Addr = o.Addr
+		i.LeaseEnd = now.Add(o.duration())'''
+new = '''		i.Addr = o.Addr
+		i.Gateway = o.Gateway
+		i.LeaseEnd = now.Add(o.duration())'''
+
+[[control]]
+name = "rediscover-on-renew"
+comment = "Throws the lease away and runs a fresh discover instead of renewing it"
+expect = ["TestRenewDoesNotRediscover"]
+[[control.edit]]
+file = "internal/lease/lease.go"
+old = '''	o, err := c.Server.Renew(c.Iface, cur.Addr.Addr())
+	if err != nil {
+		return fmt.Errorf("lease %s: renew: %w", c.Iface, err)
+	}'''
+new = '''	_ = cur
+	return c.Acquire()
+	var o Offer
+	var err error
+	if err != nil {
+		return fmt.Errorf("lease %s: renew: %w", c.Iface, err)
+	}'''
+
+[[control]]
+name = "keeps-previous-gateway"
+comment = "Publishes gateway and DNS from the previous lease instead of the server's reply"
+expect = ["TestRenewPublishesNewGateway"]
+[[control.edit]]
+file = "internal/lease/lease.go"
+old = '''		i.Addr = o.Addr
+		i.LeaseEnd = now.Add(o.duration())'''
+new = '''		i.Addr = o.Addr
+		i.Gateway = cur.Gateway
+		i.DNS = append([]netip.Addr(nil), cur.DNS...)
+		i.LeaseEnd = now.Add(o.duration())'''

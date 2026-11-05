@@ -1,5 +1,5 @@
 id = "radio-monitor-capability"
-tier = 2
+tier = 1
 root_cause = "capability-gating"
 origin = "incident-pattern"
 language = "go"

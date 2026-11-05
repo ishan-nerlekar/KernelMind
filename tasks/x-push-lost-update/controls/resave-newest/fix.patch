@@ -1,0 +1,12 @@
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -183,6 +183,9 @@
+ 			rollback()
+ 			return reject(p, fmt.Errorf("persist config: %w", err))
+ 		}
++		if a.haveSeq && seqnum.Newer(a.lastSeq, p.Seq) {
++			_ = store.SaveJSON(a.statePath, a.cfg)
++		}
+ 	}
+ 
+ 	a.cfg, a.lastSeq, a.haveSeq = cfg, p.Seq, true

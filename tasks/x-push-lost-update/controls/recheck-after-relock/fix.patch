@@ -1,0 +1,12 @@
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -183,6 +183,9 @@
+ 			rollback()
+ 			return reject(p, fmt.Errorf("persist config: %w", err))
+ 		}
++		if a.haveSeq && !seqnum.Newer(p.Seq, a.lastSeq) {
++			return msg.Ack{Seq: p.Seq, PushID: p.PushID, Status: msg.StatusStale}
++		}
+ 	}
+ 
+ 	a.cfg, a.lastSeq, a.haveSeq = cfg, p.Seq, true

@@ -1,0 +1,87 @@
+id = "x-push-lost-update"
+tier = 3
+root_cause = "atomicity-violation"
+origin = "original"
+language = "go"
+summary = "Experiment (lever C, runtime-only): the agent drops its lock while persisting, so overlapping pushes can leave an older config applied."
+starter_fails_on = ["TestConcurrentPushesKeepNewest"]
+
+[limits]
+agent_timeout_sec = 2400
+
+[[bug]]
+file = "internal/agent/agent.go"
+old = '''	if a.statePath != "" {
+		if err := store.SaveJSON(a.statePath, cfg); err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+	}'''
+new = '''	if a.statePath != "" {
+		// Writing flash can take tens of milliseconds; don't hold up state readers meanwhile.
+		a.mu.Unlock()
+		err := store.SaveJSON(a.statePath, cfg)
+		a.mu.Lock()
+		if err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+	}'''
+
+[[control]]
+name = "recheck-after-relock"
+comment = "Rechecks the sequence after the write, but the older push's file write can still land last"
+expect = ["TestConcurrentPushesPersistNewest"]
+[[control.edit]]
+file = "internal/agent/agent.go"
+old = '''		a.mu.Lock()
+		if err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+	}'''
+new = '''		a.mu.Lock()
+		if err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+		if a.haveSeq && !seqnum.Newer(p.Seq, a.lastSeq) {
+			return msg.Ack{Seq: p.Seq, PushID: p.PushID, Status: msg.StatusStale}
+		}
+	}'''
+
+[[control]]
+name = "persist-in-background"
+comment = "Keeps the lock but writes the file from a goroutine, so write failures are never reported"
+expect = ["TestPersistFailureRejects"]
+[[control.edit]]
+file = "internal/agent/agent.go"
+old = '''		a.mu.Unlock()
+		err := store.SaveJSON(a.statePath, cfg)
+		a.mu.Lock()
+		if err != nil {'''
+new = '''		var err error
+		go func(path string, c *config.Config) { _ = store.SaveJSON(path, c) }(a.statePath, cfg)
+		if err != nil {'''
+
+[[control]]
+name = "resave-newest"
+comment = "Re-saves the newest config after the write, but still commits the older push in memory"
+expect = ["TestConcurrentPushesKeepNewest"]
+[[control.edit]]
+file = "internal/agent/agent.go"
+old = '''		a.mu.Lock()
+		if err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+	}'''
+new = '''		a.mu.Lock()
+		if err != nil {
+			rollback()
+			return reject(p, fmt.Errorf("persist config: %w", err))
+		}
+		if a.haveSeq && seqnum.Newer(a.lastSeq, p.Seq) {
+			_ = store.SaveJSON(a.statePath, a.cfg)
+		}
+	}'''

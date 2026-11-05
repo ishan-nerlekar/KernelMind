@@ -1,5 +1,5 @@
 id = "rate-counter-wrap"
-tier = 2
+tier = 1
 root_cause = "counter-overflow"
 origin = "original"
 language = "go"

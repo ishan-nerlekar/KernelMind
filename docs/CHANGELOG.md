@@ -7,3 +7,4 @@ probes (SPEC.md rule 3) are logged here too.
 |---|---|---|---|---|
 | 2026-11-05 | dhcp-lease-writer, vlan-state-report | Ported from v1 | v2 format | none |
 | 2026-11-05 | lease-renew-gateway, ssid-dva-global-vlans, radio-monitor-capability, peer-timeout-flap, neigh-roam-flush, rate-counter-wrap, seq-wraparound, config-override-precedence, frame-partial-read | Added (generated from taskgen/) | First Tier 2/3 tasks on apnet | none |
+| 2026-11-05 | 8 Go tasks above | Tier 2 → Tier 1 | Both calibration probes solved all 8 (docs/CALIBRATION.md) | probe-luna, probe-haiku (probes only) |

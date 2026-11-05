@@ -1,5 +1,5 @@
 id = "seq-wraparound"
-tier = 2
+tier = 1
 root_cause = "sequence-wraparound"
 origin = "original"
 language = "go"

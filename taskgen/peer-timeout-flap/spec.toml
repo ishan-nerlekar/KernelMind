@@ -1,5 +1,5 @@
 id = "peer-timeout-flap"
-tier = 2
+tier = 1
 root_cause = "failure-vs-absence"
 origin = "incident-pattern"
 language = "go"

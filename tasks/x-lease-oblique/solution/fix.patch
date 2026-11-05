@@ -1,0 +1,34 @@
+--- a/internal/lease/lease.go
++++ b/internal/lease/lease.go
+@@ -1,7 +1,8 @@
+ // Package lease is a DHCP-style address lease client for the AP's uplink interfaces.
+ //
+ // The client acquires a lease, publishes it to the interface store, and renews it at T1
+-// (half the lease duration, as in RFC 2131).
++// (half the lease duration, as in RFC 2131). A renewal may change any field: the server can
++// move the AP to a new gateway or resolver without changing its address.
+ package lease
+ 
+ import (
+@@ -79,7 +80,7 @@
+ 	return nil
+ }
+ 
+-// Renew extends the current lease.
++// Renew extends the current lease. The server's reply replaces every field of the lease.
+ func (c *Client) Renew() error {
+ 	c.mu.Lock()
+ 	cur := c.cur
+@@ -98,10 +99,11 @@
+ 	c.mu.Lock()
+ 	c.cur, c.obtained = &o, now
+ 	c.mu.Unlock()
+-	// The address can move on renewal; refresh it along with the lease timer.
+ 	c.Store.Update(c.Iface, func(i *store.Iface) {
+ 		i.Up = true
+ 		i.Addr = o.Addr
++		i.Gateway = o.Gateway
++		i.DNS = append([]netip.Addr(nil), o.DNS...)
+ 		i.LeaseEnd = now.Add(o.duration())
+ 	})
+ 	return nil

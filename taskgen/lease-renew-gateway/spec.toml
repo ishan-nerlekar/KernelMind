@@ -1,5 +1,5 @@
 id = "lease-renew-gateway"
-tier = 2
+tier = 1
 root_cause = "stale-state-on-update"
 origin = "incident-pattern"
 language = "go"
