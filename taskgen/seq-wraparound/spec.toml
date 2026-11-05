@@ -1,0 +1,61 @@
+id = "seq-wraparound"
+tier = 2
+root_cause = "sequence-wraparound"
+origin = "original"
+language = "go"
+summary = "After 65,535 pushes the 16-bit sequence wraps and the agent rejects every new push as stale."
+starter_fails_on = ["TestNewerAcrossWrap", "TestPushAcceptedAfterSequenceWrap"]
+
+[[bug]]
+file = "internal/seqnum/seqnum.go"
+old = '''// Package seqnum compares 16-bit sequence numbers that wrap around (serial number arithmetic,
+// RFC 1982). After 65535 comes 0, and 0 is newer than 65530.
+package seqnum
+
+// Newer reports whether a is newer than b. Numbers more than 32767 apart are ambiguous; the
+// controller never has that many pushes in flight.
+func Newer(a, b uint16) bool {
+	return a != b && int16(a-b) > 0
+}'''
+new = '''// Package seqnum handles the 16-bit sequence numbers on configuration pushes.
+package seqnum
+
+// Newer reports whether a is newer than b.
+func Newer(a, b uint16) bool {
+	return a > b
+}'''
+
+[[alternative]]
+name = "half-range"
+[[alternative.edit]]
+file = "internal/seqnum/seqnum.go"
+old = '''	return a > b'''
+new = '''	d := a - b // wraps modulo 2^16
+	return d != 0 && d < 0x8000'''
+
+[[control]]
+name = "any-different"
+comment = "Accepts any number that differs, so an old retransmitted push wins"
+expect = ["TestOlderRejectedAcrossWrap"]
+[[control.edit]]
+file = "internal/seqnum/seqnum.go"
+old = '''	return a > b'''
+new = '''	return a != b'''
+
+[[control]]
+name = "special-case-zero"
+comment = "Special-cases the step from 65535 to 0 but nothing else near the wrap"
+expect = ["TestNewerAcrossWrap"]
+[[control.edit]]
+file = "internal/seqnum/seqnum.go"
+old = '''	return a > b'''
+new = '''	return a > b || (a == 0 && b == 0xFFFF)'''
+
+[[control]]
+name = "widen-to-int32"
+comment = "Widens before subtracting, which removes the wrap instead of handling it"
+expect = ["TestNewerAcrossWrap"]
+[[control.edit]]
+file = "internal/seqnum/seqnum.go"
+old = '''	return a > b'''
+new = '''	return int32(a)-int32(b) > 0'''

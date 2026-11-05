@@ -1,0 +1,13 @@
+--- a/internal/peer/peer.go
++++ b/internal/peer/peer.go
+@@ -56,6 +56,10 @@
+ 		if !ok {
+ 			return
+ 		}
++		if r == Timeout {
++			p.Stale = true
++			return
++		}
+ 		p.Misses++
+ 		p.Stale = r == Timeout
+ 		if p.Misses >= t.missLimit {

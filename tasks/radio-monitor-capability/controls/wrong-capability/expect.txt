@@ -1,0 +1,2 @@
+# Gates monitor mode on the mesh capability
+TestMonitorNeedsMonitorNotMesh

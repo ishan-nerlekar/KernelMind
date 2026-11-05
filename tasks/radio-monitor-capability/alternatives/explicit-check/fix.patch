@@ -1,0 +1,12 @@
+--- a/internal/radio/radio.go
++++ b/internal/radio/radio.go
+@@ -52,6 +52,9 @@
+ 
+ // Check reports whether the radio can run the requested configuration, without touching hardware.
+ func (r *Radio) Check(rc config.Radio) error {
++	if rc.Mode == "monitor" && !r.Caps[CapMonitor] {
++		return fmt.Errorf("%w: radio %s lacks %s for mode %s", ErrUnsupported, r.Name, CapMonitor, rc.Mode)
++	}
+ 	if need, ok := modeNeeds[rc.Mode]; ok && !r.Caps[need] {
+ 		return fmt.Errorf("%w: radio %s lacks %s for mode %s", ErrUnsupported, r.Name, need, rc.Mode)
+ 	}

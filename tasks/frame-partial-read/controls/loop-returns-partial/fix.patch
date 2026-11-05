@@ -1,0 +1,19 @@
+--- a/internal/frame/frame.go
++++ b/internal/frame/frame.go
+@@ -39,8 +39,13 @@
+ 		return nil, fmt.Errorf("%w: %d bytes", ErrTooLarge, n)
+ 	}
+ 	payload := make([]byte, n)
+-	if _, err := r.Read(payload); err != nil {
+-		return nil, fmt.Errorf("frame: read payload: %w", err)
++	got := 0
++	for got < len(payload) {
++		m, err := r.Read(payload[got:])
++		got += m
++		if err != nil {
++			break
++		}
+ 	}
+-	return payload, nil
++	return payload[:got], nil
+ }

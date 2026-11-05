@@ -1,0 +1,11 @@
+--- a/internal/neigh/cache.go
++++ b/internal/neigh/cache.go
+@@ -74,7 +74,7 @@
+ func (c *Cache) flushLocked(iface string) int {
+ 	n := 0
+ 	for ip, e := range c.entries {
+-		if e.Iface == iface {
++		if e.Iface == iface && c.perIface[iface] > n {
+ 			delete(c.entries, ip)
+ 			n++
+ 		}

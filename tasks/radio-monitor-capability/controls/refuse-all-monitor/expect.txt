@@ -1,0 +1,2 @@
+# Refuses monitor mode on every radio, including ones that support it
+TestMonitorOnCapableRadioApplies

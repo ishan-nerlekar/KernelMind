@@ -1,0 +1,12 @@
+--- a/internal/seqnum/seqnum.go
++++ b/internal/seqnum/seqnum.go
+@@ -3,7 +3,8 @@
+ 
+ // Newer reports whether a is newer than b.
+ func Newer(a, b uint16) bool {
+-	return a > b
++	d := a - b // wraps modulo 2^16
++	return d != 0 && d < 0x8000
+ }
+ 
+ // Next returns the sequence number after s.

@@ -1,0 +1,10 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -154,7 +154,6 @@
+ 	}
+ 	e := BuiltinSettings
+ 	apply(&e, s.Overrides)
+-	apply(&e, c.Defaults)
+ 	return e, nil
+ }
+ 

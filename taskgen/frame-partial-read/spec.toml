@@ -1,0 +1,91 @@
+id = "frame-partial-read"
+tier = 3
+root_cause = "message-framing"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "Command-delivery framing incident (pattern only; original code)"
+summary = "The control-channel reader assumes one read returns a whole frame; large pushes fail over real networks."
+starter_fails_on = ["TestReadAcrossShortReads", "TestLargePushOverChunkingLink"]
+
+[[bug]]
+file = "internal/frame/frame.go"
+old = '''	payload := make([]byte, n)
+	if _, err := io.ReadFull(r, payload); err != nil {
+		return nil, fmt.Errorf("frame: short payload: %w", err)
+	}
+	return payload, nil'''
+new = '''	payload := make([]byte, n)
+	if _, err := r.Read(payload); err != nil {
+		return nil, fmt.Errorf("frame: read payload: %w", err)
+	}
+	return payload, nil'''
+
+[[alternative]]
+name = "manual-loop"
+[[alternative.edit]]
+file = "internal/frame/frame.go"
+old = '''	if _, err := r.Read(payload); err != nil {
+		return nil, fmt.Errorf("frame: read payload: %w", err)
+	}
+	return payload, nil'''
+new = '''	for got := 0; got < len(payload); {
+		m, err := r.Read(payload[got:])
+		got += m
+		if got == len(payload) {
+			break
+		}
+		if err == io.EOF {
+			return nil, fmt.Errorf("frame: short payload: %w", io.ErrUnexpectedEOF)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("frame: read payload: %w", err)
+		}
+	}
+	return payload, nil'''
+
+[[control]]
+name = "loop-returns-partial"
+comment = "Keeps reading but returns a truncated frame without an error when the stream ends"
+expect = ["TestReadTruncatedPayloadErrors"]
+[[control.edit]]
+file = "internal/frame/frame.go"
+old = '''	if _, err := r.Read(payload); err != nil {
+		return nil, fmt.Errorf("frame: read payload: %w", err)
+	}
+	return payload, nil'''
+new = '''	got := 0
+	for got < len(payload) {
+		m, err := r.Read(payload[got:])
+		got += m
+		if err != nil {
+			break
+		}
+	}
+	return payload[:got], nil'''
+
+[[control]]
+name = "buffered-single-read"
+comment = "Wraps the connection in a bufio.Reader, which still returns short reads"
+expect = ["TestReadAcrossShortReads"]
+[[control.edit]]
+file = "internal/frame/frame.go"
+old = '''	if _, err := r.Read(payload); err != nil {'''
+new = '''	if _, err := bufio.NewReader(r).Read(payload); err != nil {'''
+[[control.edit]]
+file = "internal/frame/frame.go"
+old = '''import (
+	"encoding/binary"'''
+new = '''import (
+	"bufio"
+	"encoding/binary"'''
+
+[[control]]
+name = "more-retries"
+comment = "Treats the symptom: retries pushes many more times with longer timeouts"
+expect = ["TestLargePushOverChunkingLink"]
+[[control.edit]]
+file = "internal/controller/controller.go"
+old = '''		PushTimeout: 3 * time.Second,
+		Retries:     3,'''
+new = '''		PushTimeout: 10 * time.Second,
+		Retries:     12,'''

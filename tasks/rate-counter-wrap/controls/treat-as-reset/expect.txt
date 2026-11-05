@@ -1,0 +1,2 @@
+# Assumes the counter was reset to zero and loses the bytes before the wrap
+TestRateAcrossWrap

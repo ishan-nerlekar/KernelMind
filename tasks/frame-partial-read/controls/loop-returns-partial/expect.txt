@@ -1,0 +1,2 @@
+# Keeps reading but returns a truncated frame without an error when the stream ends
+TestReadTruncatedPayloadErrors

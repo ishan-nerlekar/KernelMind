@@ -1,0 +1,13 @@
+--- a/internal/controller/controller.go
++++ b/internal/controller/controller.go
+@@ -66,8 +66,8 @@
+ 	return &Controller{
+ 		Dial:        func(ctx context.Context, addr string) (net.Conn, error) { return d.DialContext(ctx, "tcp", addr) },
+ 		HTTP:        &http.Client{Timeout: 2 * time.Second},
+-		PushTimeout: 3 * time.Second,
+-		Retries:     3,
++		PushTimeout: 10 * time.Second,
++		Retries:     12,
+ 		agents:      map[string]*agentState{},
+ 	}
+ }

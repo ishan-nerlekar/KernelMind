@@ -1,0 +1,2 @@
+# Adds a never-seen peer just because a poll for it timed out
+TestTimeoutForUnknownPeer

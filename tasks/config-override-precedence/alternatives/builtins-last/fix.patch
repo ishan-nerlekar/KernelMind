@@ -1,0 +1,20 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -152,9 +152,15 @@
+ 	if !ok {
+ 		return Effective{}, fmt.Errorf("config: no ssid %q", name)
+ 	}
+-	e := BuiltinSettings
++	var e Effective
++	apply(&e, c.Defaults)
+ 	apply(&e, s.Overrides)
+-	apply(&e, c.Defaults)
++	if e.Band == "" {
++		e.Band = BuiltinSettings.Band
++	}
++	if e.MaxClients == 0 {
++		e.MaxClients = BuiltinSettings.MaxClients
++	}
+ 	return e, nil
+ }
+ 

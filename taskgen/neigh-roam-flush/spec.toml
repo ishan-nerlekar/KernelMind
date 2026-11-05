@@ -1,0 +1,80 @@
+id = "neigh-roam-flush"
+tier = 2
+root_cause = "occupancy-counting"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "Neighbor cache capacity incident (pattern only; original code)"
+summary = "After clients roam between interfaces, flushing one interface corrupts the cache's entry count."
+starter_fails_on = ["TestRoamThenFlushNewInterface"]
+
+[[bug]]
+file = "internal/neigh/cache.go"
+old = '''	if old, ok := c.entries[e.IP]; ok {
+		if old.Iface != e.Iface {
+			c.perIface[old.Iface]--
+			c.perIface[e.Iface]++
+		}
+		c.entries[e.IP] = e
+		return nil
+	}'''
+new = '''	if _, ok := c.entries[e.IP]; ok {
+		c.entries[e.IP] = e
+		return nil
+	}'''
+
+[[bug]]
+file = "internal/neigh/cache.go"
+old = '''	c.total -= n
+	delete(c.perIface, iface)'''
+new = '''	c.total -= c.perIface[iface]
+	delete(c.perIface, iface)'''
+
+[[alternative]]
+name = "count-removed"
+[[alternative.edit]]
+file = "internal/neigh/cache.go"
+old = '''	c.total -= c.perIface[iface]'''
+new = '''	c.total -= n'''
+
+[[alternative]]
+name = "derive-from-map"
+[[alternative.edit]]
+file = "internal/neigh/cache.go"
+old = '''	c.total -= c.perIface[iface]'''
+new = '''	c.total = len(c.entries)'''
+
+[[control]]
+name = "clamp-at-zero"
+comment = "Stops the count going negative but leaves it wrong"
+expect = ["TestRoamThenFlushNewInterface"]
+[[control.edit]]
+file = "internal/neigh/cache.go"
+old = '''	c.total -= c.perIface[iface]'''
+new = '''	c.total -= c.perIface[iface]
+	if c.total < 0 {
+		c.total = 0
+	}'''
+
+[[control]]
+name = "reset-on-flush"
+comment = "Resets the whole count on any flush, forgetting other interfaces' entries"
+expect = ["TestRoamThenFlushOldInterface"]
+[[control.edit]]
+file = "internal/neigh/cache.go"
+old = '''	c.total -= c.perIface[iface]'''
+new = '''	c.total = 0'''
+
+[[control]]
+name = "flush-skips-roamed"
+comment = "Makes the count consistent by refusing to flush entries that roamed, leaving stale neighbors"
+expect = ["TestRoamThenFlushNewInterface"]
+[[control.edit]]
+file = "internal/neigh/cache.go"
+old = '''		if e.Iface == iface {
+			delete(c.entries, ip)
+			n++
+		}'''
+new = '''		if e.Iface == iface && c.perIface[iface] > n {
+			delete(c.entries, ip)
+			n++
+		}'''

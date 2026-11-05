@@ -1,0 +1,100 @@
+id = "config-override-precedence"
+tier = 2
+root_cause = "rule-precedence"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "Eligibility and precedence rule incidents (pattern only; original code)"
+summary = "AP-wide defaults override an SSID's own explicit settings."
+starter_fails_on = ["TestOverrideBeatsDefault"]
+
+[[bug]]
+file = "internal/config/config.go"
+old = '''// Per-SSID settings resolve in three layers, highest priority first:
+//  1. the SSID's own Overrides
+//  2. the AP-wide Defaults
+//  3. built-in defaults (BuiltinSettings)
+//
+// A nil pointer in Overrides or Defaults means "not set at this layer".
+'''
+new = '''// Per-SSID settings combine the SSID's Overrides, the AP-wide Defaults and the built-in defaults
+// (BuiltinSettings). A nil pointer means "not set".
+'''
+
+[[bug]]
+file = "internal/config/config.go"
+old = '''	e := BuiltinSettings
+	apply(&e, c.Defaults)
+	apply(&e, s.Overrides)
+	return e, nil'''
+new = '''	e := BuiltinSettings
+	apply(&e, s.Overrides)
+	apply(&e, c.Defaults)
+	return e, nil'''
+
+[[alternative]]
+name = "builtins-last"
+[[alternative.edit]]
+file = "internal/config/config.go"
+old = '''	e := BuiltinSettings
+	apply(&e, s.Overrides)
+	apply(&e, c.Defaults)
+	return e, nil'''
+new = '''	var e Effective
+	apply(&e, c.Defaults)
+	apply(&e, s.Overrides)
+	if e.Band == "" {
+		e.Band = BuiltinSettings.Band
+	}
+	if e.MaxClients == 0 {
+		e.MaxClients = BuiltinSettings.MaxClients
+	}
+	return e, nil'''
+
+[[control]]
+name = "overrides-only"
+comment = "Drops the AP-wide defaults entirely"
+expect = ["TestDefaultFillsUnsetOverride"]
+[[control.edit]]
+file = "internal/config/config.go"
+old = '''	apply(&e, s.Overrides)
+	apply(&e, c.Defaults)
+	return e, nil'''
+new = '''	apply(&e, s.Overrides)
+	return e, nil'''
+
+[[control]]
+name = "truthy-booleans"
+comment = "Fixes the order but only applies boolean settings when they are true"
+expect = ["TestOverrideBeatsDefault"]
+[[control.edit]]
+file = "internal/config/config.go"
+old = '''	apply(&e, s.Overrides)
+	apply(&e, c.Defaults)
+	return e, nil'''
+new = '''	apply(&e, c.Defaults)
+	apply(&e, s.Overrides)
+	return e, nil'''
+[[control.edit]]
+file = "internal/config/config.go"
+old = '''	if s.Isolation != nil {
+		e.Isolation = *s.Isolation
+	}'''
+new = '''	if s.Isolation != nil && *s.Isolation {
+		e.Isolation = true
+	}'''
+
+[[control]]
+name = "all-or-nothing"
+comment = "Uses only the SSID's overrides if it has any, otherwise only the defaults"
+expect = ["TestDefaultFillsUnsetOverride"]
+[[control.edit]]
+file = "internal/config/config.go"
+old = '''	apply(&e, s.Overrides)
+	apply(&e, c.Defaults)
+	return e, nil'''
+new = '''	if s.Overrides != (Settings{}) {
+		apply(&e, s.Overrides)
+	} else {
+		apply(&e, c.Defaults)
+	}
+	return e, nil'''

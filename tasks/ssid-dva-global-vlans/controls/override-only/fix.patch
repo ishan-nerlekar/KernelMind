@@ -1,0 +1,11 @@
+--- a/internal/state/state.go
++++ b/internal/state/state.go
+@@ -38,7 +38,7 @@
+ 		out = append(out, SSID{
+ 			Name:       s.Name,
+ 			Up:         s.Enabled,
+-			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,
++			DVA:        s.Enabled && s.Overrides.DVA != nil && *s.Overrides.DVA && len(vlans) > 0,
+ 			VLANs:      vlans,
+ 			Band:       eff.Band,
+ 			MaxClients: eff.MaxClients,

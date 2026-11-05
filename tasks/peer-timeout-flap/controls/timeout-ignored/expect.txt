@@ -1,0 +1,2 @@
+# Ignores timeouts completely, so stale statistics are never flagged
+TestTimeoutKeepsPeer

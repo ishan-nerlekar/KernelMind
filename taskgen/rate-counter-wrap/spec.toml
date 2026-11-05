@@ -1,0 +1,77 @@
+id = "rate-counter-wrap"
+tier = 2
+root_cause = "counter-overflow"
+origin = "original"
+language = "go"
+summary = "Throughput spikes to absurd values whenever a 32-bit hardware byte counter wraps."
+starter_fails_on = ["TestRateAcrossWrap"]
+
+[[bug]]
+file = "internal/stats/stats.go"
+old = '''// Radio hardware exposes 32-bit byte and packet counters that wrap to zero after 2^32-1.
+// Between two samples a counter can wrap at most once at realistic sample intervals, so the
+// delta is computed modulo 2^32.
+'''
+new = '''// Radio hardware exposes 32-bit byte and packet counters.
+'''
+
+[[bug]]
+file = "internal/stats/stats.go"
+old = '''// delta is the counter increase from a to b, allowing one wrap.
+func delta(a, b uint32) uint64 { return uint64(b - a) }'''
+new = '''// delta is the counter increase from a to b. Widen first so large counters can't overflow.
+func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }'''
+
+[[alternative]]
+name = "explicit-wrap"
+[[alternative.edit]]
+file = "internal/stats/stats.go"
+old = '''func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }'''
+new = '''func delta(a, b uint32) uint64 {
+	if b >= a {
+		return uint64(b) - uint64(a)
+	}
+	return (1 << 32) - uint64(a) + uint64(b) // wrapped once
+}'''
+
+[[control]]
+name = "zero-on-wrap"
+comment = "Hides the spike by reporting zero for the sample that wraps"
+expect = ["TestRateAcrossWrap"]
+[[control.edit]]
+file = "internal/stats/stats.go"
+old = '''func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }'''
+new = '''func delta(a, b uint32) uint64 {
+	if b < a {
+		return 0
+	}
+	return uint64(b) - uint64(a)
+}'''
+
+[[control]]
+name = "treat-as-reset"
+comment = "Assumes the counter was reset to zero and loses the bytes before the wrap"
+expect = ["TestRateAcrossWrap"]
+[[control.edit]]
+file = "internal/stats/stats.go"
+old = '''func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }'''
+new = '''func delta(a, b uint32) uint64 {
+	if b < a {
+		return uint64(b)
+	}
+	return uint64(b) - uint64(a)
+}'''
+
+[[control]]
+name = "absolute-difference"
+comment = "Takes the absolute difference, which is the distance backwards across the wrap"
+expect = ["TestRateAcrossWrap"]
+[[control.edit]]
+file = "internal/stats/stats.go"
+old = '''func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }'''
+new = '''func delta(a, b uint32) uint64 {
+	if b < a {
+		return uint64(a) - uint64(b)
+	}
+	return uint64(b) - uint64(a)
+}'''

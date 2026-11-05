@@ -1,0 +1,55 @@
+id = "ssid-dva-global-vlans"
+tier = 2
+root_cause = "config-vs-operational-state"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "SSID dynamic-VLAN state reporting incident (pattern only; original code)"
+summary = "Operational DVA is reported false when VLANs come only from AP-wide global mappings."
+starter_fails_on = ["TestDVAWithGlobalVLANsOnly"]
+
+[[bug]]
+file = "internal/state/state.go"
+old = '''// DVA is operational when the SSID is up, its effective DVA setting is true, and VLANs are
+// available to it: either its own VLAN list or any AP-wide global VLAN mapping.
+'''
+new = '''// DVA is operational when the SSID is up, its effective DVA setting is true, and it has VLANs.
+'''
+
+[[bug]]
+file = "internal/state/state.go"
+old = '''			DVA:        s.Enabled && eff.DVA && len(vlans) > 0,'''
+new = '''			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,'''
+
+[[alternative]]
+name = "explicit-sources"
+[[alternative.edit]]
+file = "internal/state/state.go"
+old = '''			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,'''
+new = '''			DVA:        s.Enabled && eff.DVA && (len(s.VLANs) > 0 || len(c.GlobalVLANs) > 0),'''
+
+[[control]]
+name = "ignores-vlan-availability"
+comment = "Reports DVA whenever it is configured, even with no VLANs anywhere"
+expect = ["TestDVAWithoutAnyVLANs"]
+[[control.edit]]
+file = "internal/state/state.go"
+old = '''			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,'''
+new = '''			DVA:        s.Enabled && eff.DVA,'''
+
+[[control]]
+name = "ignores-enabled"
+comment = "Reports DVA on SSIDs that are switched off"
+expect = ["TestDVAGlobalVLANsDisabledSSID"]
+[[control.edit]]
+file = "internal/state/state.go"
+old = '''			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,'''
+new = '''			DVA:        eff.DVA && len(vlans) > 0,'''
+
+[[control]]
+name = "override-only"
+comment = "Reads the SSID's own override and ignores DVA enabled through AP-wide defaults"
+expect = ["TestDVAEnabledByAPDefaults"]
+[[control.edit]]
+file = "internal/state/state.go"
+old = '''			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,'''
+new = '''			DVA:        s.Enabled && s.Overrides.DVA != nil && *s.Overrides.DVA && len(vlans) > 0,'''

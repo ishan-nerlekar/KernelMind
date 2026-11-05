@@ -1,0 +1,11 @@
+--- a/internal/neigh/cache.go
++++ b/internal/neigh/cache.go
+@@ -79,7 +79,7 @@
+ 			n++
+ 		}
+ 	}
+-	c.total -= c.perIface[iface]
++	c.total = len(c.entries)
+ 	delete(c.perIface, iface)
+ 	return n
+ }

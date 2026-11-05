@@ -1,0 +1,12 @@
+--- a/internal/radio/radio.go
++++ b/internal/radio/radio.go
+@@ -72,6 +72,9 @@
+ 			return fmt.Errorf("radio %s: set mode: %w", r.Name, err)
+ 		}
+ 		r.Mode = rc.Mode
++		if rc.Mode == "monitor" && !r.Caps[CapMonitor] {
++			return fmt.Errorf("%w: radio %s lacks monitor", ErrUnsupported, r.Name)
++		}
+ 	}
+ 	if rc.Channel != r.Channel {
+ 		if err := hw.SetChannel(r.Name, rc.Channel); err != nil {

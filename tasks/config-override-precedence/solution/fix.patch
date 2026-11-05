@@ -1,0 +1,26 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -1,7 +1,11 @@
+ // Package config is the AP configuration model pushed by the controller.
+ //
+-// Per-SSID settings combine the SSID's Overrides, the AP-wide Defaults and the built-in defaults
+-// (BuiltinSettings). A nil pointer means "not set".
++// Per-SSID settings resolve in three layers, highest priority first:
++//  1. the SSID's own Overrides
++//  2. the AP-wide Defaults
++//  3. built-in defaults (BuiltinSettings)
++//
++// A nil pointer in Overrides or Defaults means "not set at this layer".
+ package config
+ 
+ import (
+@@ -153,8 +157,8 @@
+ 		return Effective{}, fmt.Errorf("config: no ssid %q", name)
+ 	}
+ 	e := BuiltinSettings
++	apply(&e, c.Defaults)
+ 	apply(&e, s.Overrides)
+-	apply(&e, c.Defaults)
+ 	return e, nil
+ }
+ 

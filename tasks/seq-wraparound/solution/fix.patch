@@ -1,0 +1,17 @@
+--- a/internal/seqnum/seqnum.go
++++ b/internal/seqnum/seqnum.go
+@@ -1,9 +1,11 @@
+-// Package seqnum handles the 16-bit sequence numbers on configuration pushes.
++// Package seqnum compares 16-bit sequence numbers that wrap around (serial number arithmetic,
++// RFC 1982). After 65535 comes 0, and 0 is newer than 65530.
+ package seqnum
+ 
+-// Newer reports whether a is newer than b.
++// Newer reports whether a is newer than b. Numbers more than 32767 apart are ambiguous; the
++// controller never has that many pushes in flight.
+ func Newer(a, b uint16) bool {
+-	return a > b
++	return a != b && int16(a-b) > 0
+ }
+ 
+ // Next returns the sequence number after s.

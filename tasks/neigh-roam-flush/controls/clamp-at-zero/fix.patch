@@ -1,0 +1,12 @@
+--- a/internal/neigh/cache.go
++++ b/internal/neigh/cache.go
+@@ -80,6 +80,9 @@
+ 		}
+ 	}
+ 	c.total -= c.perIface[iface]
++	if c.total < 0 {
++		c.total = 0
++	}
+ 	delete(c.perIface, iface)
+ 	return n
+ }

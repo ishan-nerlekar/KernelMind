@@ -1,0 +1,3 @@
+# Detects the unsupported mode only after the driver was already told to switch
+TestPushMonitorOnIncapableRadioRejected
+TestMonitorNeedsCapability

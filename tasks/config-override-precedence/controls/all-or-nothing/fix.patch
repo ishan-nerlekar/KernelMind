@@ -1,0 +1,16 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -153,8 +153,11 @@
+ 		return Effective{}, fmt.Errorf("config: no ssid %q", name)
+ 	}
+ 	e := BuiltinSettings
+-	apply(&e, s.Overrides)
+-	apply(&e, c.Defaults)
++	if s.Overrides != (Settings{}) {
++		apply(&e, s.Overrides)
++	} else {
++		apply(&e, c.Defaults)
++	}
+ 	return e, nil
+ }
+ 

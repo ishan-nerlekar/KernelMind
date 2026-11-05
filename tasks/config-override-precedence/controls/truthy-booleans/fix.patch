@@ -1,0 +1,23 @@
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -141,8 +141,8 @@
+ 	if s.MaxClients != nil {
+ 		e.MaxClients = *s.MaxClients
+ 	}
+-	if s.Isolation != nil {
+-		e.Isolation = *s.Isolation
++	if s.Isolation != nil && *s.Isolation {
++		e.Isolation = true
+ 	}
+ }
+ 
+@@ -153,8 +153,8 @@
+ 		return Effective{}, fmt.Errorf("config: no ssid %q", name)
+ 	}
+ 	e := BuiltinSettings
++	apply(&e, c.Defaults)
+ 	apply(&e, s.Overrides)
+-	apply(&e, c.Defaults)
+ 	return e, nil
+ }
+ 

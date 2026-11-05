@@ -1,0 +1,128 @@
+id = "peer-timeout-flap"
+tier = 2
+root_cause = "failure-vs-absence"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "Peer statistics failure vs absence incident (pattern only; original code)"
+summary = "A timed-out stats poll counts as a missed peer, so busy APs drop mesh peers that are still there."
+starter_fails_on = ["TestTimeoutKeepsPeer"]
+
+[[bug]]
+file = "internal/peer/peer.go"
+old = '''// Each poll of a peer ends in one of three results. OK refreshes the peer. NotFound means the
+// peer table no longer lists it; after MissLimit consecutive NotFound results the peer is
+// removed. Timeout means the statistics request did not complete: it says nothing about
+// whether the peer is still there, so presence is unchanged and the peer is only marked stale.
+'''
+new = '''// Each poll of a peer ends in one of three results: OK, NotFound or Timeout. A peer that misses
+// MissLimit consecutive polls is removed.
+'''
+
+[[bug]]
+file = "internal/peer/peer.go"
+old = '''	case NotFound:
+		if !ok {
+			return
+		}
+		p.Misses++
+		p.Stale = false
+		if p.Misses >= t.missLimit {
+			delete(t.peers, name)
+		}
+	case Timeout:
+		if ok {
+			p.Stale = true
+		}
+	}'''
+new = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		p.Misses++
+		p.Stale = r == Timeout
+		if p.Misses >= t.missLimit {
+			delete(t.peers, name)
+		}
+	}'''
+
+[[alternative]]
+name = "early-return"
+[[alternative.edit]]
+file = "internal/peer/peer.go"
+old = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		p.Misses++'''
+new = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		if r == Timeout {
+			p.Stale = true
+			return
+		}
+		p.Misses++'''
+
+[[control]]
+name = "timeout-resets-misses"
+comment = "Treats a timeout as proof of life and clears the NotFound count"
+expect = ["TestTimeoutDoesNotHideNotFound"]
+[[control.edit]]
+file = "internal/peer/peer.go"
+old = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		p.Misses++'''
+new = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		if r == Timeout {
+			p.Misses, p.Stale = 0, true
+			return
+		}
+		p.Misses++'''
+
+[[control]]
+name = "timeout-ignored"
+comment = "Ignores timeouts completely, so stale statistics are never flagged"
+expect = ["TestTimeoutKeepsPeer"]
+[[control.edit]]
+file = "internal/peer/peer.go"
+old = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		p.Misses++'''
+new = '''	case NotFound, Timeout:
+		if !ok || r == Timeout {
+			return
+		}
+		p.Misses++'''
+
+[[control]]
+name = "timeout-creates-peer"
+comment = "Adds a never-seen peer just because a poll for it timed out"
+expect = ["TestTimeoutForUnknownPeer"]
+[[control.edit]]
+file = "internal/peer/peer.go"
+old = '''	case NotFound, Timeout:
+		if !ok {
+			return
+		}
+		p.Misses++'''
+new = '''	case NotFound, Timeout:
+		if !ok && r == Timeout {
+			t.peers[name] = &Peer{Name: name, Stale: true}
+			return
+		}
+		if !ok {
+			return
+		}
+		if r == Timeout {
+			p.Stale = true
+			return
+		}
+		p.Misses++'''

@@ -1,0 +1,66 @@
+id = "radio-monitor-capability"
+tier = 2
+root_cause = "capability-gating"
+origin = "incident-pattern"
+language = "go"
+inspired_by = "Capability-aware radio mode incident (pattern only; original code)"
+summary = "Monitor mode is programmed on radios whose hardware lacks monitor support."
+starter_fails_on = ["TestMonitorNeedsCapability", "TestPushMonitorOnIncapableRadioRejected"]
+
+[[bug]]
+file = "internal/radio/radio.go"
+old = '''var modeNeeds = map[string]Capability{
+	"monitor": CapMonitor,
+	"mesh":    CapMesh,
+}'''
+new = '''var modeNeeds = map[string]Capability{
+	"mesh": CapMesh,
+}'''
+
+[[alternative]]
+name = "explicit-check"
+[[alternative.edit]]
+file = "internal/radio/radio.go"
+old = '''	if need, ok := modeNeeds[rc.Mode]; ok && !r.Caps[need] {'''
+new = '''	if rc.Mode == "monitor" && !r.Caps[CapMonitor] {
+		return fmt.Errorf("%w: radio %s lacks %s for mode %s", ErrUnsupported, r.Name, CapMonitor, rc.Mode)
+	}
+	if need, ok := modeNeeds[rc.Mode]; ok && !r.Caps[need] {'''
+
+[[control]]
+name = "refuse-all-monitor"
+comment = "Refuses monitor mode on every radio, including ones that support it"
+expect = ["TestMonitorOnCapableRadioApplies"]
+[[control.edit]]
+file = "internal/radio/radio.go"
+old = '''	"mesh": CapMesh,
+}'''
+new = '''	"mesh":    CapMesh,
+	"monitor": "unsupported",
+}'''
+
+[[control]]
+name = "check-after-programming"
+comment = "Detects the unsupported mode only after the driver was already told to switch"
+expect = ["TestPushMonitorOnIncapableRadioRejected", "TestMonitorNeedsCapability"]
+[[control.edit]]
+file = "internal/radio/radio.go"
+old = '''		r.Mode = rc.Mode
+	}'''
+new = '''		r.Mode = rc.Mode
+		if rc.Mode == "monitor" && !r.Caps[CapMonitor] {
+			return fmt.Errorf("%w: radio %s lacks monitor", ErrUnsupported, r.Name)
+		}
+	}'''
+
+[[control]]
+name = "wrong-capability"
+comment = "Gates monitor mode on the mesh capability"
+expect = ["TestMonitorNeedsMonitorNotMesh"]
+[[control.edit]]
+file = "internal/radio/radio.go"
+old = '''	"mesh": CapMesh,
+}'''
+new = '''	"mesh":    CapMesh,
+	"monitor": CapMesh,
+}'''

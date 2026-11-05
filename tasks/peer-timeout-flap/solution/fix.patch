@@ -1,0 +1,35 @@
+--- a/internal/peer/peer.go
++++ b/internal/peer/peer.go
+@@ -1,7 +1,9 @@
+ // Package peer tracks mesh peers seen by the AP.
+ //
+-// Each poll of a peer ends in one of three results: OK, NotFound or Timeout. A peer that misses
+-// MissLimit consecutive polls is removed.
++// Each poll of a peer ends in one of three results. OK refreshes the peer. NotFound means the
++// peer table no longer lists it; after MissLimit consecutive NotFound results the peer is
++// removed. Timeout means the statistics request did not complete: it says nothing about
++// whether the peer is still there, so presence is unchanged and the peer is only marked stale.
+ package peer
+ 
+ import (
+@@ -52,14 +54,18 @@
+ 			t.peers[name] = p
+ 		}
+ 		p.LastSeen, p.Misses, p.Stale = now, 0, false
+-	case NotFound, Timeout:
++	case NotFound:
+ 		if !ok {
+ 			return
+ 		}
+ 		p.Misses++
+-		p.Stale = r == Timeout
++		p.Stale = false
+ 		if p.Misses >= t.missLimit {
+ 			delete(t.peers, name)
++		}
++	case Timeout:
++		if ok {
++			p.Stale = true
+ 		}
+ 	}
+ }

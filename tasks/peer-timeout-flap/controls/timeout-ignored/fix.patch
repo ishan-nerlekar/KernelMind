@@ -1,0 +1,11 @@
+--- a/internal/peer/peer.go
++++ b/internal/peer/peer.go
+@@ -53,7 +53,7 @@
+ 		}
+ 		p.LastSeen, p.Misses, p.Stale = now, 0, false
+ 	case NotFound, Timeout:
+-		if !ok {
++		if !ok || r == Timeout {
+ 			return
+ 		}
+ 		p.Misses++
