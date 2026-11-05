@@ -1,0 +1,92 @@
+id = "bgp-rtr-no-data"
+tier = 2
+root_cause = "failure-vs-absence"
+origin = "incident-transplant"
+language = "go"
+substrate = "gobgp"
+inspired_by = "Peer statistics failure vs absence incident, transplanted into new RPKI code"
+summary = "New RTR error handling treats a cache's 'No Data Available' as an empty cache and flushes all ROAs."
+starter_fails_on = ["TestRTRErrorNoDataKeepsROAs"]
+extra_runs = ["-run '^TestRTRError' ./pkg/server/"]
+
+[limits]
+agent_timeout_sec = 2400
+
+# ---------------------------------------------------------------- transplanted feature (both trees)
+[[feature]]
+file = "pkg/server/rpki.go"
+old = '''	roaRTR
+	roaLifetimeout
+)'''
+new = '''	roaRTR
+	roaLifetimeout
+	roaRetry
+)'''
+
+[[feature]]
+file = "pkg/server/rpki.go"
+old = '''	case roaRTR:
+		m.handleRTRMsg(client, &client.state, ev.Data)'''
+new = '''	case roaRTR:
+		m.handleRTRMsg(client, &client.state, ev.Data)
+	case roaRetry:
+		// Only retry on the session that asked for it.
+		if client.conn != nil && client.conn == ev.conn {
+			client.softReset()
+		}'''
+
+[[feature]]
+file = "pkg/server/rpki.go"
+old = '''		case *rtr.RTRErrorReport:
+			received.Error++'''
+new = '''		case *rtr.RTRErrorReport:
+			m.handleErrorReport(client, msg)'''
+
+# ---------------------------------------------------------------- the bug (starter only)
+[[bug]]
+file = "pkg/server/rpki_errors.go"
+old = '''		// The cache is up but has nothing to serve yet, typically right after it restarted and
+		// before its first validation run has finished. That says nothing about the ROAs we
+		// already hold from it: keep them and ask again later.
+		client.retryAfter(rtrRetryInterval)'''
+new = '''		// The cache has nothing to serve: drop what we hold from it and ask again later.
+		m.table.DeleteAll(client.host)
+		client.retryAfter(rtrRetryInterval)'''
+
+# ---------------------------------------------------------------- plausible wrong fixes
+[[control]]
+name = "keep-but-never-retry"
+comment = "Stops flushing but also stops asking again, so the router waits forever for data"
+expect = ["TestRTRErrorNoDataRetries"]
+[[control.edit]]
+file = "pkg/server/rpki_errors.go"
+old = '''		m.table.DeleteAll(client.host)
+		client.retryAfter(rtrRetryInterval)'''
+new = '''		return'''
+
+[[control]]
+name = "treat-as-fatal"
+comment = "Keeps the ROAs by closing the session instead, which drops a healthy cache connection"
+expect = ["TestRTRErrorNoDataKeepsROAs"]
+[[control.edit]]
+file = "pkg/server/rpki_errors.go"
+old = '''		m.table.DeleteAll(client.host)
+		client.retryAfter(rtrRetryInterval)'''
+new = '''		client.reset()'''
+
+[[control]]
+name = "flush-on-every-error"
+comment = "Moves the flush to the fatal branch, discarding ROAs that should live until the lifetime expires"
+expect = ["TestRTRErrorFatalClosesSession"]
+[[control.edit]]
+file = "pkg/server/rpki_errors.go"
+old = '''		m.table.DeleteAll(client.host)
+		client.retryAfter(rtrRetryInterval)'''
+new = '''		client.retryAfter(rtrRetryInterval)'''
+[[control.edit]]
+file = "pkg/server/rpki_errors.go"
+old = '''		// lifetime timer expires, as for any other disconnect.
+		client.reset()'''
+new = '''		// lifetime timer expires, as for any other disconnect.
+		m.table.DeleteAll(client.host)
+		client.reset()'''

@@ -1,0 +1,16 @@
+2026-11-03T01:58:12Z INFO  scheduled restart for upgrade 2.4.1 -> 2.4.2
+2026-11-03T01:58:13Z INFO  rtr: closing 0 listeners gracefully
+2026-11-03T01:58:13Z INFO  shutdown complete
+2026-11-03T01:58:20Z INFO  starting rpki validator 2.4.2
+2026-11-03T01:58:20Z WARN  tls: certificate for repo.example.net expires in 13 days
+2026-11-03T01:58:21Z INFO  rtr: listening on 10.9.0.20:3323
+2026-11-03T01:58:21Z INFO  validation: initial run started (5 trust anchors)
+2026-11-03T01:58:24Z INFO  rtr: client 10.9.0.11:51920 connected
+2026-11-03T01:58:24Z INFO  rtr: client 10.9.0.11:51920 reset query: no data yet, sending error report (code 2)
+2026-11-03T01:59:24Z INFO  rtr: client 10.9.0.11:51920 reset query: no data yet, sending error report (code 2)
+2026-11-03T02:00:24Z INFO  rtr: client 10.9.0.11:51920 reset query: no data yet, sending error report (code 2)
+2026-11-03T02:01:02Z WARN  rsync: repository rsync://rpki.example.org/repo unreachable, falling back to RRDP
+2026-11-03T02:01:24Z INFO  rtr: client 10.9.0.11:51920 reset query: no data yet, sending error report (code 2)
+2026-11-03T02:02:24Z INFO  rtr: client 10.9.0.11:51920 reset query: no data yet, sending error report (code 2)
+2026-11-03T02:03:01Z INFO  validation: initial run finished, 512870 VRPs
+2026-11-03T02:03:24Z INFO  rtr: client 10.9.0.11:51920 reset query: serving session 41 serial 1 (512870 VRPs)

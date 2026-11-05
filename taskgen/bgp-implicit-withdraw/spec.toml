@@ -1,7 +1,7 @@
 id = "bgp-implicit-withdraw"
-tier = 2
+tier = 1
 root_cause = "stale-state-on-update"
-origin = "incident-pattern"
+origin = "upstream-mutation"
 language = "go"
 substrate = "gobgp"
 inspired_by = "DHCP interface-metadata rewrite incident (pattern only; original code)"

@@ -1,0 +1,2 @@
+# Keeps the ROAs by closing the session instead, which drops a healthy cache connection
+TestRTRErrorNoDataKeepsROAs

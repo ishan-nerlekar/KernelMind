@@ -1,0 +1,10 @@
+time="2026-11-03T01:58:13Z" level=info msg="ROA server is disconnected" Key="10.9.0.20:3323" Topic=rpki
+time="2026-11-03T01:58:24Z" level=info msg="ROA server is connected" Key="10.9.0.20:3323" Topic=rpki
+time="2026-11-03T01:58:24Z" level=warning msg="RPKI cache sent an error report" Code=2 Error="No Data Available" Key="10.9.0.20:3323" Text= Topic=rpki
+time="2026-11-03T01:58:31Z" level=info msg="Peer Up" Key=192.0.2.66 State=BGP_FSM_OPENCONFIRM Topic=Peer
+time="2026-11-03T01:58:40Z" level=warning msg="hold timer expired" Key=198.51.100.14 State=BGP_FSM_ESTABLISHED Topic=Peer
+time="2026-11-03T01:59:24Z" level=warning msg="RPKI cache sent an error report" Code=2 Error="No Data Available" Key="10.9.0.20:3323" Text= Topic=rpki
+time="2026-11-03T02:00:24Z" level=warning msg="RPKI cache sent an error report" Code=2 Error="No Data Available" Key="10.9.0.20:3323" Text= Topic=rpki
+time="2026-11-03T02:01:24Z" level=warning msg="RPKI cache sent an error report" Code=2 Error="No Data Available" Key="10.9.0.20:3323" Text= Topic=rpki
+time="2026-11-03T02:02:24Z" level=warning msg="RPKI cache sent an error report" Code=2 Error="No Data Available" Key="10.9.0.20:3323" Text= Topic=rpki
+time="2026-11-03T02:03:25Z" level=info msg="ROA table updated" Key="10.9.0.20:3323" Topic=rpki

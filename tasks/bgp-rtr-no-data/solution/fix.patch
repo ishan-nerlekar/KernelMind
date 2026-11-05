@@ -1,0 +1,14 @@
+--- a/pkg/server/rpki_errors.go
++++ b/pkg/server/rpki_errors.go
+@@ -58,8 +58,9 @@
+ 	client.state.RpkiMessages.RpkiReceived.Error++
+ 	switch msg.ErrorCode {
+ 	case rtr.NO_DATA_AVAILABLE:
+-		// The cache has nothing to serve: drop what we hold from it and ask again later.
+-		m.table.DeleteAll(client.host)
++		// The cache is up but has nothing to serve yet, typically right after it restarted and
++		// before its first validation run has finished. That says nothing about the ROAs we
++		// already hold from it: keep them and ask again later.
+ 		client.retryAfter(rtrRetryInterval)
+ 	case rtr.WITHDRAWAL_OF_UNKNOWN_RECORD, rtr.DUPLICATE_ANNOUNCEMENT_RECORD:
+ 		// Only a router sends these about data it received. Nothing to do.

@@ -30,6 +30,9 @@ files and lines touched, human solve time where measured).
 
 One task per root cause at minimum; a root cause never appears in more than three tasks.
 Origin: **A** = pattern from a production incident (original code), **O** = original, **H** = held out.
+From Nov 5 the main public set is `incident-transplant`: a real production incident's causal chain, symptoms and evidence,
+re-implemented as new feature code inside GoBGP, so the scenario is unique and the buggy code can't be recalled from
+upstream. `upstream-mutation` tasks (bugs planted in existing public code) are kept for calibration only.
 
 | # | Root cause | Origin | Tier 1 (ported) | Tier 2/3 task in the Go system |
 |---|---|---|---|---|

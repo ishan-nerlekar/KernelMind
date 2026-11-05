@@ -44,3 +44,22 @@ cheap, localization (the hard part of debugging) disappears.**
 
 **Decision:** build Tier 2/3 on a large real networking codebase where reading everything is
 impossible, and keep apnet's tasks as Tier 1. Candidate: GoBGP (BGP daemon, ~113k lines of non-test Go).
+
+## 2026-11-05 · first GoBGP tasks (upstream mutations)
+
+| Task | GPT-6 Luna | Claude Haiku 5.5 |
+|---|---|---|
+| bgp-implicit-withdraw | pass, 126 s, 11 cmds | pass, 962 s, 28 cmds |
+| bgp-bestpath-med-order | pass, 152 s, 15 cmds | pass, 116 s, 14 cmds |
+
+Size slowed the probes down (2–16 minutes instead of under 1) but didn't stop them. In a protocol
+implementation the operator's vocabulary is the code's vocabulary (`NextHop`, `Withdraw`, `MED`), and
+both bugs break textbook BGP rules, so they're obvious once found. Relabeled Tier 1.
+
+**Novelty concern (raised by Ishan):** both bugs are deviations from public upstream code, so a model
+can "fix" them by recalling GoBGP rather than by debugging. Tagged `origin = "upstream-mutation"`.
+
+**Decision:** transplant the real production incidents into GoBGP as *new feature code* (origin
+`incident-transplant`): the scenario is unique, the buggy code isn't upstream so it can't be recalled,
+and the surrounding codebase is large. Evidence (logs, captures) ships with each task. Separately, a
+small private set built from the real proprietary code fragments, never published.

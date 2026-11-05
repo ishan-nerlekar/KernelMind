@@ -1,7 +1,7 @@
 id = "bgp-bestpath-med-order"
-tier = 2
+tier = 1
 root_cause = "rule-precedence"
-origin = "incident-pattern"
+origin = "upstream-mutation"
 language = "go"
 substrate = "gobgp"
 inspired_by = "Eligibility and precedence rule incidents (pattern only; original code)"

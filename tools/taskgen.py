@@ -58,6 +58,7 @@ cp -r "$T/visible/." "$APP/"
 cp -r "$T/hidden/." "$APP/"
 timeout 600 go test -count=1 -timeout 180s {flags} -v {packages} > "$LOGS/go-test.log" 2>&1
 status=$?
+{extra}
 failed=$(grep -oE '^[[:space:]]*--- FAIL: [A-Za-z0-9_]+' "$LOGS/go-test.log" | awk '{{print $3}}' | sort -u | tr '\n' ' ')
 grep -qE '\[(build|setup) failed\]' "$LOGS/go-test.log" && failed="$failed build_failed"
 grep -q 'panic: test timed out' "$LOGS/go-test.log" && failed="$failed test_timeout"
@@ -98,9 +99,10 @@ def unified_patch(a_root: Path, b_root: Path, files: list[str]) -> str:
     return "".join(out)
 
 
-def go_test(root: Path, flags: str, what: str, packages: str = "./...") -> None:
+def go_test(root: Path, flags: str, what: str, packages: str = "./...", extra: list[str] = ()) -> None:
     env = {**os.environ, "GOFLAGS": "-mod=mod", "GOTOOLCHAIN": "local"}
-    r = subprocess.run(f"go build ./... && go test -count=1 {flags} {packages}", shell=True, cwd=root,
+    cmd = f"go build ./... && go test -count=1 {flags} {packages}" + "".join(f" && go test -count=1 {flags} {r}" for r in extra)
+    r = subprocess.run(cmd, shell=True, cwd=root,
                        capture_output=True, text=True, env=env)
     if r.returncode:
         raise SystemExit(f"{what} failed:\n{(r.stdout + r.stderr)[-3000:]}")
@@ -135,7 +137,16 @@ def build(task_id: str) -> None:
         clean, starter = Path(tmp, "clean"), Path(tmp, "starter")
         shutil.copytree(src, clean)
         shutil.copytree(src, starter)
+        # Transplanted features: new code (taskgen/<id>/feature/ files plus [[feature]] edits)
+        # added to both trees. The bug is then planted only in the starter.
+        for tree in (clean, starter):
+            if (spec_dir / "feature").is_dir():
+                shutil.copytree(spec_dir / "feature", tree, dirs_exist_ok=True)
+            apply_edits(tree, spec.get("feature", []), f"{task_id} feature")
         apply_edits(starter, spec["bug"], f"{task_id} bug")
+        # Evidence the engineer would have (captures, logs, RIB dumps) ships inside the workspace.
+        if (spec_dir / "app_files").is_dir():
+            shutil.copytree(spec_dir / "app_files", starter, dirs_exist_ok=True)
         # Existing tests that would reveal the bug are removed from the agent's copy; the originals
         # still run at grading time (tests/visible is copied from the clean tree).
         for h in spec.get("hide", []):
@@ -143,7 +154,8 @@ def build(task_id: str) -> None:
                                capture_output=True, text=True, env={**os.environ, "GOFLAGS": ""})
             if r.returncode:
                 raise SystemExit(f"{task_id}: hiding tests in {h['file']}: {r.stderr}")
-        go_test(starter, flags, f"{task_id}: visible tests on the starter (the bug must not be visible)", packages)
+        go_test(clean, flags, f"{task_id}: visible tests on the clean tree", packages, spec.get("extra_runs", []))
+        go_test(starter, flags, f"{task_id}: visible tests on the starter (the bug must not be visible)", packages, spec.get("extra_runs", []))
         hidden = spec_dir / "hidden"
         probe = Path(tmp, "probe")
         shutil.copytree(starter, probe)
@@ -166,7 +178,9 @@ def build(task_id: str) -> None:
         tests = out / "tests"
         copy_tests(clean, tests / "visible")
         shutil.copytree(hidden, tests / "hidden")
-        (tests / "test.sh").write_text(TEST_SH.format(flags=flags, packages=packages))
+        extra = "".join(f'timeout 300 go test -count=1 -timeout 120s {flags} -v {run} >> "$LOGS/go-test.log" 2>&1 || status=$?\n'
+                        for run in spec.get("extra_runs", []))
+        (tests / "test.sh").write_text(TEST_SH.format(flags=flags, packages=packages, extra=extra))
         os.chmod(tests / "test.sh", 0o755)
 
         bug_files = [e["file"] for e in spec["bug"]]

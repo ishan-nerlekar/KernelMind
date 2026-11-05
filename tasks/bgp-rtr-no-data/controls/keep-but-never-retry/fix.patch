@@ -1,0 +1,12 @@
+--- a/pkg/server/rpki_errors.go
++++ b/pkg/server/rpki_errors.go
+@@ -59,8 +59,7 @@
+ 	switch msg.ErrorCode {
+ 	case rtr.NO_DATA_AVAILABLE:
+ 		// The cache has nothing to serve: drop what we hold from it and ask again later.
+-		m.table.DeleteAll(client.host)
+-		client.retryAfter(rtrRetryInterval)
++		return
+ 	case rtr.WITHDRAWAL_OF_UNKNOWN_RECORD, rtr.DUPLICATE_ANNOUNCEMENT_RECORD:
+ 		// Only a router sends these about data it received. Nothing to do.
+ 	default:

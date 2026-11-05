@@ -1,0 +1,2 @@
+# Moves the flush to the fatal branch, discarding ROAs that should live until the lifetime expires
+TestRTRErrorFatalClosesSession
