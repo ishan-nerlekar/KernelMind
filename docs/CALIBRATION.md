@@ -78,3 +78,20 @@ there the bug is in plain sight. The surrounding 95k lines never had to be read.
 **Next experiment (decoy):** the code the symptom greps into is *correct*; the fault is an omission in
 shared plumbing that never mentions the symptom's vocabulary, so grep can't find it and the agent has to
 follow the data flow.
+
+## 2026-11-05 · decoy experiment
+
+| Task | GPT-6 Luna | Claude Haiku 5.5 |
+|---|---|---|
+| bgp-legacy-missing-routes | pass, 172 s, 14 cmds | pass, 169 s, 19 cmds |
+
+The decoy (correct extended-message code that the capability evidence points at) cost neither probe
+anything. Both read every debug file first, then searched for *every* noun in the evidence at once
+(`ExtendedMessage|MaxMessage|LargeCommunity|CreateUpdateMsgFromPaths`), so the tagging code was in
+view by command 4–6. Both reasoned out the ordering bug without help; Haiku wrote a reproduction test
+first, then restructured the packer (a fix we didn't anticipate, which the hidden tests accepted).
+
+**Conclusion after 6 rounds (16 tasks, ~$0.30 total):** single-fault bugs with static evidence are
+solved by the cheapest current models in 2–5 minutes, whatever the codebase size, novelty, missing
+text clues, or decoys. They search for every term in the evidence at once, so hiding one route to the
+bug doesn't help when another term leads there.
