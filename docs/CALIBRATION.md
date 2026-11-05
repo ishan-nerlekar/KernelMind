@@ -124,3 +124,30 @@ against 15–90 s on apnet. Two transient API errors (a 600 s OpenAI timeout, an
 flagged by its usage-policy filter, both on Luna) were retried by LiteLLM and didn't affect results.
 The full-suite Docker `validate` didn't run (a shell comment pasted into zsh broke the command); the
 sweep did build and run every task image with the timestamp change.
+
+## 2026-11-06 · two faults, live reproduction
+
+Full Docker `validate` on the Mac: all 19 tasks valid (starter fails, every alternative passes, every
+control fails on its pinned check).
+
+| Task | GPT-6 Luna | Claude Haiku 5.5 |
+|---|---|---|
+| bgp-agg-incident | pass, 285 s, 23 cmds, $0.01 | pass, 497 s, 34 cmds, $0.03 |
+
+Both worked like engineers: read the repro, ran it, fixed the capability check, **re-ran it, saw rtr7
+still short of routes**, found the tagging bug and verified with the repro again (Luna ran it 2 times,
+Haiku 6). Haiku also wrote its own regression test. The hypothesis (agents stop once the visible
+symptom is gone) was wrong for these models. Their longest runs so far, but not a failure. Relabeled
+Tier 1.
+
+Repro fix: when an agent's command timed out, the stand-ins kept running and held port 179 (Haiku
+spent 4 commands killing them). repro.sh now records the PIDs it starts and stops exactly those on the
+next run. (A first attempt with `pkill -f` matched the caller's own shell and killed it.)
+
+**Overall after 7 rounds (19 tasks, 116 probe attempts, ~$1):** no task form tried so far separates
+the cheapest current models from a perfect score: single bugs, large codebases, novel code, missing text
+clues, decoys, two interacting faults, a live system with no logs. Candidate forms from the incident
+records, not yet tried: a regression caused by an earlier fix, where reverting it reintroduces the
+older bug; recurrence after a fix that covered only one case; the test (not the product) is wrong;
+writing a test that actually catches the bug; separating two unrelated failures in one report;
+post-mortem from a core dump with no reproduction.

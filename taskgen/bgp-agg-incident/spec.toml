@@ -1,5 +1,5 @@
 id = "bgp-agg-incident"
-tier = 3
+tier = 1
 root_cause = "multi-fault"
 origin = "incident-transplant"
 language = "go"
