@@ -1,0 +1,46 @@
+--- a/internal/drv/drv.go
++++ b/internal/drv/drv.go
+@@ -9,10 +9,8 @@
+ )
+ 
+ var (
+-	// ErrDriver means a driver request failed; the station may or may not still exist.
++	// ErrDriver means a driver request failed.
+ 	ErrDriver = errors.New("drv: driver request failed")
+-	// ErrNoStation means the driver has no such station.
+-	ErrNoStation = errors.New("drv: no such station")
+ )
+ 
+ // Driver is safe for concurrent use.
+@@ -61,9 +59,6 @@
+ 		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+ 	}
+ 	secs, err := d.dp.InactiveSec(addr, typ)
+-	if errors.Is(err, dp.ErrNoPeer) {
+-		return 0, ErrNoStation
+-	}
+ 	if err != nil {
+ 		return 0, ErrDriver
+ 	}
+--- a/internal/station/station.go
++++ b/internal/station/station.go
+@@ -10,8 +10,6 @@
+ 	"sort"
+ 	"sync"
+ 	"time"
+-
+-	"apnet/internal/drv"
+ )
+ 
+ // Reason is an IEEE 802.11 reason code.
+@@ -97,10 +95,6 @@
+ 		secs, err := m.drv.InactiveSec(st.Addr)
+ 		idle := time.Duration(secs) * time.Second
+ 		switch {
+-		case errors.Is(err, drv.ErrNoStation):
+-			// The driver no longer has this station: the client left without disassociating
+-			// (powered off, out of range). Drop the entry so the client can associate again.
+-			m.remove(st, ReasonInactivity, now)
+ 		case err != nil:
+ 			// The counters couldn't be read; try again next interval.
+ 			st.next = now.Add(m.maxInactivity)

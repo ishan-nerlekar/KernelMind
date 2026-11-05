@@ -1,0 +1,12 @@
+# AP lab-ap-07, software 23.1, radio 6 GHz + 5 GHz. Station events, 2026-10-23 (IST).
+09:58:12 assoc     sta=02:00:00:00:00:51 mld=fc:b2:14:c1:e5:4a links=5G,6G  (MacBook, Wi-Fi 7)
+09:58:40 assoc     sta=3a:91:7c:20:11:0e                                     (Pixel, Wi-Fi 6)
+10:13:12 disassoc  sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:13:13 deauth    sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:13:19 assoc     sta=02:00:00:00:00:51 mld=fc:b2:14:c1:e5:4a links=5G,6G
+10:28:19 disassoc  sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:28:20 deauth    sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:28:26 assoc     sta=02:00:00:00:00:51 mld=fc:b2:14:c1:e5:4a links=5G,6G
+10:43:26 disassoc  sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:43:27 deauth    sta=02:00:00:00:00:51 reason=4 (inactivity)
+10:43:33 assoc     sta=02:00:00:00:00:51 mld=fc:b2:14:c1:e5:4a links=5G,6G

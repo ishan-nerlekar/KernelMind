@@ -1,0 +1,245 @@
+id = "ap-mlo-inactivity"
+tier = 2
+root_cause = "regression-from-fix"
+origin = "incident-transplant"
+language = "go"
+substrate = "apnet"
+inspired_by = "MLO inactivity disconnects after a stale-station fix exposed an older link-vs-MLD lookup mismatch; the historical remedy (revert) restored the stale-station bug"
+summary = "A fix that removes stations the driver no longer has exposes an older bug: MLO stations' activity is looked up by link address instead of MLD address, so active MLO clients are dropped every 900 s. Reverting the fix brings back the stale-station bug."
+starter_fails_on = ["TestMLOActiveStationKept", "TestMLOAndSingleLinkTogether"]
+
+[limits]
+agent_timeout_sec = 2400
+
+# ---------------------------------------------------------------- history (newest last)
+[history_base]
+message = "Import AP software 23.0"
+date = "2026-09-01T10:00:00+05:30"
+author = "Release Engineering <release@apnet.example>"
+tag = "23.0"
+
+[[history]]
+message = """config: say how SSID overrides and AP-wide defaults combine"""
+date = "2026-09-09T15:12:00+05:30"
+author = "Ravi Menon <ravi.menon@apnet.example>"
+[[history.edit]]
+file = "internal/config/config.go"
+old = '''// A nil pointer in Overrides or Defaults means "not set at this layer".
+'''
+new = '''// A nil pointer in Overrides or Defaults means "not set at this layer". Layers merge field by
+// field: an SSID can override one setting and inherit the rest.
+'''
+
+[[history]]
+message = """station: drop stations the driver no longer has
+
+A client that powers off or goes out of range without disassociating keeps
+its station entry, because the inactivity check treated every driver error
+as "try again later". Firmware has already deleted the peer, so the check
+never succeeds and the entry is never removed. When the client comes back,
+its association is refused as a duplicate and it cannot rejoin until the
+AP is rebooted (#412).
+
+The driver now reports ErrNoStation when the datapath has no peer for the
+station, and the inactivity check removes such stations. Other driver
+errors are still retried."""
+date = "2026-10-02T11:47:00+05:30"
+author = "Lena Fischer <lena.fischer@apnet.example>"
+adds = ["internal/station/rejoin_test.go", "internal/drv/nostation_test.go"]
+[[history.edit]]
+file = "internal/drv/drv.go"
+old = '''	// ErrDriver means a driver request failed.
+	ErrDriver = errors.New("drv: driver request failed")
+'''
+new = '''	// ErrDriver means a driver request failed; the station may or may not still exist.
+	ErrDriver = errors.New("drv: driver request failed")
+	// ErrNoStation means the driver has no such station.
+	ErrNoStation = errors.New("drv: no such station")
+'''
+[[history.edit]]
+file = "internal/drv/drv.go"
+old = '''	secs, err := d.dp.InactiveSec(addr, typ)
+	if err != nil {'''
+new = '''	secs, err := d.dp.InactiveSec(addr, typ)
+	if errors.Is(err, dp.ErrNoPeer) {
+		return 0, ErrNoStation
+	}
+	if err != nil {'''
+[[history.edit]]
+file = "internal/station/station.go"
+old = '''	"time"
+)'''
+new = '''	"time"
+
+	"apnet/internal/drv"
+)'''
+[[history.edit]]
+file = "internal/station/station.go"
+old = '''		switch {
+		case err != nil:'''
+new = '''		switch {
+		case errors.Is(err, drv.ErrNoStation):
+			// The driver no longer has this station: the client left without disassociating
+			// (powered off, out of range). Drop the entry so the client can associate again.
+			m.remove(st, ReasonInactivity, now)
+		case err != nil:'''
+
+[[history]]
+message = """stats: state the unit of Rate"""
+date = "2026-10-14T09:30:00+05:30"
+author = "Ravi Menon <ravi.menon@apnet.example>"
+tag = "23.1"
+[[history.edit]]
+file = "internal/stats/stats.go"
+old = '''// Rate is throughput between two samples.
+'''
+new = '''// Rate is throughput between two samples, in bytes per second.
+'''
+
+# ---------------------------------------------------------------- final-tree text for the history above
+[[feature]]
+file = "internal/config/config.go"
+old = '''// A nil pointer in Overrides or Defaults means "not set at this layer".
+'''
+new = '''// A nil pointer in Overrides or Defaults means "not set at this layer". Layers merge field by
+// field: an SSID can override one setting and inherit the rest.
+'''
+
+[[feature]]
+file = "internal/stats/stats.go"
+old = '''// Rate is throughput between two samples.
+'''
+new = '''// Rate is throughput between two samples, in bytes per second.
+'''
+
+# ---------------------------------------------------------------- the latent bug (present since 23.0)
+[[bug]]
+file = "internal/drv/drv.go"
+old = '''	mld, mlo := d.mld[addr]
+	d.mu.Unlock()
+	key, typ := addr, dp.LinkPeer
+	if mlo {
+		key, typ = mld, dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+	}
+	secs, err := d.dp.InactiveSec(key, typ)'''
+new = '''	_, mlo := d.mld[addr]
+	d.mu.Unlock()
+	typ := dp.LinkPeer
+	if mlo {
+		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+	}
+	secs, err := d.dp.InactiveSec(addr, typ)'''
+
+# ---------------------------------------------------------------- a different valid fix
+[[alternative]]
+name = "peer-for-helper"
+[[alternative.edit]]
+file = "internal/drv/drv.go"
+old = '''	d.mu.Lock()
+	_, mlo := d.mld[addr]
+	d.mu.Unlock()
+	typ := dp.LinkPeer
+	if mlo {
+		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+	}
+	secs, err := d.dp.InactiveSec(addr, typ)'''
+new = '''	secs, err := d.dp.InactiveSec(d.peerFor(addr))'''
+[[alternative.edit]]
+file = "internal/drv/drv.go"
+old = '''// InactiveSec reports how long the station associated on addr has been idle.'''
+new = '''// peerFor is the datapath peer that holds the counters of the station associated on addr.
+func (d *Driver) peerFor(addr string) (string, dp.PeerType) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if mld, ok := d.mld[addr]; ok {
+		return mld, dp.MLDPeer
+	}
+	return addr, dp.LinkPeer
+}
+
+// InactiveSec reports how long the station associated on addr has been idle.'''
+
+# ---------------------------------------------------------------- plausible wrong fixes
+[[control]]
+name = "revert-412"
+comment = "Reverts the commit that started the disconnects (what the historical incident did); stale stations can't rejoin again"
+expect = ["TestVanishedStationCanRejoin"]
+[[control.edit]]
+file = "internal/drv/drv.go"
+old = '''	// ErrDriver means a driver request failed; the station may or may not still exist.
+	ErrDriver = errors.New("drv: driver request failed")
+	// ErrNoStation means the driver has no such station.
+	ErrNoStation = errors.New("drv: no such station")
+'''
+new = '''	// ErrDriver means a driver request failed.
+	ErrDriver = errors.New("drv: driver request failed")
+'''
+[[control.edit]]
+file = "internal/drv/drv.go"
+old = '''	if errors.Is(err, dp.ErrNoPeer) {
+		return 0, ErrNoStation
+	}
+'''
+new = ''
+[[control.edit]]
+file = "internal/station/station.go"
+old = '''	"time"
+
+	"apnet/internal/drv"
+)'''
+new = '''	"time"
+)'''
+[[control.edit]]
+file = "internal/station/station.go"
+old = '''		case errors.Is(err, drv.ErrNoStation):
+			// The driver no longer has this station: the client left without disassociating
+			// (powered off, out of range). Drop the entry so the client can associate again.
+			m.remove(st, ReasonInactivity, now)
+'''
+new = ''
+
+[[control]]
+name = "no-station-is-transient"
+comment = "Keeps the driver change but treats 'no such station' as a transient error again"
+expect = ["TestVanishedStationCanRejoin"]
+[[control.edit]]
+file = "internal/station/station.go"
+old = '''			m.remove(st, ReasonInactivity, now)
+		case err != nil:'''
+new = '''			st.next = now.Add(m.maxInactivity)
+		case err != nil:'''
+
+[[control]]
+name = "skip-mlo"
+comment = "Exempts MLO stations from the inactivity check"
+expect = ["TestMLOIdleStationDisconnected"]
+[[control.edit]]
+file = "internal/station/station.go"
+old = '''		if now.Before(st.next) {
+			continue
+		}'''
+new = '''		if now.Before(st.next) || st.MLD != "" {
+			continue
+		}'''
+
+[[control]]
+name = "query-link-peer"
+comment = "Queries MLO stations as link peers, which the datapath doesn't have"
+expect = ["TestMLOActiveStationKept"]
+[[control.edit]]
+file = "internal/drv/drv.go"
+old = '''		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer'''
+new = '''		typ = dp.LinkPeer // query the link the station associated on'''
+
+[[control]]
+name = "mlo-lookup-is-transient"
+comment = "Reports a failed MLO lookup as a driver error instead of 'no such station', so idle MLO clients are never disconnected"
+expect = ["TestMLOIdleStationDisconnected"]
+[[control.edit]]
+file = "internal/drv/drv.go"
+old = '''	if errors.Is(err, dp.ErrNoPeer) {
+		return 0, ErrNoStation
+	}'''
+new = '''	if errors.Is(err, dp.ErrNoPeer) && !mlo {
+		return 0, ErrNoStation
+	}'''

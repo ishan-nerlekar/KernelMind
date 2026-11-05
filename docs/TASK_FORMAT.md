@@ -47,3 +47,15 @@ cpus = "2"
 - No leaks: no git history, no comments or names pointing at the bug, no helper that already
   implements the fix, no test files in `app/`.
 - Every control has a one-line comment in `expect.txt` saying what mistake it represents.
+
+## Git history (`[[history]]`)
+
+A generated task can ship a short project history instead of a single baseline commit, for tasks
+where the history is part of the evidence (a regression from an earlier fix). Each `[[history]]`
+entry is one commit (`message`, `date`, `author`, optional `tag`) and describes a change that is
+already present in the final starter tree: `[[history.edit]]` entries as `old` (before) → `new`
+(after), plus `adds`, the files the commit created. `[history_base]` is the first commit. The
+generator undoes the entries newest first to get the first commit's tree, replays them as commits,
+checks that the result reproduces the starter exactly, and ships the repository as
+`environment/history.bundle`, which the Dockerfile unpacks into `/app/.git`. Incident evidence in
+`debug/` is excluded from git.

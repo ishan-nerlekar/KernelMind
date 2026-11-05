@@ -1,0 +1,20 @@
+--- a/internal/drv/drv.go
++++ b/internal/drv/drv.go
+@@ -54,13 +54,13 @@
+ // InactiveSec reports how long the station associated on addr has been idle.
+ func (d *Driver) InactiveSec(addr string) (int, error) {
+ 	d.mu.Lock()
+-	_, mlo := d.mld[addr]
++	mld, mlo := d.mld[addr]
+ 	d.mu.Unlock()
+-	typ := dp.LinkPeer
++	key, typ := addr, dp.LinkPeer
+ 	if mlo {
+-		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
++		key, typ = mld, dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+ 	}
+-	secs, err := d.dp.InactiveSec(addr, typ)
++	secs, err := d.dp.InactiveSec(key, typ)
+ 	if errors.Is(err, dp.ErrNoPeer) {
+ 		return 0, ErrNoStation
+ 	}

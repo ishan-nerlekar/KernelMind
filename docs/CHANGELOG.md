@@ -16,3 +16,4 @@ probes (SPEC.md rule 3) are logged here too.
 | 2026-11-05 | bgp-legacy-missing-routes | Egress tags wired from gobgpd's config file to the server (`SetEgressTags`) | The API round trip dropped the new config field, so the evidence described a setting that couldn't take effect | probe6 (probes only) |
 | 2026-11-05 | bgp-agg-incident | Added (Tier 3 experiment: two faults, live reproduction, no collected logs) | Tests whether agents verify the whole symptom is gone, not just the first one | none |
 | 2026-11-06 | bgp-agg-incident | Tier 3 → Tier 1; repro.sh stops leftover processes by recorded PID | Both probes solved; interrupted repro runs left port 179 held | probe7 (probes only) |
+| 2026-11-06 | ap-mlo-inactivity | Added (regression-from-fix form, with git history) | Tests whether agents revert the commit that started the symptom; the revert reintroduces the bug that commit fixed | none |

@@ -151,3 +151,16 @@ records, not yet tried: a regression caused by an earlier fix, where reverting i
 older bug; recurrence after a fix that covered only one case; the test (not the product) is wrong;
 writing a test that actually catches the bug; separating two unrelated failures in one report;
 post-mortem from a core dump with no reproduction.
+
+## 2026-11-06 · next experiment: regression from an earlier fix (ap-mlo-inactivity)
+
+Transplant of the MLO incident's full history. The workspace has four commits (`23.0` → `23.1`).
+One commit fixed stale stations that couldn't rejoin by treating "driver has no such station" as
+"remove". That exposed a bug present since 23.0: MLO stations' activity is looked up by link address
+under the MLD peer type, so the lookup always fails and active MLO clients are dropped every 900 s
+with reason "inactivity".
+
+The trap: `git revert` of that commit stops the disconnects and **all visible tests pass**, because the
+revert also deletes the test the commit added. Grading restores that test, so the revert fails, as
+does treating "no such station" as transient. The fix is the lookup key. Built on apnet (2k lines) on
+purpose: if the history form works even where the code is easy to read, the form itself is what's hard.

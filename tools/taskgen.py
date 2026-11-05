@@ -42,10 +42,11 @@ WORKDIR /app
 {download}COPY app/ /app/
 # One timestamp for every file, so modification times don't reveal which files the task changed.
 RUN find /app -exec touch -h -d @1746700000 {{}} +
-# Warm the build cache so neither the agent nor the verifier pays for a cold compile.
+{history}# Warm the build cache so neither the agent nor the verifier pays for a cold compile.
 RUN go build ./... && go test -count=1 {flags} -run '^$' {packages} > /dev/null
-# A single baseline commit lets the harness record the agent's diff. No project history is included.
-RUN git init -q && git add -A && git -c user.email=kernelmind@local -c user.name=kernelmind commit -qm baseline
+# A single baseline commit lets the harness record the agent's diff. Tasks with [[history]] ship
+# their own repository instead.
+RUN [ -d .git ] || (git init -q && git add -A && git -c user.email=kernelmind@local -c user.name=kernelmind commit -qm baseline)
 """
 
 TEST_SH = r"""#!/usr/bin/env bash
@@ -171,8 +172,12 @@ def build(task_id: str) -> None:
             shutil.rmtree(out)
         (out / "environment").mkdir(parents=True)
         shutil.copytree(starter, out / "environment" / "app")
+        if spec.get("history"):
+            build_history(out / "environment" / "app", starter, spec, Path(tmp, "hist"), task_id)
         download = "COPY app/go.mod app/go.sum /app/\nRUN go mod download\n" if (src / "go.sum").exists() else ""
-        (out / "environment" / "Dockerfile").write_text(DOCKERFILE.format(flags=flags, packages=packages, download=download))
+        history = HISTORY_DOCKER if spec.get("history") else ""
+        (out / "environment" / "Dockerfile").write_text(DOCKERFILE.format(flags=flags, packages=packages, download=download,
+                                                                          history=history))
         meta = {k: spec[k] for k in META_KEYS if k in spec}
         (out / "task.toml").write_text(to_toml(meta))
         shutil.copy2(spec_dir / "instruction.md", out / "instruction.md")
@@ -199,6 +204,59 @@ def build(task_id: str) -> None:
             write_fix(out / "controls" / ctl["name"], unified_patch(starter, wrong, [e["file"] for e in ctl["edit"]]),
                       ctl["expect"], ctl.get("comment", ""))
     print(f"built {task_id}")
+
+
+def git(cwd: Path, *args: str, date: str = "", author: str = "") -> None:
+    name, _, email = (author or "kernelmind <kernelmind@local>").partition(" <")
+    env = {**os.environ, "GIT_AUTHOR_NAME": name, "GIT_COMMITTER_NAME": name,
+           "GIT_AUTHOR_EMAIL": email.rstrip(">"), "GIT_COMMITTER_EMAIL": email.rstrip(">")}
+    if date:
+        env |= {"GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
+    subprocess.run(["git", "-c", "init.defaultBranch=main", *args], cwd=cwd, env=env, check=True, capture_output=True)
+
+
+def build_history(app: Path, starter: Path, spec: dict, scratch: Path, task_id: str) -> None:
+    """Give the workspace a git history. Each [[history]] entry describes a change already present in
+    the final tree (edits as old -> new, plus files it added); undoing them newest first yields the
+    first commit, then they are replayed as commits."""
+    hist = spec["history"]
+    shutil.copytree(starter, scratch)
+    for h in reversed(hist):
+        apply_edits(scratch, [{"file": e["file"], "old": e["new"], "new": e["old"]} for e in h.get("edit", [])],
+                    f"{task_id} history (undo) {h['message'].splitlines()[0]}")
+        for f in h.get("adds", []):
+            (scratch / f).unlink()
+    shutil.rmtree(app)
+    shutil.copytree(scratch, app)
+    base = spec["history_base"]
+    git(app, "init", "-q")
+    if (app / "debug").is_dir():  # incident evidence is not part of the project's history
+        (app / ".git" / "info").mkdir(exist_ok=True)
+        (app / ".git" / "info" / "exclude").write_text("debug/\n")
+    git(app, "add", "-A")
+    git(app, "commit", "-qm", base["message"], date=base["date"], author=base["author"])
+    if base.get("tag"):
+        git(app, "tag", base["tag"], date=base["date"], author=base["author"])
+    for h in hist:
+        apply_edits(app, h.get("edit", []), f"{task_id} history {h['message'].splitlines()[0]}")
+        for f in h.get("adds", []):
+            shutil.copy2(starter / f, app / f)
+        git(app, "add", "-A")
+        git(app, "commit", "-qm", h["message"], date=h["date"], author=h["author"])
+        if h.get("tag"):
+            git(app, "tag", h["tag"], date=h["date"], author=h["author"])
+    r = subprocess.run(["diff", "-r", "-x", ".git", str(starter), str(app)], capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit(f"{task_id}: replayed history does not reproduce the starter:\n{r.stdout[-2000:]}")
+    # A nested .git can't be committed to this repo, so the history ships as a bundle the image unpacks.
+    git(app, "bundle", "create", str(app.parent / "history.bundle"), "--all")
+    shutil.rmtree(app / ".git")
+
+
+HISTORY_DOCKER = """COPY history.bundle /tmp/history.bundle
+RUN git init -q -b main && git fetch -q --update-head-ok /tmp/history.bundle 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*' \\
+    && git reset -q && { [ ! -d debug ] || echo 'debug/' > .git/info/exclude; } && rm /tmp/history.bundle
+"""
 
 
 def to_toml(meta: dict) -> str:

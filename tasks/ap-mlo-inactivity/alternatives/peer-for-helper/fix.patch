@@ -1,0 +1,30 @@
+--- a/internal/drv/drv.go
++++ b/internal/drv/drv.go
+@@ -51,16 +51,19 @@
+ 	d.dp.RemovePeer(addr, dp.LinkPeer)
+ }
+ 
++// peerFor is the datapath peer that holds the counters of the station associated on addr.
++func (d *Driver) peerFor(addr string) (string, dp.PeerType) {
++	d.mu.Lock()
++	defer d.mu.Unlock()
++	if mld, ok := d.mld[addr]; ok {
++		return mld, dp.MLDPeer
++	}
++	return addr, dp.LinkPeer
++}
++
+ // InactiveSec reports how long the station associated on addr has been idle.
+ func (d *Driver) InactiveSec(addr string) (int, error) {
+-	d.mu.Lock()
+-	_, mlo := d.mld[addr]
+-	d.mu.Unlock()
+-	typ := dp.LinkPeer
+-	if mlo {
+-		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+-	}
+-	secs, err := d.dp.InactiveSec(addr, typ)
++	secs, err := d.dp.InactiveSec(d.peerFor(addr))
+ 	if errors.Is(err, dp.ErrNoPeer) {
+ 		return 0, ErrNoStation
+ 	}

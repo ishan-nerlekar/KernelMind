@@ -1,0 +1,11 @@
+--- a/internal/station/station.go
++++ b/internal/station/station.go
+@@ -91,7 +91,7 @@
+ 	m.mu.Lock()
+ 	defer m.mu.Unlock()
+ 	for _, st := range m.sorted() {
+-		if now.Before(st.next) {
++		if now.Before(st.next) || st.MLD != "" {
+ 			continue
+ 		}
+ 		secs, err := m.drv.InactiveSec(st.Addr)

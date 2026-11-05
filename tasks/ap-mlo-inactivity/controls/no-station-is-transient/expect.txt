@@ -1,0 +1,2 @@
+# Keeps the driver change but treats 'no such station' as a transient error again
+TestVanishedStationCanRejoin

@@ -1,0 +1,4 @@
+Reported by the MacBook user, 2026-10-23:
+On a Meet call from about 09:58. The call froze and the laptop reconnected at about 10:13, 10:28
+and 10:43. Wi-Fi status during the call showed both 5 GHz and 6 GHz links active, ~6 Mbit/s each
+way. The Pixel next to it stayed connected all morning.

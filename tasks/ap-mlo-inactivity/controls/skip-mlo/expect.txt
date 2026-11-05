@@ -1,0 +1,2 @@
+# Exempts MLO stations from the inactivity check
+TestMLOIdleStationDisconnected

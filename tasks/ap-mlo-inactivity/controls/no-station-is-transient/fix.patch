@@ -1,0 +1,11 @@
+--- a/internal/station/station.go
++++ b/internal/station/station.go
+@@ -100,7 +100,7 @@
+ 		case errors.Is(err, drv.ErrNoStation):
+ 			// The driver no longer has this station: the client left without disassociating
+ 			// (powered off, out of range). Drop the entry so the client can associate again.
+-			m.remove(st, ReasonInactivity, now)
++			st.next = now.Add(m.maxInactivity)
+ 		case err != nil:
+ 			// The counters couldn't be read; try again next interval.
+ 			st.next = now.Add(m.maxInactivity)

@@ -1,0 +1,11 @@
+--- a/internal/drv/drv.go
++++ b/internal/drv/drv.go
+@@ -61,7 +61,7 @@
+ 		typ = dp.MLDPeer // an MLO station's counters are kept on its MLD peer
+ 	}
+ 	secs, err := d.dp.InactiveSec(addr, typ)
+-	if errors.Is(err, dp.ErrNoPeer) {
++	if errors.Is(err, dp.ErrNoPeer) && !mlo {
+ 		return 0, ErrNoStation
+ 	}
+ 	if err != nil {
