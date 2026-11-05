@@ -1,0 +1,16 @@
+rtr7# show ip bgp neighbors 10.20.0.1 | include state|notification|malformed|discarded
+  BGP state is Established, up for 41d03h
+  Last notification sent: none, received: none
+  Malformed updates received: 0, discarded attributes: 0
+
+rtr7# show ip bgp 10.40.0.0/14 longer-prefixes | count
+480
+
+rtr7# show ip bgp 10.40.0.0/14 longer-prefixes | first 1
+*> 10.40.6.84/32     10.20.0.1    0  4200000100 i
+
+rtr7# show ip bgp 10.40.0.0/14 longer-prefixes | last 1
+*> 10.40.8.51/32     10.20.0.1    0  4200000100 i
+
+rtr7# show ip bgp 10.40.6.84/32 detail | include Large
+  Large Community: 4200000100:900:7 4200000100:901:1

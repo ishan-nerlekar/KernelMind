@@ -1,0 +1,18 @@
+--- a/pkg/server/egress_tag.go
++++ b/pkg/server/egress_tag.go
+@@ -43,8 +43,14 @@
+ 	if len(tags) == 0 {
+ 		return msgs
+ 	}
++	limit := bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options)
+ 	for _, m := range msgs {
+-		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
++		u := m.Body.(*bgp.BGPUpdate)
++		orig := u.PathAttributes
++		stampEgressTags(u, tags)
++		if b, err := u.Serialize(options); err != nil || bgp.BGP_HEADER_LENGTH+len(b) > limit {
++			u.PathAttributes = orig
++		}
+ 	}
+ 	return msgs
+ }

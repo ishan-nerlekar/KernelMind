@@ -1,0 +1,3 @@
+CHG-7714  2026-11-04 14:00
+Redistribute data-center host routes (/32, 10.40.0.0/14) into BGP on edge1.
+About 2,100 routes, identical attributes. Expected impact: none.

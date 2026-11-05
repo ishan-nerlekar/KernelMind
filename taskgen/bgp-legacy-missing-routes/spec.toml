@@ -1,0 +1,302 @@
+id = "bgp-legacy-missing-routes"
+tier = 2
+root_cause = "unchecked-precondition"
+origin = "incident-transplant"
+language = "go"
+substrate = "gobgp"
+inspired_by = "Probe sized to link MTU, not path MTU (fails only across the tunnel), transplanted into new BGP egress tagging code"
+summary = "Egress tags are stamped on UPDATEs after they are packed to the size limit, so full UPDATEs to peers without extended messages overflow and are silently dropped."
+starter_fails_on = ["TestEgressUpdatesFitLegacyPeer", "TestEgressUpdatesManyTags"]
+extra_runs = ["-run '^(TestEgress|TestSessionOptions)' ./pkg/server/"]
+
+[limits]
+agent_timeout_sec = 2400
+
+# ---------------------------------------------------------------- transplanted feature: RFC 8654
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	BGP_CAP_EXTENDED_NEXTHOP            BGPCapabilityCode = 5
+'''
+new = '''	BGP_CAP_EXTENDED_NEXTHOP            BGPCapabilityCode = 5
+	BGP_CAP_EXTENDED_MESSAGE            BGPCapabilityCode = 6
+'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	BGP_CAP_EXTENDED_NEXTHOP:            "extended-nexthop",
+'''
+new = '''	BGP_CAP_EXTENDED_NEXTHOP:            "extended-nexthop",
+	BGP_CAP_EXTENDED_MESSAGE:            "extended-message",
+'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	case BGP_CAP_ENHANCED_ROUTE_REFRESH:
+		c = &CapEnhancedRouteRefresh{}'''
+new = '''	case BGP_CAP_ENHANCED_ROUTE_REFRESH:
+		c = &CapEnhancedRouteRefresh{}
+	case BGP_CAP_EXTENDED_MESSAGE:
+		c = &CapExtendedMessage{}'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''type MarshallingOption struct {
+	AddPath        map[RouteFamily]BGPAddPathMode
+	Attributes     map[BGPAttrType]bool
+	ImplicitPrefix AddrPrefixInterface
+}'''
+new = '''type MarshallingOption struct {
+	AddPath        map[RouteFamily]BGPAddPathMode
+	Attributes     map[BGPAttrType]bool
+	ImplicitPrefix AddrPrefixInterface
+	// ExtendedMessage allows messages up to BGP_MAX_EXTENDED_MESSAGE_LENGTH (RFC 8654).
+	ExtendedMessage bool
+}'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	if msg.Header.Len == 0 {
+		if BGP_HEADER_LENGTH+len(b) > BGP_MAX_MESSAGE_LENGTH {'''
+new = '''	if msg.Header.Len == 0 {
+		if BGP_HEADER_LENGTH+len(b) > MaxMessageLength(msg.Header.Type, options...) {'''
+
+[[feature]]
+file = "pkg/packet/bgp/validate.go"
+old = '''func ValidateBGPMessage(m *BGPMessage) error {
+	if m.Header.Len > BGP_MAX_MESSAGE_LENGTH {'''
+new = '''func ValidateBGPMessage(m *BGPMessage, options ...*MarshallingOption) error {
+	if int(m.Header.Len) > MaxMessageLength(m.Header.Type, options...) {'''
+
+[[feature]]
+file = "internal/pkg/table/message.go"
+old = '''		return (bgp.BGP_MAX_MESSAGE_LENGTH - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+new = '''		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''	caps = append(caps, bgp.NewCapFourOctetASNumber(pConf.Config.LocalAs))
+'''
+new = '''	caps = append(caps, bgp.NewCapFourOctetASNumber(pConf.Config.LocalAs))
+	caps = append(caps, bgp.NewCapExtendedMessage())
+'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''					fsm.capMap, fsm.rfMap = open2Cap(body, fsm.pConf)
+
+					if _, y := fsm.capMap[bgp.BGP_CAP_ADD_PATH]; y {
+						fsm.marshallingOptions = &bgp.MarshallingOption{
+							AddPath: fsm.rfMap,
+						}
+					} else {
+						fsm.marshallingOptions = nil
+					}'''
+new = '''					fsm.capMap, fsm.rfMap = open2Cap(body, fsm.pConf)
+					fsm.marshallingOptions = sessionMarshallingOptions(fsm.capMap, fsm.rfMap)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''		err = bgp.ValidateBGPMessage(m)'''
+new = '''		err = bgp.ValidateBGPMessage(m, options)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''func open2Cap(open *bgp.BGPOpen, n *oc.Neighbor) (map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, map[bgp.RouteFamily]bgp.BGPAddPathMode) {'''
+new = '''// sessionMarshallingOptions decides how messages are encoded on an established session, from the
+// capabilities the peer sent in its OPEN (capMap) and the negotiated ADD-PATH modes (rfMap).
+// We always advertise RFC 8654 extended messages, so they are in use whenever the peer
+// advertised them too. nil means plain RFC 4271 encoding.
+func sessionMarshallingOptions(capMap map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, rfMap map[bgp.RouteFamily]bgp.BGPAddPathMode) *bgp.MarshallingOption {
+	_, addPath := capMap[bgp.BGP_CAP_ADD_PATH]
+	_, extended := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]
+	if !addPath && !extended {
+		return nil
+	}
+	o := &bgp.MarshallingOption{ExtendedMessage: extended}
+	if addPath {
+		o.AddPath = rfMap
+	}
+	return o
+}
+
+func open2Cap(open *bgp.BGPOpen, n *oc.Neighbor) (map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, map[bgp.RouteFamily]bgp.BGPAddPathMode) {'''
+
+
+# ---------------------------------------------------------------- transplanted feature: per-neighbor egress tags
+[[feature]]
+file = "pkg/config/oc/bgp_configs.go"
+old = '''	Vrf string `mapstructure:"vrf" json:"vrf,omitempty"`
+	// original -> gobgp:send-software-version
+	// gobgp:send-software-version's original type is boolean.
+	SendSoftwareVersion bool `mapstructure:"send-software-version" json:"send-software-version,omitempty"`
+}'''
+new = '''	Vrf string `mapstructure:"vrf" json:"vrf,omitempty"`
+	// original -> gobgp:send-software-version
+	// gobgp:send-software-version's original type is boolean.
+	SendSoftwareVersion bool `mapstructure:"send-software-version" json:"send-software-version,omitempty"`
+	// Large communities (asn:data1:data2) added to every route advertised to this neighbor.
+	EgressLargeCommunities []string `mapstructure:"egress-large-communities" json:"egress-large-communities,omitempty"`
+}'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''				options := h.fsm.marshallingOptions
+				h.fsm.lock.RUnlock()
+				for _, msg := range table.CreateUpdateMsgFromPaths(m.Paths, options) {'''
+new = '''				options := h.fsm.marshallingOptions
+				tags := egressTags(h.fsm.pConf)
+				h.fsm.lock.RUnlock()
+				for _, msg := range egressUpdates(m.Paths, tags, options) {'''
+
+# ---------------------------------------------------------------- the bug: tags stamped after packing
+[[bug]]
+file = "pkg/server/egress_tag.go"
+old = '''// egressUpdates builds the UPDATEs sent to one neighbor: the advertised paths carry the neighbor's
+// egress tags, and the RIB paths are left untouched.
+func egressUpdates(paths []*table.Path, tags []*bgp.LargeCommunity, options *bgp.MarshallingOption) []*bgp.BGPMessage {
+	if len(tags) > 0 {
+		paths = withEgressTags(paths, tags)
+	}
+	return table.CreateUpdateMsgFromPaths(paths, options)
+}
+
+// withEgressTags returns tagged copies of the advertised paths.
+func withEgressTags(paths []*table.Path, tags []*bgp.LargeCommunity) []*table.Path {
+	out := make([]*table.Path, 0, len(paths))
+	for _, p := range paths {
+		if p.IsWithdraw || p.IsEOR() {
+			out = append(out, p)
+			continue
+		}
+		c := p.Clone(false)
+		c.SetLargeCommunities(append(p.GetLargeCommunities(), tags...), true)
+		out = append(out, c)
+	}
+	return out
+}'''
+new = '''// egressUpdates builds the UPDATEs sent to one neighbor and stamps the neighbor's egress tags on
+// the ones that advertise routes. Tagging the encoded messages leaves the RIB paths untouched.
+func egressUpdates(paths []*table.Path, tags []*bgp.LargeCommunity, options *bgp.MarshallingOption) []*bgp.BGPMessage {
+	msgs := table.CreateUpdateMsgFromPaths(paths, options)
+	if len(tags) == 0 {
+		return msgs
+	}
+	for _, m := range msgs {
+		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
+	}
+	return msgs
+}
+
+// stampEgressTags adds tags to an UPDATE that advertises routes. The attribute list is rebuilt rather
+// than edited in place, because packed UPDATEs share attribute values with the RIB paths.
+func stampEgressTags(u *bgp.BGPUpdate, tags []*bgp.LargeCommunity) {
+	advertises := len(u.NLRI) > 0
+	attrs := make([]bgp.PathAttributeInterface, 0, len(u.PathAttributes)+1)
+	var cs []*bgp.LargeCommunity
+	for _, a := range u.PathAttributes {
+		switch a := a.(type) {
+		case *bgp.PathAttributeLargeCommunities:
+			cs = append(cs, a.Values...)
+			continue
+		case *bgp.PathAttributeMpReachNLRI:
+			advertises = true
+		}
+		attrs = append(attrs, a)
+	}
+	if !advertises {
+		return
+	}
+	u.PathAttributes = append(attrs, bgp.NewPathAttributeLargeCommunities(append(cs, tags...)))
+}'''
+
+# ---------------------------------------------------------------- a different valid fix
+[[alternative]]
+name = "split-after-stamping"
+[[alternative.edit]]
+file = "pkg/server/egress_tag.go"
+old = '''	for _, m := range msgs {
+		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
+	}
+	return msgs
+}'''
+new = '''	limit := bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options)
+	out := make([]*bgp.BGPMessage, 0, len(msgs))
+	var fit func(u *bgp.BGPUpdate)
+	fit = func(u *bgp.BGPUpdate) {
+		b, err := u.Serialize(options)
+		if (err != nil || bgp.BGP_HEADER_LENGTH+len(b) > limit) && len(u.NLRI) > 1 {
+			h := len(u.NLRI) / 2
+			fit(&bgp.BGPUpdate{WithdrawnRoutes: u.WithdrawnRoutes, PathAttributes: u.PathAttributes, NLRI: u.NLRI[:h]})
+			fit(&bgp.BGPUpdate{PathAttributes: u.PathAttributes, NLRI: u.NLRI[h:]})
+			return
+		}
+		out = append(out, &bgp.BGPMessage{Header: bgp.BGPHeader{Type: bgp.BGP_MSG_UPDATE}, Body: u})
+	}
+	for _, m := range msgs {
+		u := m.Body.(*bgp.BGPUpdate)
+		stampEgressTags(u, tags)
+		fit(u)
+	}
+	return out
+}'''
+
+# ---------------------------------------------------------------- plausible wrong fixes
+[[control]]
+name = "never-extended"
+comment = "Blames extended messages and turns them off; legacy peers still get overflowing UPDATEs"
+expect = ["TestEgressUpdatesFitLegacyPeer"]
+[[control.edit]]
+file = "pkg/server/fsm.go"
+old = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]'''
+new = '''	extended := false'''
+
+[[control]]
+name = "fixed-margin"
+comment = "Reserves room for exactly one large community in the packer; more tags still overflow"
+expect = ["TestEgressUpdatesManyTags"]
+[[control.edit]]
+file = "internal/pkg/table/message.go"
+old = '''		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+new = '''		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + 15 + attrsLen)) / (5 + addpathNLRILen)'''
+
+[[control]]
+name = "tag-the-rib"
+comment = "Tags the paths before packing, but edits the shared RIB paths in place"
+expect = ["TestEgressTagsLeaveRIBUntouched"]
+[[control.edit]]
+file = "pkg/server/egress_tag.go"
+old = '''	msgs := table.CreateUpdateMsgFromPaths(paths, options)
+	if len(tags) == 0 {
+		return msgs
+	}
+	for _, m := range msgs {
+		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
+	}
+	return msgs'''
+new = '''	for _, p := range paths {
+		if len(tags) > 0 && !p.IsWithdraw && !p.IsEOR() {
+			p.SetLargeCommunities(tags, false)
+		}
+	}
+	return table.CreateUpdateMsgFromPaths(paths, options)'''
+
+[[control]]
+name = "skip-tag-when-full"
+comment = "Leaves the tag off any UPDATE it would push over the limit"
+expect = ["TestEgressUpdatesFitLegacyPeer"]
+[[control.edit]]
+file = "pkg/server/egress_tag.go"
+old = '''	for _, m := range msgs {
+		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
+	}
+	return msgs'''
+new = '''	limit := bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options)
+	for _, m := range msgs {
+		u := m.Body.(*bgp.BGPUpdate)
+		orig := u.PathAttributes
+		stampEgressTags(u, tags)
+		if b, err := u.Serialize(options); err != nil || bgp.BGP_HEADER_LENGTH+len(b) > limit {
+			u.PathAttributes = orig
+		}
+	}
+	return msgs'''

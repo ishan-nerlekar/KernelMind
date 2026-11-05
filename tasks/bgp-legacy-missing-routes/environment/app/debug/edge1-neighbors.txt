@@ -1,0 +1,45 @@
+$ gobgp neighbor 10.20.0.7
+BGP neighbor is 10.20.0.7, remote AS 64707
+  BGP version 4, remote router ID 10.20.0.7
+  BGP state = ESTABLISHED, up for 41d 03:12:44
+  BGP OutQ = 0, Flops = 0
+  Hold time is 90, keepalive interval is 30 seconds
+  Configured hold time is 90, keepalive interval is 30 seconds
+
+  Neighbor capabilities:
+    multiprotocol:
+        ipv4-unicast:	advertised and received
+        ipv6-unicast:	advertised and received
+    route-refresh:	advertised and received
+    extended-nexthop:	advertised and received
+        Local:  nlri: ipv4-unicast, nexthop: ipv6
+        Remote: nlri: ipv4-unicast, nexthop: ipv6
+    extended-message:	advertised
+    graceful-restart:	advertised
+    4-octet-as:	advertised and received
+    add-path:	advertised
+    enhanced-route-refresh:	advertised and received
+    fqdn:	advertised
+
+$ gobgp neighbor 10.20.0.11
+BGP neighbor is 10.20.0.11, remote AS 4200000211
+  BGP version 4, remote router ID 10.20.0.11
+  BGP state = ESTABLISHED, up for 41d 03:12:40
+  BGP OutQ = 0, Flops = 0
+  Hold time is 90, keepalive interval is 30 seconds
+  Configured hold time is 90, keepalive interval is 30 seconds
+
+  Neighbor capabilities:
+    multiprotocol:
+        ipv4-unicast:	advertised and received
+        ipv6-unicast:	advertised and received
+    route-refresh:	advertised and received
+    extended-nexthop:	advertised and received
+        Local:  nlri: ipv4-unicast, nexthop: ipv6
+        Remote: nlri: ipv4-unicast, nexthop: ipv6
+    extended-message:	advertised and received
+    graceful-restart:	advertised and received
+    4-octet-as:	advertised and received
+    add-path:	advertised
+    enhanced-route-refresh:	advertised and received
+    fqdn:	advertised

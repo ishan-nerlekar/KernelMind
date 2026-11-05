@@ -63,3 +63,18 @@ can "fix" them by recalling GoBGP rather than by debugging. Tagged `origin = "up
 `incident-transplant`): the scenario is unique, the buggy code isn't upstream so it can't be recalled,
 and the surrounding codebase is large. Evidence (logs, captures) ships with each task. Separately, a
 small private set built from the real proprietary code fragments, never published.
+
+## 2026-11-05 · first transplants
+
+| Task | GPT-6 Luna | Claude Haiku 5.5 |
+|---|---|---|
+| bgp-rtr-no-data | pass, 128 s, 11 cmds | pass, 89 s, 7 cmds |
+| bgp-extended-message | pass, 178 s, 18 cmds | pass, 242 s, 12 cmds |
+
+Both probes went log → `grep "4096|message length|extended"` → the new feature file → the wrong
+constant. **New feature code is a beacon:** the symptom's vocabulary greps straight into it, and once
+there the bug is in plain sight. The surrounding 95k lines never had to be read. Relabeled Tier 1.
+
+**Next experiment (decoy):** the code the symptom greps into is *correct*; the fault is an omission in
+shared plumbing that never mentions the symptom's vocabulary, so grep can't find it and the agent has to
+follow the data flow.

@@ -1,0 +1,43 @@
+[global.config]
+  as = 4200000100
+  router-id = "10.20.0.1"
+
+[[peer-groups]]
+  [peer-groups.config]
+    peer-group-name = "agg"
+    peer-as = 0
+  [[peer-groups.afi-safis]]
+    [peer-groups.afi-safis.config]
+      afi-safi-name = "ipv4-unicast"
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "10.20.0.7"
+    peer-as = 64707
+    peer-group = "agg"
+    description = "rtr7 agg-west (legacy)"
+    egress-large-communities = ["4200000100:900:7", "4200000100:901:1"]
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "10.20.0.8"
+    peer-as = 64708
+    peer-group = "agg"
+    description = "rtr8 agg-east (legacy)"
+    egress-large-communities = ["4200000100:900:8", "4200000100:901:1"]
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "10.20.0.11"
+    peer-as = 4200000211
+    peer-group = "agg"
+    description = "rtr11 agg-west"
+    egress-large-communities = ["4200000100:900:11", "4200000100:901:1"]
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "10.20.0.12"
+    peer-as = 4200000212
+    peer-group = "agg"
+    description = "rtr12 agg-east"
+    egress-large-communities = ["4200000100:900:12", "4200000100:901:1"]

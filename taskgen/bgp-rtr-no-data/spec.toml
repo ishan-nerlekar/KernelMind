@@ -1,5 +1,5 @@
 id = "bgp-rtr-no-data"
-tier = 2
+tier = 1
 root_cause = "failure-vs-absence"
 origin = "incident-transplant"
 language = "go"

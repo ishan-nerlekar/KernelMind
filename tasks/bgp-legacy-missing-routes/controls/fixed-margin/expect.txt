@@ -1,0 +1,2 @@
+# Reserves room for exactly one large community in the packer; more tags still overflow
+TestEgressUpdatesManyTags

@@ -1,5 +1,5 @@
 id = "bgp-extended-message"
-tier = 2
+tier = 1
 root_cause = "capability-gating"
 origin = "incident-transplant"
 language = "go"

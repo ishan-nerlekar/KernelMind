@@ -1,0 +1,30 @@
+--- a/pkg/server/egress_tag.go
++++ b/pkg/server/egress_tag.go
+@@ -43,10 +43,25 @@
+ 	if len(tags) == 0 {
+ 		return msgs
+ 	}
++	limit := bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options)
++	out := make([]*bgp.BGPMessage, 0, len(msgs))
++	var fit func(u *bgp.BGPUpdate)
++	fit = func(u *bgp.BGPUpdate) {
++		b, err := u.Serialize(options)
++		if (err != nil || bgp.BGP_HEADER_LENGTH+len(b) > limit) && len(u.NLRI) > 1 {
++			h := len(u.NLRI) / 2
++			fit(&bgp.BGPUpdate{WithdrawnRoutes: u.WithdrawnRoutes, PathAttributes: u.PathAttributes, NLRI: u.NLRI[:h]})
++			fit(&bgp.BGPUpdate{PathAttributes: u.PathAttributes, NLRI: u.NLRI[h:]})
++			return
++		}
++		out = append(out, &bgp.BGPMessage{Header: bgp.BGPHeader{Type: bgp.BGP_MSG_UPDATE}, Body: u})
++	}
+ 	for _, m := range msgs {
+-		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
++		u := m.Body.(*bgp.BGPUpdate)
++		stampEgressTags(u, tags)
++		fit(u)
+ 	}
+-	return msgs
++	return out
+ }
+ 
+ // stampEgressTags adds tags to an UPDATE that advertises routes. The attribute list is rebuilt rather

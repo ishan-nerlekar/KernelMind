@@ -1,0 +1,2 @@
+# Tags the paths before packing, but edits the shared RIB paths in place
+TestEgressTagsLeaveRIBUntouched

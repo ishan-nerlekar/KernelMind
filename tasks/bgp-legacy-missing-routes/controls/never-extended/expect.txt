@@ -1,0 +1,2 @@
+# Blames extended messages and turns them off; legacy peers still get overflowing UPDATEs
+TestEgressUpdatesFitLegacyPeer

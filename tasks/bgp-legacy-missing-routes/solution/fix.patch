@@ -1,0 +1,55 @@
+--- a/pkg/server/egress_tag.go
++++ b/pkg/server/egress_tag.go
+@@ -36,37 +36,26 @@
+ 	return tags
+ }
+ 
+-// egressUpdates builds the UPDATEs sent to one neighbor and stamps the neighbor's egress tags on
+-// the ones that advertise routes. Tagging the encoded messages leaves the RIB paths untouched.
++// egressUpdates builds the UPDATEs sent to one neighbor: the advertised paths carry the neighbor's
++// egress tags, and the RIB paths are left untouched.
+ func egressUpdates(paths []*table.Path, tags []*bgp.LargeCommunity, options *bgp.MarshallingOption) []*bgp.BGPMessage {
+-	msgs := table.CreateUpdateMsgFromPaths(paths, options)
+-	if len(tags) == 0 {
+-		return msgs
++	if len(tags) > 0 {
++		paths = withEgressTags(paths, tags)
+ 	}
+-	for _, m := range msgs {
+-		stampEgressTags(m.Body.(*bgp.BGPUpdate), tags)
+-	}
+-	return msgs
++	return table.CreateUpdateMsgFromPaths(paths, options)
+ }
+ 
+-// stampEgressTags adds tags to an UPDATE that advertises routes. The attribute list is rebuilt rather
+-// than edited in place, because packed UPDATEs share attribute values with the RIB paths.
+-func stampEgressTags(u *bgp.BGPUpdate, tags []*bgp.LargeCommunity) {
+-	advertises := len(u.NLRI) > 0
+-	attrs := make([]bgp.PathAttributeInterface, 0, len(u.PathAttributes)+1)
+-	var cs []*bgp.LargeCommunity
+-	for _, a := range u.PathAttributes {
+-		switch a := a.(type) {
+-		case *bgp.PathAttributeLargeCommunities:
+-			cs = append(cs, a.Values...)
++// withEgressTags returns tagged copies of the advertised paths.
++func withEgressTags(paths []*table.Path, tags []*bgp.LargeCommunity) []*table.Path {
++	out := make([]*table.Path, 0, len(paths))
++	for _, p := range paths {
++		if p.IsWithdraw || p.IsEOR() {
++			out = append(out, p)
+ 			continue
+-		case *bgp.PathAttributeMpReachNLRI:
+-			advertises = true
+ 		}
+-		attrs = append(attrs, a)
++		c := p.Clone(false)
++		c.SetLargeCommunities(append(p.GetLargeCommunities(), tags...), true)
++		out = append(out, c)
+ 	}
+-	if !advertises {
+-		return
+-	}
+-	u.PathAttributes = append(attrs, bgp.NewPathAttributeLargeCommunities(append(cs, tags...)))
++	return out
+ }

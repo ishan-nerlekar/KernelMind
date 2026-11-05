@@ -1,0 +1,11 @@
+--- a/internal/pkg/table/message.go
++++ b/internal/pkg/table/message.go
+@@ -419,7 +419,7 @@
+ 	// TotalPathAttributeLen + attributes + maxlen of NLRI).
+ 	// the max size of NLRI is 5bytes (plus 4bytes with addpath enabled)
+ 	maxNLRIs := func(attrsLen int) int {
+-		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)
++		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + 15 + attrsLen)) / (5 + addpathNLRILen)
+ 	}
+ 
+ 	loop := func(attrsLen int, paths []*Path, cb func([]*bgp.IPAddrPrefix)) {
