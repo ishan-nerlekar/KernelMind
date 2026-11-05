@@ -12,7 +12,11 @@ from ..env import Environment
 from ..task import Task
 
 
-def get_agent(name: str, model: str | None):
+class BudgetExceeded(Exception):
+    """The run's total spending cap was reached. Not a model failure: the attempt is not scored."""
+
+
+def get_agent(name: str, model: str | None, cost_per_attempt: float = 5.0):
     if name == "oracle":
         from .oracle import OracleAgent
         return OracleAgent()
@@ -20,7 +24,7 @@ def get_agent(name: str, model: str | None):
         if not model:
             raise SystemExit("--model is required for the mini agent (a LiteLLM model name)")
         from .mini import MiniAgent
-        return MiniAgent(model)
+        return MiniAgent(model, cost_limit=cost_per_attempt)
     raise SystemExit(f"unknown agent '{name}' (choose oracle or mini)")
 
 

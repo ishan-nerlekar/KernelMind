@@ -12,7 +12,7 @@ from minisweagent.models import get_model
 
 from ..env import Environment
 from ..task import Task
-from . import Agent
+from . import Agent, BudgetExceeded
 
 SUBMIT = "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
 
@@ -44,10 +44,16 @@ class MiniAgent(Agent):
     name = "mini"
 
     def __init__(self, model: str, step_limit: int = 150, cost_limit: float = 5.0):
+        import litellm
         self.model = model
         self.step_limit, self.cost_limit = step_limit, cost_limit
         config_path = Path(minisweagent.__file__).parent / "config" / "mini.yaml"
         self.config = yaml.safe_load(config_path.read_text())
+        # Local (Ollama) or very new models have no price in LiteLLM's table. Record $0 instead of
+        # crashing; the per-attempt step limit still bounds the run.
+        self.priced = model in litellm.model_cost or model.split("/", 1)[-1] in litellm.model_cost
+        if not self.priced:
+            self.config.setdefault("model", {})["cost_tracking"] = "ignore_errors"
 
     def run(self, env: Environment, task: Task, out_dir: Path) -> dict:
         limits = task.limits
@@ -63,5 +69,8 @@ class MiniAgent(Agent):
             info = agent.run(prompt)
             status = info.get("exit_status", "")
         except Exception as e:  # model/API errors end the attempt; the verifier still runs
+            if "Global cost/call limit exceeded" in str(e):
+                raise BudgetExceeded(str(e)) from e
             status = f"AgentError: {type(e).__name__}: {e}"
-        return {"exit_status": status, "steps": agent.n_calls, "cost_usd": round(agent.cost, 4)}
+        return {"exit_status": status, "steps": agent.n_calls, "cost_usd": round(agent.cost, 4),
+                "cost_known": self.priced}

@@ -2,7 +2,7 @@
 
   kernelmind list
   kernelmind validate [TASK ...] [--backend docker|local]
-  kernelmind run --agent mini --model anthropic/claude-sonnet-4-5 [--tasks ...] [--attempts 3]
+  kernelmind run --agent mini --model claude-opus-5-5 --max-cost 20 [--tasks ...] [--attempts 3]
   kernelmind report results/<run-id> [...]
 """
 from __future__ import annotations
@@ -48,7 +48,10 @@ def cmd_validate(args) -> int:
 def cmd_run(args) -> int:
     from .run import run
     tasks = load_tasks(args.tasks or None, args.tier)
-    run_dir = run(tasks, args.agent, args.model, args.attempts, args.backend, args.jobs, args.run_id)
+    if args.agent == "mini" and args.max_cost <= 0:
+        raise SystemExit("--max-cost is required for model runs (total USD cap for this run)")
+    run_dir = run(tasks, args.agent, args.model, args.attempts, args.backend, args.jobs, args.run_id,
+                  args.max_cost, args.cost_per_attempt)
     from .report import load, markdown, summarize
     records = load([run_dir])
     print("\n" + markdown(summarize(records)))
@@ -83,13 +86,15 @@ def main(argv=None) -> int:
 
     s = sub.add_parser("run", help="run an agent on tasks")
     s.add_argument("--agent", default="mini", choices=["mini", "oracle"])
-    s.add_argument("--model", help="LiteLLM model name, e.g. anthropic/claude-sonnet-4-5")
+    s.add_argument("--model", help="LiteLLM model name: claude-opus-5-5, gpt-6.1-sol, ollama_chat/gpt-oss:20b")
     s.add_argument("--tasks", nargs="*")
     s.add_argument("--tier", type=int)
     s.add_argument("--attempts", type=int, default=1)
     s.add_argument("--jobs", type=int, default=4)
     s.add_argument("--backend", choices=["docker", "local"], default="docker")
-    s.add_argument("--run-id")
+    s.add_argument("--run-id", help="reuse an id to resume an interrupted run")
+    s.add_argument("--max-cost", type=float, default=0.0, help="hard total USD cap for this run (required for models)")
+    s.add_argument("--cost-per-attempt", type=float, default=5.0, help="USD cap per attempt (default 5)")
     s.set_defaults(fn=cmd_run)
 
     s = sub.add_parser("report", help="leaderboard from one or more run directories")
