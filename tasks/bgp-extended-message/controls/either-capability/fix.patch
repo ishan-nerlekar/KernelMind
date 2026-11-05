@@ -1,0 +1,13 @@
+--- a/pkg/server/fsm.go
++++ b/pkg/server/fsm.go
+@@ -1201,7 +1201,9 @@
+ // advertised them too. nil means plain RFC 4271 encoding.
+ func sessionMarshallingOptions(capMap map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, rfMap map[bgp.RouteFamily]bgp.BGPAddPathMode) *bgp.MarshallingOption {
+ 	_, addPath := capMap[bgp.BGP_CAP_ADD_PATH]
+-	_, extended := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]
++	_, extNH := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]
++	_, extMsg := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]
++	extended := extNH || extMsg
+ 	if !addPath && !extended {
+ 		return nil
+ 	}

@@ -1,0 +1,2 @@
+# Caps the packer at 4096 bytes regardless of negotiation, breaking large messages to capable peers
+TestPackerUsesExtendedLength

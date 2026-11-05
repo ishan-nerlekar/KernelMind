@@ -1,0 +1,14 @@
+Nov 04 13:55:02 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Up
+Nov 04 14:00:41 rtr7 bgpd[812]: %BGP-3-NOTIFICATION: sent to neighbor 10.20.0.1 1/2 (message header error / bad message length) 2 bytes 10553
+Nov 04 14:00:41 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Down BGP Notification sent
+Nov 04 14:01:13 rtr7 bgpd[812]: %BGP-6-OPEN: received from 10.20.0.1: version 4, as 23456, holdtime 90, id 10.20.0.1, capabilities [1 1 2 5 6 64 65 69 70 73]
+Nov 04 14:01:13 rtr7 bgpd[812]: %BGP-6-OPEN: sent to 10.20.0.1: version 4, as 64707, holdtime 180, id 10.20.0.7, capabilities [1 1 2 5 65 70]
+Nov 04 14:01:13 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Up
+Nov 04 14:01:14 rtr7 bgpd[812]: %BGP-3-NOTIFICATION: sent to neighbor 10.20.0.1 1/2 (message header error / bad message length) 2 bytes 10553
+Nov 04 14:01:14 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Down BGP Notification sent
+Nov 04 14:01:20 rtr7 bgpd[812]: %SYS-4-CPUHOG: task bgp_io spent 412 ms in one run
+Nov 04 14:01:46 rtr7 bgpd[812]: %BGP-6-OPEN: received from 10.20.0.1: version 4, as 23456, holdtime 90, id 10.20.0.1, capabilities [1 1 2 5 6 64 65 69 70 73]
+Nov 04 14:01:46 rtr7 bgpd[812]: %BGP-6-OPEN: sent to 10.20.0.1: version 4, as 64707, holdtime 180, id 10.20.0.7, capabilities [1 1 2 5 65 70]
+Nov 04 14:01:46 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Up
+Nov 04 14:01:47 rtr7 bgpd[812]: %BGP-3-NOTIFICATION: sent to neighbor 10.20.0.1 1/2 (message header error / bad message length) 2 bytes 10553
+Nov 04 14:01:47 rtr7 bgpd[812]: %BGP-5-ADJCHANGE: neighbor 10.20.0.1 Down BGP Notification sent

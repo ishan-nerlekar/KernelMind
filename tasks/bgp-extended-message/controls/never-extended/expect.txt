@@ -1,0 +1,2 @@
+# Stops the resets by never using extended messages, even with peers that support them
+TestSessionOptionsExtendedMessage

@@ -1,0 +1,171 @@
+id = "bgp-extended-message"
+tier = 2
+root_cause = "capability-gating"
+origin = "incident-transplant"
+language = "go"
+substrate = "gobgp"
+inspired_by = "Capability-aware radio mode incident, transplanted into new BGP Extended Message (RFC 8654) code"
+summary = "Extended Message use is gated on the wrong capability code, so peers without RFC 8654 receive oversized UPDATEs."
+starter_fails_on = ["TestSessionOptionsExtendedNexthopOnly"]
+extra_runs = ["-run '^TestSessionOptions' ./pkg/server/"]
+
+[limits]
+agent_timeout_sec = 2400
+
+# ---------------------------------------------------------------- transplanted feature: RFC 8654
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	BGP_CAP_EXTENDED_NEXTHOP            BGPCapabilityCode = 5
+'''
+new = '''	BGP_CAP_EXTENDED_NEXTHOP            BGPCapabilityCode = 5
+	BGP_CAP_EXTENDED_MESSAGE            BGPCapabilityCode = 6
+'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	BGP_CAP_EXTENDED_NEXTHOP:            "extended-nexthop",
+'''
+new = '''	BGP_CAP_EXTENDED_NEXTHOP:            "extended-nexthop",
+	BGP_CAP_EXTENDED_MESSAGE:            "extended-message",
+'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	case BGP_CAP_ENHANCED_ROUTE_REFRESH:
+		c = &CapEnhancedRouteRefresh{}'''
+new = '''	case BGP_CAP_ENHANCED_ROUTE_REFRESH:
+		c = &CapEnhancedRouteRefresh{}
+	case BGP_CAP_EXTENDED_MESSAGE:
+		c = &CapExtendedMessage{}'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''type MarshallingOption struct {
+	AddPath        map[RouteFamily]BGPAddPathMode
+	Attributes     map[BGPAttrType]bool
+	ImplicitPrefix AddrPrefixInterface
+}'''
+new = '''type MarshallingOption struct {
+	AddPath        map[RouteFamily]BGPAddPathMode
+	Attributes     map[BGPAttrType]bool
+	ImplicitPrefix AddrPrefixInterface
+	// ExtendedMessage allows messages up to BGP_MAX_EXTENDED_MESSAGE_LENGTH (RFC 8654).
+	ExtendedMessage bool
+}'''
+
+[[feature]]
+file = "pkg/packet/bgp/bgp.go"
+old = '''	if msg.Header.Len == 0 {
+		if BGP_HEADER_LENGTH+len(b) > BGP_MAX_MESSAGE_LENGTH {'''
+new = '''	if msg.Header.Len == 0 {
+		if BGP_HEADER_LENGTH+len(b) > MaxMessageLength(msg.Header.Type, options...) {'''
+
+[[feature]]
+file = "pkg/packet/bgp/validate.go"
+old = '''func ValidateBGPMessage(m *BGPMessage) error {
+	if m.Header.Len > BGP_MAX_MESSAGE_LENGTH {'''
+new = '''func ValidateBGPMessage(m *BGPMessage, options ...*MarshallingOption) error {
+	if int(m.Header.Len) > MaxMessageLength(m.Header.Type, options...) {'''
+
+[[feature]]
+file = "internal/pkg/table/message.go"
+old = '''		return (bgp.BGP_MAX_MESSAGE_LENGTH - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+new = '''		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''	caps = append(caps, bgp.NewCapFourOctetASNumber(pConf.Config.LocalAs))
+'''
+new = '''	caps = append(caps, bgp.NewCapFourOctetASNumber(pConf.Config.LocalAs))
+	caps = append(caps, bgp.NewCapExtendedMessage())
+'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''					fsm.capMap, fsm.rfMap = open2Cap(body, fsm.pConf)
+
+					if _, y := fsm.capMap[bgp.BGP_CAP_ADD_PATH]; y {
+						fsm.marshallingOptions = &bgp.MarshallingOption{
+							AddPath: fsm.rfMap,
+						}
+					} else {
+						fsm.marshallingOptions = nil
+					}'''
+new = '''					fsm.capMap, fsm.rfMap = open2Cap(body, fsm.pConf)
+					fsm.marshallingOptions = sessionMarshallingOptions(fsm.capMap, fsm.rfMap)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''		err = bgp.ValidateBGPMessage(m)'''
+new = '''		err = bgp.ValidateBGPMessage(m, options)'''
+
+[[feature]]
+file = "pkg/server/fsm.go"
+old = '''func open2Cap(open *bgp.BGPOpen, n *oc.Neighbor) (map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, map[bgp.RouteFamily]bgp.BGPAddPathMode) {'''
+new = '''// sessionMarshallingOptions decides how messages are encoded on an established session, from the
+// capabilities the peer sent in its OPEN (capMap) and the negotiated ADD-PATH modes (rfMap).
+// We always advertise RFC 8654 extended messages, so they are in use whenever the peer
+// advertised them too. nil means plain RFC 4271 encoding.
+func sessionMarshallingOptions(capMap map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, rfMap map[bgp.RouteFamily]bgp.BGPAddPathMode) *bgp.MarshallingOption {
+	_, addPath := capMap[bgp.BGP_CAP_ADD_PATH]
+	_, extended := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]
+	if !addPath && !extended {
+		return nil
+	}
+	o := &bgp.MarshallingOption{ExtendedMessage: extended}
+	if addPath {
+		o.AddPath = rfMap
+	}
+	return o
+}
+
+func open2Cap(open *bgp.BGPOpen, n *oc.Neighbor) (map[bgp.BGPCapabilityCode][]bgp.ParameterCapabilityInterface, map[bgp.RouteFamily]bgp.BGPAddPathMode) {'''
+
+# ---------------------------------------------------------------- the bug: wrong capability constant
+[[bug]]
+file = "pkg/server/fsm.go"
+old = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]'''
+new = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]'''
+
+# ---------------------------------------------------------------- a different valid fix
+[[alternative]]
+name = "scan-peer-capabilities"
+[[alternative.edit]]
+file = "pkg/server/fsm.go"
+old = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]'''
+new = '''	extended := false
+	for code := range capMap {
+		if code == bgp.BGP_CAP_EXTENDED_MESSAGE {
+			extended = true
+		}
+	}'''
+
+# ---------------------------------------------------------------- plausible wrong fixes
+[[control]]
+name = "never-extended"
+comment = "Stops the resets by never using extended messages, even with peers that support them"
+expect = ["TestSessionOptionsExtendedMessage"]
+[[control.edit]]
+file = "pkg/server/fsm.go"
+old = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]'''
+new = '''	extended := false'''
+
+[[control]]
+name = "either-capability"
+comment = "Accepts either capability code, so extended-nexthop-only peers still get oversized messages"
+expect = ["TestSessionOptionsExtendedNexthopOnly"]
+[[control.edit]]
+file = "pkg/server/fsm.go"
+old = '''	_, extended := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]'''
+new = '''	_, extNH := capMap[bgp.BGP_CAP_EXTENDED_NEXTHOP]
+	_, extMsg := capMap[bgp.BGP_CAP_EXTENDED_MESSAGE]
+	extended := extNH || extMsg'''
+
+[[control]]
+name = "clamp-packer"
+comment = "Caps the packer at 4096 bytes regardless of negotiation, breaking large messages to capable peers"
+expect = ["TestPackerUsesExtendedLength"]
+[[control.edit]]
+file = "internal/pkg/table/message.go"
+old = '''		return (bgp.MaxMessageLength(bgp.BGP_MSG_UPDATE, options...) - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
+new = '''		return (bgp.BGP_MAX_MESSAGE_LENGTH - (19 + 2 + 2 + attrsLen)) / (5 + addpathNLRILen)'''
