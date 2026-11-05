@@ -25,19 +25,23 @@ import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-SUBSTRATE = REPO / "substrate" / "apnet"
+SUBSTRATES = {"apnet": REPO / "substrate" / "apnet", "gobgp": REPO / "substrate" / "gobgp"}
+# Packages graded for each substrate. GoBGP's pkg/server, pkg/config and pkg/metrics tests open real
+# listeners on [::] and need IPv6, so they are left out of grading for portability.
+DEFAULT_PACKAGES = {"apnet": "./...",
+                    "gobgp": "./internal/pkg/table/... ./pkg/packet/... ./pkg/apiutil/... ./pkg/zebra/... ./cmd/gobgp/... ./pkg/config/oc/..."}
 SPECS = REPO / "taskgen"
 TASKS = REPO / "tasks"
-META_KEYS = ("id", "tier", "root_cause", "origin", "language", "summary", "inspired_by",
+META_KEYS = ("id", "tier", "root_cause", "origin", "language", "substrate", "summary", "inspired_by",
              "starter_fails_on", "limits", "docker")
 
 DOCKERFILE = """ARG BASE_IMAGE=golang:1.24-bookworm
 FROM ${{BASE_IMAGE}}
 ENV GOTOOLCHAIN=local GOFLAGS=-mod=mod CGO_ENABLED=1
 WORKDIR /app
-COPY app/ /app/
+{download}COPY app/ /app/
 # Warm the build cache so neither the agent nor the verifier pays for a cold compile.
-RUN go build ./... && go test -count=1 {flags} -run '^$' ./... > /dev/null
+RUN go build ./... && go test -count=1 {flags} -run '^$' {packages} > /dev/null
 # A single baseline commit lets the harness record the agent's diff. No project history is included.
 RUN git init -q && git add -A && git -c user.email=kernelmind@local -c user.name=kernelmind commit -qm baseline
 """
@@ -52,7 +56,7 @@ export GOTOOLCHAIN=local GOFLAGS=-mod=mod
 find . -name '*_test.go' -not -path './.git/*' -delete
 cp -r "$T/visible/." "$APP/"
 cp -r "$T/hidden/." "$APP/"
-timeout 600 go test -count=1 -timeout 180s {flags} -v ./... > "$LOGS/go-test.log" 2>&1
+timeout 600 go test -count=1 -timeout 180s {flags} -v {packages} > "$LOGS/go-test.log" 2>&1
 status=$?
 failed=$(grep -oE '^[[:space:]]*--- FAIL: [A-Za-z0-9_]+' "$LOGS/go-test.log" | awk '{{print $3}}' | sort -u | tr '\n' ' ')
 grep -qE '\[(build|setup) failed\]' "$LOGS/go-test.log" && failed="$failed build_failed"
@@ -94,9 +98,9 @@ def unified_patch(a_root: Path, b_root: Path, files: list[str]) -> str:
     return "".join(out)
 
 
-def go_test(root: Path, flags: str, what: str) -> None:
+def go_test(root: Path, flags: str, what: str, packages: str = "./...") -> None:
     env = {**os.environ, "GOFLAGS": "-mod=mod", "GOTOOLCHAIN": "local"}
-    r = subprocess.run(f"go vet ./... && go test -count=1 {flags} ./...", shell=True, cwd=root,
+    r = subprocess.run(f"go build ./... && go test -count=1 {flags} {packages}", shell=True, cwd=root,
                        capture_output=True, text=True, env=env)
     if r.returncode:
         raise SystemExit(f"{what} failed:\n{(r.stdout + r.stderr)[-3000:]}")
@@ -124,17 +128,27 @@ def build(task_id: str) -> None:
     if spec["id"] != task_id:
         raise SystemExit(f"{task_id}: spec id is {spec['id']}")
     flags = spec.get("go_test_flags", "")
+    substrate = spec.get("substrate", "apnet")
+    packages = spec.get("test_packages", DEFAULT_PACKAGES[substrate])
+    src = SUBSTRATES[substrate]
     with tempfile.TemporaryDirectory() as tmp:
         clean, starter = Path(tmp, "clean"), Path(tmp, "starter")
-        shutil.copytree(SUBSTRATE, clean)
-        shutil.copytree(SUBSTRATE, starter)
+        shutil.copytree(src, clean)
+        shutil.copytree(src, starter)
         apply_edits(starter, spec["bug"], f"{task_id} bug")
-        go_test(starter, flags, f"{task_id}: visible tests on the starter (the bug must not be visible)")
+        # Existing tests that would reveal the bug are removed from the agent's copy; the originals
+        # still run at grading time (tests/visible is copied from the clean tree).
+        for h in spec.get("hide", []):
+            r = subprocess.run(["go", "run", ".", str(starter / h["file"]), *h["tests"]], cwd=REPO / "tools" / "stripfuncs",
+                               capture_output=True, text=True, env={**os.environ, "GOFLAGS": ""})
+            if r.returncode:
+                raise SystemExit(f"{task_id}: hiding tests in {h['file']}: {r.stderr}")
+        go_test(starter, flags, f"{task_id}: visible tests on the starter (the bug must not be visible)", packages)
         hidden = spec_dir / "hidden"
         probe = Path(tmp, "probe")
         shutil.copytree(starter, probe)
         shutil.copytree(hidden, probe, dirs_exist_ok=True)
-        r = subprocess.run("go vet ./...", shell=True, cwd=probe, capture_output=True, text=True)
+        r = subprocess.run(f"go test -count=1 -run '^$' {packages}", shell=True, cwd=probe, capture_output=True, text=True)
         if r.returncode:
             raise SystemExit(f"{task_id}: hidden tests do not compile against the starter:\n{r.stderr[-2000:]}")
 
@@ -143,7 +157,8 @@ def build(task_id: str) -> None:
             shutil.rmtree(out)
         (out / "environment").mkdir(parents=True)
         shutil.copytree(starter, out / "environment" / "app")
-        (out / "environment" / "Dockerfile").write_text(DOCKERFILE.format(flags=flags))
+        download = "COPY app/go.mod app/go.sum /app/\nRUN go mod download\n" if (src / "go.sum").exists() else ""
+        (out / "environment" / "Dockerfile").write_text(DOCKERFILE.format(flags=flags, packages=packages, download=download))
         meta = {k: spec[k] for k in META_KEYS if k in spec}
         (out / "task.toml").write_text(to_toml(meta))
         shutil.copy2(spec_dir / "instruction.md", out / "instruction.md")
@@ -151,7 +166,7 @@ def build(task_id: str) -> None:
         tests = out / "tests"
         copy_tests(clean, tests / "visible")
         shutil.copytree(hidden, tests / "hidden")
-        (tests / "test.sh").write_text(TEST_SH.format(flags=flags))
+        (tests / "test.sh").write_text(TEST_SH.format(flags=flags, packages=packages))
         os.chmod(tests / "test.sh", 0o755)
 
         bug_files = [e["file"] for e in spec["bug"]]
@@ -190,7 +205,6 @@ def to_toml(meta: dict) -> str:
 
 
 def main(argv: list[str]) -> int:
-    go_test(SUBSTRATE, "", "substrate tests on the clean code")
     ids = argv or sorted(p.name for p in SPECS.iterdir() if (p / "spec.toml").exists())
     for i in ids:
         build(i)

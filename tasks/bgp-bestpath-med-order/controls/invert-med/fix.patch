@@ -1,0 +1,11 @@
+--- a/internal/pkg/table/destination.go
++++ b/internal/pkg/table/destination.go
+@@ -754,7 +754,7 @@
+ 		med2 := getMed(path2)
+ 		if med1 == med2 {
+ 			return nil
+-		} else if med1 < med2 {
++		} else if med1 > med2 {
+ 			return path1
+ 		}
+ 		return path2

@@ -1,0 +1,2 @@
+# Makes withdrawals remove every path from the peer, but re-advertisements still pile up
+TestReadvertiseWithNewNexthopReplacesPath

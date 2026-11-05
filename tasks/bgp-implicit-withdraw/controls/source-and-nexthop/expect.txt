@@ -1,0 +1,2 @@
+# Requires both the same peer and the same next hop, so a new next hop still leaves the old path
+TestReadvertiseWithNewNexthopReplacesPath

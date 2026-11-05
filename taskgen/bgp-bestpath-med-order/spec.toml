@@ -1,0 +1,100 @@
+id = "bgp-bestpath-med-order"
+tier = 2
+root_cause = "rule-precedence"
+origin = "incident-pattern"
+language = "go"
+substrate = "gobgp"
+inspired_by = "Eligibility and precedence rule incidents (pattern only; original code)"
+summary = "Best-path selection compares MED before AS-path length, so a longer path with a lower MED wins."
+starter_fails_on = ["TestShorterASPathBeatsLowerMED"]
+
+[limits]
+agent_timeout_sec = 2400
+
+[[bug]]
+file = "internal/pkg/table/destination.go"
+old = '''		if better == nil {
+			better = compareByASPath(path1, path2)
+			reason = BPR_ASPATH
+		}
+		if better == nil {
+			better = compareByOrigin(path1, path2)
+			reason = BPR_ORIGIN
+		}
+		if better == nil {
+			better = compareByMED(path1, path2)
+			reason = BPR_MED
+		}'''
+new = '''		if better == nil {
+			better = compareByMED(path1, path2)
+			reason = BPR_MED
+		}
+		if better == nil {
+			better = compareByASPath(path1, path2)
+			reason = BPR_ASPATH
+		}
+		if better == nil {
+			better = compareByOrigin(path1, path2)
+			reason = BPR_ORIGIN
+		}'''
+
+[[control]]
+name = "origin-before-aspath"
+comment = "Moves MED back but puts origin ahead of AS-path length"
+expect = ["TestShorterASPathBeatsBetterOrigin"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''		if better == nil {
+			better = compareByMED(path1, path2)
+			reason = BPR_MED
+		}
+		if better == nil {
+			better = compareByASPath(path1, path2)
+			reason = BPR_ASPATH
+		}
+		if better == nil {
+			better = compareByOrigin(path1, path2)
+			reason = BPR_ORIGIN
+		}'''
+new = '''		if better == nil {
+			better = compareByOrigin(path1, path2)
+			reason = BPR_ORIGIN
+		}
+		if better == nil {
+			better = compareByASPath(path1, path2)
+			reason = BPR_ASPATH
+		}
+		if better == nil {
+			better = compareByMED(path1, path2)
+			reason = BPR_MED
+		}'''
+
+[[control]]
+name = "drop-med"
+comment = "Removes the MED step instead of moving it"
+expect = ["TestMEDDecidesWhenASPathAndOriginTie"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''		if better == nil {
+			better = compareByMED(path1, path2)
+			reason = BPR_MED
+		}
+		if better == nil {
+			better = compareByASPath(path1, path2)'''
+new = '''		if better == nil {
+			better = compareByASPath(path1, path2)'''
+
+[[control]]
+name = "invert-med"
+comment = "Keeps the order and flips MED preference so the reported case happens to pick the short path"
+expect = ["TestMEDDecidesWhenASPathAndOriginTie"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''		} else if med1 < med2 {
+			return path1
+		}
+		return path2'''
+new = '''		} else if med1 > med2 {
+			return path1
+		}
+		return path2'''

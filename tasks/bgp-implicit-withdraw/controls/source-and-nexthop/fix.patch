@@ -1,0 +1,11 @@
+--- a/internal/pkg/table/destination.go
++++ b/internal/pkg/table/destination.go
+@@ -326,7 +326,7 @@
+ 		// path ID) and not check path version num. as newPaths are
+ 		// implicit withdrawal of old paths and when doing RouteRefresh
+ 		// (not EnhancedRouteRefresh) we get same paths again.
+-		if newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {
++		if newPath.GetSource().Equal(path.GetSource()) && newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {
+ 			if logger.GetLevel() >= log.DebugLevel {
+ 				logger.Debug("Implicit withdrawal of old path, since we have learned new path from the same peer",
+ 					log.Fields{

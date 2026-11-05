@@ -1,0 +1,26 @@
+--- a/internal/pkg/table/destination.go
++++ b/internal/pkg/table/destination.go
+@@ -270,6 +270,23 @@
+ // we can receive withdraws for such paths and withdrawals may not be
+ // stopped by the same policies.
+ func (dest *Destination) explicitWithdraw(logger log.Logger, withdraw *Path) *Path {
++	kept := dest.knownPathList[:0]
++	var removed *Path
++	for _, p := range dest.knownPathList {
++		if p.GetSource().Equal(withdraw.GetSource()) && p.GetNlri().PathIdentifier() == withdraw.GetNlri().PathIdentifier() {
++			removed = p
++			continue
++		}
++		kept = append(kept, p)
++	}
++	if removed != nil {
++		dest.knownPathList = kept
++		return removed
++	}
++	return dest.explicitWithdrawOne(logger, withdraw)
++}
++
++func (dest *Destination) explicitWithdrawOne(logger log.Logger, withdraw *Path) *Path {
+ 	if logger.GetLevel() >= log.DebugLevel {
+ 		logger.Debug("Removing withdrawals",
+ 			log.Fields{

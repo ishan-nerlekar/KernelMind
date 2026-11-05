@@ -1,0 +1,2 @@
+# Keeps the order and flips MED preference so the reported case happens to pick the short path
+TestMEDDecidesWhenASPathAndOriginTie

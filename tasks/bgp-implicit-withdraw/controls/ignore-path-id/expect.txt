@@ -1,0 +1,2 @@
+# Matches on the peer alone, which collapses ADD-PATH routes that differ only in path ID
+TestAddPathKeepsDistinctPathIDs

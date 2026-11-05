@@ -1,0 +1,2 @@
+# Moves MED back but puts origin ahead of AS-path length
+TestShorterASPathBeatsBetterOrigin

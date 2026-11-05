@@ -1,0 +1,74 @@
+id = "bgp-implicit-withdraw"
+tier = 2
+root_cause = "stale-state-on-update"
+origin = "incident-pattern"
+language = "go"
+substrate = "gobgp"
+inspired_by = "DHCP interface-metadata rewrite incident (pattern only; original code)"
+summary = "A re-advertisement with a new next hop doesn't replace the neighbor's old path, so stale paths stay in the RIB."
+starter_fails_on = ["TestReadvertiseWithNewNexthopReplacesPath", "TestTwoPeersSameNexthopBothKept"]
+
+[limits]
+agent_timeout_sec = 2400
+
+[[bug]]
+file = "internal/pkg/table/destination.go"
+old = '''		// Here we just check if source is same and not check if path
+		// version num. as newPaths are implicit withdrawal of old
+		// paths and when doing RouteRefresh (not EnhancedRouteRefresh)
+		// we get same paths again.
+		if newPath.GetSource().Equal(path.GetSource()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {'''
+new = '''		// Here we just check if it is the same route (same next hop and
+		// path ID) and not check path version num. as newPaths are
+		// implicit withdrawal of old paths and when doing RouteRefresh
+		// (not EnhancedRouteRefresh) we get same paths again.
+		if newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {'''
+
+[[control]]
+name = "source-and-nexthop"
+comment = "Requires both the same peer and the same next hop, so a new next hop still leaves the old path"
+expect = ["TestReadvertiseWithNewNexthopReplacesPath"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''		if newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {'''
+new = '''		if newPath.GetSource().Equal(path.GetSource()) && newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {'''
+
+[[control]]
+name = "ignore-path-id"
+comment = "Matches on the peer alone, which collapses ADD-PATH routes that differ only in path ID"
+expect = ["TestAddPathKeepsDistinctPathIDs"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''		if newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {'''
+new = '''		if newPath.GetSource().Equal(path.GetSource()) {'''
+
+[[control]]
+name = "withdraw-everything-from-peer"
+comment = "Makes withdrawals remove every path from the peer, but re-advertisements still pile up"
+expect = ["TestReadvertiseWithNewNexthopReplacesPath"]
+[[control.edit]]
+file = "internal/pkg/table/destination.go"
+old = '''func (dest *Destination) explicitWithdraw(logger log.Logger, withdraw *Path) *Path {'''
+new = '''func (dest *Destination) explicitWithdraw(logger log.Logger, withdraw *Path) *Path {
+	kept := dest.knownPathList[:0]
+	var removed *Path
+	for _, p := range dest.knownPathList {
+		if p.GetSource().Equal(withdraw.GetSource()) && p.GetNlri().PathIdentifier() == withdraw.GetNlri().PathIdentifier() {
+			removed = p
+			continue
+		}
+		kept = append(kept, p)
+	}
+	if removed != nil {
+		dest.knownPathList = kept
+		return removed
+	}
+	return dest.explicitWithdrawOne(logger, withdraw)
+}
+
+func (dest *Destination) explicitWithdrawOne(logger log.Logger, withdraw *Path) *Path {'''
+
+# GoBGP's own tests that catch this bug; removed from the agent's copy, still run at grading.
+[[hide]]
+file = "internal/pkg/table/destination_test.go"
+tests = ["TestCalculate2", "TestTimeTieBreaker"]

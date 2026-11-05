@@ -1,0 +1,27 @@
+--- a/internal/pkg/table/destination.go
++++ b/internal/pkg/table/destination.go
+@@ -439,16 +439,16 @@
+ 			reason = BPR_LOCAL_ORIGIN
+ 		}
+ 		if better == nil {
++			better = compareByASPath(path1, path2)
++			reason = BPR_ASPATH
++		}
++		if better == nil {
++			better = compareByOrigin(path1, path2)
++			reason = BPR_ORIGIN
++		}
++		if better == nil {
+ 			better = compareByMED(path1, path2)
+ 			reason = BPR_MED
+-		}
+-		if better == nil {
+-			better = compareByASPath(path1, path2)
+-			reason = BPR_ASPATH
+-		}
+-		if better == nil {
+-			better = compareByOrigin(path1, path2)
+-			reason = BPR_ORIGIN
+ 		}
+ 		if better == nil {
+ 			better = compareByASNumber(path1, path2)

@@ -1,0 +1,19 @@
+--- a/internal/pkg/table/destination.go
++++ b/internal/pkg/table/destination.go
+@@ -322,11 +322,11 @@
+ 		if newPath.NoImplicitWithdraw() {
+ 			continue
+ 		}
+-		// Here we just check if it is the same route (same next hop and
+-		// path ID) and not check path version num. as newPaths are
+-		// implicit withdrawal of old paths and when doing RouteRefresh
+-		// (not EnhancedRouteRefresh) we get same paths again.
+-		if newPath.GetNexthop().Equal(path.GetNexthop()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {
++		// Here we just check if source is same and not check if path
++		// version num. as newPaths are implicit withdrawal of old
++		// paths and when doing RouteRefresh (not EnhancedRouteRefresh)
++		// we get same paths again.
++		if newPath.GetSource().Equal(path.GetSource()) && newPath.GetNlri().PathIdentifier() == path.GetNlri().PathIdentifier() {
+ 			if logger.GetLevel() >= log.DebugLevel {
+ 				logger.Debug("Implicit withdrawal of old path, since we have learned new path from the same peer",
+ 					log.Fields{
