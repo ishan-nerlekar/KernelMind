@@ -1,0 +1,2 @@
+# Borrows global VLAN support from a different AP
+isolation

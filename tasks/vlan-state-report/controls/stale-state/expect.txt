@@ -1,0 +1,2 @@
+# Keeps the stale incoming state instead of recomputing
+stale

@@ -1,0 +1,2181 @@
+{
+  "configurations": {
+    "absent": null,
+    "empty": "",
+    "blank": "\n \t\n",
+    "normal": "# local preferences\nTYPE=Ethernet\nBOOTPROTO=dhcp\nDEVICE=old0\nIPADDR=192.0.2.9\nSUBNET=255.255.255.0\nLeaseTime=600\nGATEWAY=192.0.2.1\nPrimaryDNS=192.0.2.53\nDNSPrefix=old.example\nMTU=1450\n",
+    "missing_mode": "TYPE=Ethernet\nDEVICE=old1\nIPADDR=192.0.2.10\n",
+    "empty_mode": "BOOTPROTO=\n",
+    "quoted_empty_mode": "BOOTPROTO=\"\"\n",
+    "stale_mode": "BOOTPROTO=static\n",
+    "duplicate_mode": "BOOTPROTO=static\nBOOTPROTO=dhcp\nBOOTPROTO=\n",
+    "stale_lease": "BOOTPROTO=dhcp\nDEVICE=old3\nIPADDR=198.51.100.90\nSUBNET=255.255.0.0\nLeaseTime=12\nGATEWAY=198.51.100.1\nPrimaryDNS=198.51.100.2\nDNSPrefix=retired.example\n",
+    "duplicate_lease": "IPADDR=192.0.2.5\nIPADDR=192.0.2.6\nDEVICE=old0\nDEVICE=old1\nGATEWAY=192.0.2.1\nGATEWAY=192.0.2.2\nLeaseTime=9\nLeaseTime=8\n",
+    "whitespace": " \tBOOTPROTO \t= \tstatic \t\n\tDEVICE = old0\n \tMTU \t= 1400 \t\n\t# keep this\n",
+    "quoting": "LABEL=\"rack #7 = east \\\"node\\\" \\\\ end\"\nBOOTPROTO=\"static\"\nIPADDR=\"192.0.2.4\"\nEMPTY=\"\"\n",
+    "lookalikes": "BOOTPROTO_BACKUP=static\nXBOOTPROTO=manual\nbootproto=manual\nPrimaryDNSExtra=192.0.2.11\nIPADDR6=2001:db8::9\nLeaseTimeOld=123\n",
+    "comments": "# BOOTPROTO=static\n # IPADDR=192.0.2.4\n# BOOTPROTO=static\n# DEVICE\n\n# DEVICE\n",
+    "ipv6_custom": "IPV6_AUTOCONF=1\nIPV6ADDR=2001:db8::4\nIPV6_DEF_GW=fe80::1\nCUSTOM=\"hello world\"\nTYPE=Bridge\nTYPE=Tunnel\nMTU=9000",
+    "interaction": "# BOOTPROTO=static\nBOOTPROTO=static\nBOOTPROTO=\"\"\nIPADDR=192.0.2.2\nIPADDR=192.0.2.3\nDNSPrefix=gone.example\nDNSPrefix=older.example\nIPV6ADDR=2001:db8::7\nDNSPrefixBackup=\"keep # data\"\n# BOOTPROTO=static\n",
+    "unterminated": "# final comment",
+    "malformed_section": "[interface]\nBOOTPROTO=dhcp\n",
+    "malformed_inline": "MTU=1500 # note\n",
+    "malformed_escape": "LABEL=\"bad\\nvalue\"\n",
+    "malformed_quote": "BOOTPROTO=\"dhcp\n",
+    "malformed_bare": "IPADDR\n",
+    "malformed_single_quote": "LABEL='value'\n",
+    "malformed_key": "_BAD=value\n",
+    "malformed_extra": "LABEL=\"value\" extra\n",
+    "valid_escapes": "LABEL=\"quote: \\\" slash: \\\\\"\n"
+  },
+  "leases": {
+    "alpha": {
+      "address": "192.0.2.44",
+      "netmask": "255.255.255.0",
+      "seconds": "3600",
+      "gateway": "192.0.2.1",
+      "dns": "192.0.2.53",
+      "domain": "lab.example"
+    },
+    "beta": {
+      "address": "198.51.100.123",
+      "netmask": "255.255.254.0",
+      "seconds": "7201",
+      "gateway": "198.51.100.1",
+      "dns": "203.0.113.53",
+      "domain": "next.example"
+    },
+    "missing": {
+      "address": "203.0.113.17",
+      "netmask": "255.255.255.128",
+      "seconds": "91"
+    },
+    "empty": {
+      "address": "203.0.113.18",
+      "netmask": "255.255.255.128",
+      "seconds": "92",
+      "gateway": "",
+      "dns": "",
+      "domain": ""
+    },
+    "zero_mask": {
+      "address": "0.0.0.0",
+      "netmask": "0.0.0.0",
+      "seconds": "1"
+    },
+    "full_mask": {
+      "address": "255.255.255.255",
+      "netmask": "255.255.255.255",
+      "seconds": "999999999",
+      "domain": "A.............................................................."
+    }
+  },
+  "scenarios": [
+    {
+      "id": "update_absent",
+      "config_id": "absent",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_empty",
+      "config_id": "empty",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_blank",
+      "config_id": "blank",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_normal",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_missing_mode",
+      "config_id": "missing_mode",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_empty_mode",
+      "config_id": "empty_mode",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_quoted_empty_mode",
+      "config_id": "quoted_empty_mode",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_stale_mode",
+      "config_id": "stale_mode",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_duplicate_mode",
+      "config_id": "duplicate_mode",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_stale_lease",
+      "config_id": "stale_lease",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_duplicate_lease",
+      "config_id": "duplicate_lease",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_whitespace",
+      "config_id": "whitespace",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_quoting",
+      "config_id": "quoting",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_lookalikes",
+      "config_id": "lookalikes",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_comments",
+      "config_id": "comments",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_ipv6_custom",
+      "config_id": "ipv6_custom",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_interaction",
+      "config_id": "interaction",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "update_unterminated",
+      "config_id": "unterminated",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "escaped_values",
+      "config_id": "valid_escapes",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "uplink_2",
+            "lease": {
+              "address": "198.51.100.123",
+              "netmask": "255.255.254.0",
+              "seconds": "7201",
+              "gateway": "198.51.100.1",
+              "dns": "203.0.113.53",
+              "domain": "next.example"
+            }
+          },
+          "lease_id": "beta",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "uplink_2",
+            "IPADDR": "198.51.100.123",
+            "SUBNET": "255.255.254.0",
+            "LeaseTime": "7201",
+            "GATEWAY": "198.51.100.1",
+            "PrimaryDNS": "203.0.113.53",
+            "DNSPrefix": "next.example"
+          }
+        }
+      ]
+    },
+    {
+      "id": "same_lease_repeated",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        },
+        {
+          "request": {
+            "update": false
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "different_leases",
+      "config_id": "interaction",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "lease_id": "alpha",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "192.0.2.44",
+            "SUBNET": "255.255.255.0",
+            "LeaseTime": "3600",
+            "GATEWAY": "192.0.2.1",
+            "PrimaryDNS": "192.0.2.53",
+            "DNSPrefix": "lab.example"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "port9",
+            "lease": {
+              "address": "198.51.100.123",
+              "netmask": "255.255.254.0",
+              "seconds": "7201",
+              "gateway": "198.51.100.1",
+              "dns": "203.0.113.53",
+              "domain": "next.example"
+            }
+          },
+          "lease_id": "beta",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "port9",
+            "IPADDR": "198.51.100.123",
+            "SUBNET": "255.255.254.0",
+            "LeaseTime": "7201",
+            "GATEWAY": "198.51.100.1",
+            "PrimaryDNS": "203.0.113.53",
+            "DNSPrefix": "next.example"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "bridge-4",
+            "lease": {
+              "address": "203.0.113.17",
+              "netmask": "255.255.255.128",
+              "seconds": "91"
+            }
+          },
+          "lease_id": "missing",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "bridge-4",
+            "IPADDR": "203.0.113.17",
+            "SUBNET": "255.255.255.128",
+            "LeaseTime": "91"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "access0",
+            "lease": {
+              "address": "203.0.113.18",
+              "netmask": "255.255.255.128",
+              "seconds": "92",
+              "gateway": "",
+              "dns": "",
+              "domain": ""
+            }
+          },
+          "lease_id": "empty",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "access0",
+            "IPADDR": "203.0.113.18",
+            "SUBNET": "255.255.255.128",
+            "LeaseTime": "92"
+          }
+        }
+      ]
+    },
+    {
+      "id": "new_then_clear",
+      "config_id": "absent",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "198.51.100.123",
+              "netmask": "255.255.254.0",
+              "seconds": "7201",
+              "gateway": "198.51.100.1",
+              "dns": "203.0.113.53",
+              "domain": "next.example"
+            }
+          },
+          "lease_id": "beta",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "198.51.100.123",
+            "SUBNET": "255.255.254.0",
+            "LeaseTime": "7201",
+            "GATEWAY": "198.51.100.1",
+            "PrimaryDNS": "203.0.113.53",
+            "DNSPrefix": "next.example"
+          }
+        },
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "203.0.113.17",
+              "netmask": "255.255.255.128",
+              "seconds": "91"
+            }
+          },
+          "lease_id": "missing",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "edge7.31",
+            "IPADDR": "203.0.113.17",
+            "SUBNET": "255.255.255.128",
+            "LeaseTime": "91"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lease_missing",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "Z9999999999999999999999999999999",
+            "lease": {
+              "address": "203.0.113.17",
+              "netmask": "255.255.255.128",
+              "seconds": "91"
+            }
+          },
+          "lease_id": "missing",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "Z9999999999999999999999999999999",
+            "IPADDR": "203.0.113.17",
+            "SUBNET": "255.255.255.128",
+            "LeaseTime": "91"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lease_empty",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "Z9999999999999999999999999999999",
+            "lease": {
+              "address": "203.0.113.18",
+              "netmask": "255.255.255.128",
+              "seconds": "92",
+              "gateway": "",
+              "dns": "",
+              "domain": ""
+            }
+          },
+          "lease_id": "empty",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "Z9999999999999999999999999999999",
+            "IPADDR": "203.0.113.18",
+            "SUBNET": "255.255.255.128",
+            "LeaseTime": "92"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lease_zero_mask",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "a",
+            "lease": {
+              "address": "0.0.0.0",
+              "netmask": "0.0.0.0",
+              "seconds": "1"
+            }
+          },
+          "lease_id": "zero_mask",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "a",
+            "IPADDR": "0.0.0.0",
+            "SUBNET": "0.0.0.0",
+            "LeaseTime": "1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lease_full_mask",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "Z9999999999999999999999999999999",
+            "lease": {
+              "address": "255.255.255.255",
+              "netmask": "255.255.255.255",
+              "seconds": "999999999",
+              "domain": "A.............................................................."
+            }
+          },
+          "lease_id": "full_mask",
+          "expect": "update",
+          "managed": {
+            "BOOTPROTO": "dhcp",
+            "DEVICE": "Z9999999999999999999999999999999",
+            "IPADDR": "255.255.255.255",
+            "SUBNET": "255.255.255.255",
+            "LeaseTime": "999999999",
+            "DNSPrefix": "A.............................................................."
+          }
+        }
+      ]
+    },
+    {
+      "id": "no_update_absent",
+      "config_id": "absent",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_empty",
+      "config_id": "empty",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_normal",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_unterminated",
+      "config_id": "unterminated",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_malformed_section",
+      "config_id": "malformed_section",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_malformed_inline",
+      "config_id": "malformed_inline",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "no_update_malformed_escape",
+      "config_id": "malformed_escape",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": 42,
+            "lease": "ignored"
+          },
+          "expect": "no_update"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_section",
+      "config_id": "malformed_section",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_inline",
+      "config_id": "malformed_inline",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_escape",
+      "config_id": "malformed_escape",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_quote",
+      "config_id": "malformed_quote",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_bare",
+      "config_id": "malformed_bare",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_single_quote",
+      "config_id": "malformed_single_quote",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_key",
+      "config_id": "malformed_key",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "reject_malformed_extra",
+      "config_id": "malformed_extra",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_''",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_'1bad'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "1bad",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_'bad/name'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "bad/name",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_None",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": null,
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_interface_1",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": 1,
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_address_'01.2.3.4'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "01.2.3.4",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_address_'2001:db8::1'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "2001:db8::1",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_address_3",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": 3,
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_netmask_'0.0.0.255'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "0.0.0.255",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_netmask_'255.0.255.0'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.0.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_netmask_'24'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "24",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_seconds_'0'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "0",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_seconds_'01'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "01",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_seconds_300",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": 300,
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_seconds_'1000000000'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "1000000000",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_seconds_True",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": true,
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_gateway_None",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": null,
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_gateway_'999.2.3.4'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "999.2.3.4",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_dns_'1.2.3'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "1.2.3",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_domain_'bad space'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "bad space"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_domain_'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_domain_'-bad'",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "-bad"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_missing_address",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_missing_netmask",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_missing_seconds",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_unknown_lease_key",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example",
+              "extra": "x"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_lease_type_None",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": null
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_lease_type_[]",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": []
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_lease_type_42",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": 42
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_30",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": 1,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_31",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": null,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            }
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_32",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "extra": true
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_33",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": []
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_34",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": 17
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_35",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": "X=\r\n"
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_36",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": "X=\u00e9"
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_37",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": true,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": "#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_envelope_38",
+      "config_id": "normal",
+      "steps": [
+        {
+          "request": {
+            "update": false,
+            "interface": "edge7.31",
+            "lease": {
+              "address": "192.0.2.44",
+              "netmask": "255.255.255.0",
+              "seconds": "3600",
+              "gateway": "192.0.2.1",
+              "dns": "192.0.2.53",
+              "domain": "lab.example"
+            },
+            "config": "\u0000"
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_0",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": null,
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_1",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": [],
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_2",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": 7,
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_3",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": {},
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_4",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": {
+            "config": ""
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_5",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": {
+            "update": true
+          },
+          "expect": "error"
+        }
+      ]
+    },
+    {
+      "id": "invalid_raw_6",
+      "config_id": "empty",
+      "steps": [
+        {
+          "raw_request": {
+            "config": null,
+            "update": true
+          },
+          "expect": "error"
+        }
+      ]
+    }
+  ]
+}

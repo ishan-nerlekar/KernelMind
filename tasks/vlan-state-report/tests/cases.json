@@ -1,0 +1,3418 @@
+[
+  {
+    "id": "global_only",
+    "category": "core",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "local_only",
+    "category": "core",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": [
+                  1,
+                  4094
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "vlans": [
+                    1,
+                    4094
+                  ]
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "both",
+    "category": "core",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": [
+                  27
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "vlans": [
+                    27
+                  ]
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "neither",
+    "category": "core",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "disabled_global",
+    "category": "disable",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": false
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "disabled_local",
+    "category": "disable",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  27
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": false,
+                  "vlans": [
+                    27
+                  ]
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "disabled_both",
+    "category": "disable",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  27
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": false,
+                  "vlans": [
+                    27
+                  ]
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "empty_config",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {}
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {},
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "absent_dva",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "vlans": [
+                  27
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "vlans": [
+                    27
+                  ]
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "null_dva",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": null,
+                "vlans": [
+                  27
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": null,
+                  "vlans": [
+                    27
+                  ]
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "absent_config",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "null_config",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": null,
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "ssids_absent",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "ssids_null",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": null
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "ssids_empty",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": []
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_vlans_absent",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_vlans_null",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": null,
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": null,
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_vlans_empty",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "local_null",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": null
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "vlans": null
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "local_empty",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "vlans": []
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_0",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {}
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {}
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_1",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff"
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff"
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_2",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_3",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": null,
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": null,
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_4",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": null
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": null
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "incomplete_then_usable",
+    "category": "incomplete",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {},
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {},
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "duplicates_equivalent",
+    "category": "duplicates",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            },
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": [
+                  1,
+                  1
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              },
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "vlans": [
+                    1,
+                    1
+                  ]
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "same_id_alias",
+    "category": "duplicates",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            },
+            {
+              "name": "guest",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              },
+              {
+                "name": "guest",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "conflict",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            },
+            {
+              "name": "staff",
+              "vlan_id": 28
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "incomplete_no_conflict",
+    "category": "duplicates",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            },
+            {
+              "name": "staff"
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              },
+              {
+                "name": "staff"
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_lower",
+    "category": "bounds",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 1
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "x",
+                "vlan_id": 1
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_upper",
+    "category": "bounds",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 4094
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "x",
+                "vlan_id": 4094
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_bad_zero",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 0
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_zero",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  0
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "global_bad_above",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 4095
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_above",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  4095
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "global_bad_negative",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": -1
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_negative",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  -1
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "global_bad_boolean",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": true
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_boolean",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  true
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "global_bad_float",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 27.0
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_float",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  27.0
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "global_bad_string",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": "27"
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "local_bad_string",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": false,
+                "vlans": [
+                  "27"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_bool_0",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_bool_1",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_bool_2",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_bool_3",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_bool_4",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_mapping_name_empty",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": ""
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_mapping_name_blank",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": " \t"
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_mapping_name_number",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": 3
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "nonobject_mapping",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            null
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_container_global_vlans_dict",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": {},
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_container_ssids_dict",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": {}
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_container_global_vlans_str",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": "bad",
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_config",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": []
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_state",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": []
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "bad_local_container",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "vlans": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "null_root",
+    "category": "invalid",
+    "input": null,
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "array_root",
+    "category": "invalid",
+    "input": [],
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "missing_aps",
+    "category": "invalid",
+    "input": {},
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "null_aps",
+    "category": "invalid",
+    "input": {
+      "aps": null
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "nonobject_ap",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        null
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "missing_ap_id",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {}
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "empty_aps",
+    "category": "optional",
+    "input": {
+      "aps": []
+    },
+    "expected": {
+      "snapshot": {
+        "aps": []
+      }
+    }
+  },
+  {
+    "id": "duplicate_ap",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "duplicate_ssid",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            },
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "nonobject_ssid",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            null
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "blank_ssid",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": " ",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "blank_ap",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "stale_false",
+    "category": "stale",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "stale_true",
+    "category": "stale",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "opaque_stale",
+    "category": "stale",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": {
+                  "old": [
+                    1
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "null_state",
+    "category": "optional",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "preservation",
+    "category": "preservation",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27,
+              "extra": {
+                "ok": true
+              }
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true,
+                "label": "keep"
+              },
+              "state": {
+                "dva": false,
+                "clients": 3,
+                "nested": {
+                  "keep": [
+                    1,
+                    null,
+                    true
+                  ]
+                }
+              }
+            }
+          ],
+          "config": {
+            "opaque": "keep"
+          }
+        }
+      ],
+      "trace": {
+        "z": null
+      }
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27,
+                "extra": {
+                  "ok": true
+                }
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true,
+                  "label": "keep"
+                },
+                "state": {
+                  "dva": true,
+                  "clients": 3,
+                  "nested": {
+                    "keep": [
+                      1,
+                      null,
+                      true
+                    ]
+                  }
+                }
+              }
+            ],
+            "config": {
+              "opaque": "keep"
+            }
+          }
+        ],
+        "trace": {
+          "z": null
+        }
+      }
+    }
+  },
+  {
+    "id": "ap_isolation",
+    "category": "isolation",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "same",
+              "config": {
+                "dva": true
+              }
+            },
+            {
+              "name": "off",
+              "config": {
+                "dva": false
+              }
+            },
+            {
+              "name": "other",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "ssids": [
+            {
+              "name": "same",
+              "config": {
+                "dva": true
+              }
+            },
+            {
+              "name": "local",
+              "config": {
+                "dva": true,
+                "vlans": [
+                  4094
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "same",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              },
+              {
+                "name": "off",
+                "config": {
+                  "dva": false
+                },
+                "state": {
+                  "dva": false
+                }
+              },
+              {
+                "name": "other",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "b",
+            "ssids": [
+              {
+                "name": "same",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              },
+              {
+                "name": "local",
+                "config": {
+                  "dva": true,
+                  "vlans": [
+                    4094
+                  ]
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "ordering",
+    "category": "ordering",
+    "input": {
+      "aps": [
+        {
+          "id": "b",
+          "ssids": [
+            {
+              "name": "local",
+              "config": {
+                "dva": true,
+                "vlans": [
+                  4094
+                ]
+              }
+            },
+            {
+              "name": "same",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "other",
+              "config": {
+                "dva": true
+              }
+            },
+            {
+              "name": "off",
+              "config": {
+                "dva": false
+              }
+            },
+            {
+              "name": "same",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "b",
+            "ssids": [
+              {
+                "name": "local",
+                "config": {
+                  "dva": true,
+                  "vlans": [
+                    4094
+                  ]
+                },
+                "state": {
+                  "dva": true
+                }
+              },
+              {
+                "name": "same",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false
+                }
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "other",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              },
+              {
+                "name": "off",
+                "config": {
+                  "dva": false
+                },
+                "state": {
+                  "dva": false
+                }
+              },
+              {
+                "name": "same",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "mapping_order",
+    "category": "ordering",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "guest",
+              "vlan_id": 1
+            },
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "guest",
+                "vlan_id": 1
+              },
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "before_add",
+    "category": "sequence",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": false,
+                "keep": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false,
+                  "keep": 7
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "after_add",
+    "category": "sequence",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": false,
+                "keep": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true,
+                  "keep": 7
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "after_remove",
+    "category": "sequence",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": true,
+                "keep": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": false,
+                  "keep": 7
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "idempotent_snapshot",
+    "category": "repeat",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              },
+              "state": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "global_only_repeat",
+    "category": "repeat",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "staff",
+              "vlan_id": 27
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "validate_unused_ap",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "name": "x",
+              "vlan_id": 0
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "incomplete_bad_id",
+    "category": "invalid",
+    "input": {
+      "aps": [
+        {
+          "id": "a",
+          "global_vlans": [
+            {
+              "vlan_id": "27"
+            }
+          ],
+          "ssids": [
+            {
+              "name": "office",
+              "config": {
+                "dva": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "error": "invalid_input"
+    }
+  }
+]

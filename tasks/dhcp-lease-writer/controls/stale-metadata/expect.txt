@@ -1,0 +1,2 @@
+# Previous lease values survive the update
+managed_values

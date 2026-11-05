@@ -1,0 +1,115 @@
+[
+  {
+    "id": "raw_empty",
+    "category": "raw_cli",
+    "raw_stdin": "",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_syntax",
+    "category": "raw_cli",
+    "raw_stdin": "{",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_trailing",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[]} {}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_duplicate_key",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[],\"aps\":[]}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_nested_duplicate",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[],\"x\":{\"a\":1,\"a\":2}}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_nan",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[],\"x\":NaN}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_infinity",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[],\"x\":Infinity}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_overflow",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\":[],\"x\":1e999}",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_root_null",
+    "category": "raw_cli",
+    "raw_stdin": "null",
+    "expected": {
+      "error": "invalid_input"
+    }
+  },
+  {
+    "id": "raw_whitespace",
+    "category": "raw_cli",
+    "raw_stdin": " \n {\"aps\": []} \t\n",
+    "expected": {
+      "snapshot": {
+        "aps": []
+      }
+    }
+  },
+  {
+    "id": "raw_global_only",
+    "category": "raw_cli",
+    "raw_stdin": "{\"aps\": [{\"id\": \"a\", \"global_vlans\": [{\"name\": \"staff\", \"vlan_id\": 27}], \"ssids\": [{\"name\": \"office\", \"config\": {\"dva\": true}}]}]}",
+    "expected": {
+      "snapshot": {
+        "aps": [
+          {
+            "id": "a",
+            "global_vlans": [
+              {
+                "name": "staff",
+                "vlan_id": 27
+              }
+            ],
+            "ssids": [
+              {
+                "name": "office",
+                "config": {
+                  "dva": true
+                },
+                "state": {
+                  "dva": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

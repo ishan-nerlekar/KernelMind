@@ -1,0 +1,2 @@
+# Rebuilds the snapshot and loses unrelated fields
+preservation

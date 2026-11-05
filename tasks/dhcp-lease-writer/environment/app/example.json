@@ -1,0 +1,10 @@
+{
+  "config": "TYPE=Ethernet\nBOOTPROTO=dhcp\nMTU=1450\n",
+  "update": true,
+  "interface": "uplink3",
+  "lease": {
+    "address": "192.0.2.70",
+    "netmask": "255.255.255.0",
+    "seconds": "1800"
+  }
+}

@@ -1,0 +1,14 @@
+id = "vlan-state-report"
+tier = 1
+root_cause = "config-vs-operational-state"
+origin = "incident-derived"          # synthetic rewrite inspired by a production incident; no proprietary code
+inspired_by = "SSID dynamic-VLAN state reporting incident"
+language = "python"
+summary = "An enabled SSID reports DVA false when VLAN support comes only from the AP's global mappings."
+ported_from = "KernelMind v1 vlan-state v2 (frozen 2026-11-04)"
+
+starter_fails_on = ["core"]
+
+[limits]
+agent_timeout_sec = 1200
+test_timeout_sec = 300

@@ -1,0 +1,1 @@
+{"aps":[{"id":"lab-ap","global_vlans":[{"name":"staff","vlan_id":27}],"ssids":[{"name":"office","config":{"dva":true},"state":{"clients":3,"dva":false}}]}]}
