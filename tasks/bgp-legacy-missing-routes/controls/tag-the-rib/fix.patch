@@ -1,6 +1,6 @@
 --- a/pkg/server/egress_tag.go
 +++ b/pkg/server/egress_tag.go
-@@ -39,14 +39,12 @@
+@@ -57,14 +57,12 @@
  // egressUpdates builds the UPDATEs sent to one neighbor and stamps the neighbor's egress tags on
  // the ones that advertise routes. Tagging the encoded messages leaves the RIB paths untouched.
  func egressUpdates(paths []*table.Path, tags []*bgp.LargeCommunity, options *bgp.MarshallingOption) []*bgp.BGPMessage {

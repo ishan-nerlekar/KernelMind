@@ -95,3 +95,18 @@ first, then restructured the packer (a fix we didn't anticipate, which the hidde
 solved by the cheapest current models in 2–5 minutes, whatever the codebase size, novelty, missing
 text clues, or decoys. They search for every term in the evidence at once, so hiding one route to the
 bug doesn't help when another term leads there.
+
+## 2026-11-05 · next experiment: two faults, live reproduction (bgp-agg-incident)
+
+No collected logs. `/app/debug/repro.sh` builds gobgpd from `/app` and runs it against Python stand-ins
+for the routers (a minimal BGP speaker that enforces message size limits). Two faults from the earlier
+transplants are planted together:
+
+| State | What the repro shows |
+|---|---|
+| starter | rtr7 resets every few seconds (10,574-byte UPDATE) |
+| capability check fixed only | rtr7 stays up but holds 482 of 2,100 routes; nothing on rtr7's side |
+| both fixed | rtr7 holds all 2,100 |
+
+Hypothesis: agents stop once the visible symptom (the resets) is gone. Passing needs them to check the
+outcome the instruction asks for (every route received) and keep going.

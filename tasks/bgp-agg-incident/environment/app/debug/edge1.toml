@@ -1,0 +1,35 @@
+# edge1's BGP configuration, reduced to the incident: one data-center source, one legacy and one
+# newer aggregation router. Addresses are loopback aliases so everything runs in one container.
+[global.config]
+  as = 4200000100
+  router-id = "10.20.0.1"
+  port = -1
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "127.0.0.30"
+    peer-as = 4200000300
+    description = "dc1 host-route source"
+  [neighbors.timers.config]
+    connect-retry = 3
+    idle-hold-time-after-reset = 3
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "127.0.0.7"
+    peer-as = 64707
+    description = "rtr7 agg-west (legacy)"
+    egress-large-communities = ["4200000100:900:7", "4200000100:901:1"]
+  [neighbors.timers.config]
+    connect-retry = 3
+    idle-hold-time-after-reset = 3
+
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "127.0.0.11"
+    peer-as = 4200000211
+    description = "rtr11 agg-west"
+    egress-large-communities = ["4200000100:900:11", "4200000100:901:1"]
+  [neighbors.timers.config]
+    connect-retry = 3
+    idle-hold-time-after-reset = 3

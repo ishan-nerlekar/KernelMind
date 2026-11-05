@@ -1,0 +1,3 @@
+# Turns extended messages off: resets stop, routes still dropped, capable peers lose extended messages
+TestEgressUpdatesFitLegacyPeer
+TestSessionOptionsExtendedMessage

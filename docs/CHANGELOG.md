@@ -13,3 +13,5 @@ probes (SPEC.md rule 3) are logged here too.
 | 2026-11-05 | bgp-legacy-missing-routes | Added (incident-transplant: unchecked-precondition pattern; decoy experiment) | Symptom greps into correct extended-message code; fault is the order of tagging vs. packing | none |
 | 2026-11-05 | bgp-legacy-missing-routes | Tier 2 → Tier 1 | Both probes solved (docs/CALIBRATION.md) | probe6 (probes only) |
 | 2026-11-05 | all generated Go tasks | Dockerfile normalizes file timestamps | mtimes revealed which files a task changed (`ls -lt`) | none (before any leaderboard run) |
+| 2026-11-05 | bgp-legacy-missing-routes | Egress tags wired from gobgpd's config file to the server (`SetEgressTags`) | The API round trip dropped the new config field, so the evidence described a setting that couldn't take effect | probe6 (probes only) |
+| 2026-11-05 | bgp-agg-incident | Added (Tier 3 experiment: two faults, live reproduction, no collected logs) | Tests whether agents verify the whole symptom is gone, not just the first one | none |

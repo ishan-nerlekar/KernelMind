@@ -16,6 +16,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/osrg/gobgp/v3/internal/pkg/table"
 	"github.com/osrg/gobgp/v3/pkg/config/oc"
 	"github.com/osrg/gobgp/v3/pkg/packet/bgp"
@@ -24,6 +26,22 @@ import (
 // Egress tags: large communities added to every route advertised to a neighbor
 // (neighbor config "egress-large-communities"), so the receiving network can tell
 // where a route entered it. They are never stored in our own RIB.
+
+// SetEgressTags sets the egress tags of a configured neighbor. The API's peer configuration has no
+// field for them, so gobgpd sets them from its configuration file right after adding the neighbor.
+// shortcut: not re-applied on config reload (UpdateConfig); add it there if tags must change live.
+func (s *BgpServer) SetEgressTags(addr string, tags []string) error {
+	return s.mgmtOperation(func() error {
+		p, ok := s.neighborMap[addr]
+		if !ok {
+			return fmt.Errorf("neighbor %s not found", addr)
+		}
+		p.fsm.lock.Lock()
+		p.fsm.pConf.Config.EgressLargeCommunities = tags
+		p.fsm.lock.Unlock()
+		return nil
+	}, true)
+}
 
 // egressTags parses the neighbor's configured egress tags, skipping malformed entries.
 func egressTags(n *oc.Neighbor) []*bgp.LargeCommunity {

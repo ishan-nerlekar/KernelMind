@@ -1,0 +1,2 @@
+# Fixes tag ordering; legacy peers still get extended messages and reset the session
+TestSessionOptionsExtendedNexthopOnly

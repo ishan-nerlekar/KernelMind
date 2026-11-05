@@ -1,6 +1,6 @@
 --- a/pkg/server/egress_tag.go
 +++ b/pkg/server/egress_tag.go
-@@ -36,37 +36,26 @@
+@@ -54,37 +54,26 @@
  	return tags
  }
  

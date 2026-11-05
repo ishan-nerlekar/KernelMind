@@ -1,0 +1,2 @@
+# Fixes the capability check; resets stop, but full UPDATEs are still dropped and routes stay missing
+TestEgressUpdatesFitLegacyPeer

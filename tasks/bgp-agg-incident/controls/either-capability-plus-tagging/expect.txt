@@ -1,0 +1,2 @@
+# Fixes tagging and accepts either capability code; extended-nexthop-only peers still get oversized UPDATEs
+TestSessionOptionsExtendedNexthopOnly

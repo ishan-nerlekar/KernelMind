@@ -194,6 +194,12 @@ func addNeighbors(ctx context.Context, bgpServer *server.BgpServer, added []oc.N
 					"Key":   p.State.NeighborAddress,
 					"Error": err})
 		}
+		if len(p.Config.EgressLargeCommunities) > 0 {
+			if err := bgpServer.SetEgressTags(p.State.NeighborAddress, p.Config.EgressLargeCommunities); err != nil {
+				bgpServer.Log().Error("Failed to set egress tags",
+					log.Fields{"Topic": "config", "Key": p.State.NeighborAddress, "Error": err})
+			}
+		}
 	}
 }
 

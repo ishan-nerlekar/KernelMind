@@ -148,6 +148,37 @@ new = '''				options := h.fsm.marshallingOptions
 				h.fsm.lock.RUnlock()
 				for _, msg := range egressUpdates(m.Paths, tags, options) {'''
 
+[[feature]]
+file = "pkg/config/config.go"
+old = '''		if err := bgpServer.AddPeer(ctx, &api.AddPeerRequest{
+			Peer: oc.NewPeerFromConfigStruct(&p),
+		}); err != nil {
+			bgpServer.Log().Fatal("Failed to add Peer",
+				log.Fields{
+					log.FieldFacility: log.FacilityConfig,
+
+					"Topic": "config",
+					"Key":   p.State.NeighborAddress,
+					"Error": err})
+		}'''
+new = '''		if err := bgpServer.AddPeer(ctx, &api.AddPeerRequest{
+			Peer: oc.NewPeerFromConfigStruct(&p),
+		}); err != nil {
+			bgpServer.Log().Fatal("Failed to add Peer",
+				log.Fields{
+					log.FieldFacility: log.FacilityConfig,
+
+					"Topic": "config",
+					"Key":   p.State.NeighborAddress,
+					"Error": err})
+		}
+		if len(p.Config.EgressLargeCommunities) > 0 {
+			if err := bgpServer.SetEgressTags(p.State.NeighborAddress, p.Config.EgressLargeCommunities); err != nil {
+				bgpServer.Log().Error("Failed to set egress tags",
+					log.Fields{"Topic": "config", "Key": p.State.NeighborAddress, "Error": err})
+			}
+		}'''
+
 # ---------------------------------------------------------------- the bug: tags stamped after packing
 [[bug]]
 file = "pkg/server/egress_tag.go"

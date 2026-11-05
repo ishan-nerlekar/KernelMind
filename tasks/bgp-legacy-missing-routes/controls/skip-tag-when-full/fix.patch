@@ -1,6 +1,6 @@
 --- a/pkg/server/egress_tag.go
 +++ b/pkg/server/egress_tag.go
-@@ -43,8 +43,14 @@
+@@ -61,8 +61,14 @@
  	if len(tags) == 0 {
  		return msgs
  	}
