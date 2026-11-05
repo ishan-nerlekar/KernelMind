@@ -110,3 +110,17 @@ transplants are planted together:
 
 Hypothesis: agents stop once the visible symptom (the resets) is gone. Passing needs them to check the
 outcome the instruction asks for (every route received) and keep going.
+
+## 2026-11-05/06 · reliability sweep (all 18 tasks × 3 attempts)
+
+| Probe | Attempts | pass@1 | Cost | Median time |
+|---|---|---|---|---|
+| GPT-6 Luna | 54 | 100% | $0.26 | 68 s |
+| Claude Haiku 5.5 | 54 | 100% | $0.29 | 32 s |
+
+108/108. Not one failure, so single-attempt probes weren't hiding variance. The only differences
+between the probes are time and cost: on the GoBGP tasks, Luna took 110–280 s and Haiku 80–315 s,
+against 15–90 s on apnet. Two transient API errors (a 600 s OpenAI timeout, and an OpenAI prompt
+flagged by its usage-policy filter, both on Luna) were retried by LiteLLM and didn't affect results.
+The full-suite Docker `validate` didn't run (a shell comment pasted into zsh broke the command); the
+sweep did build and run every task image with the timestamp change.
