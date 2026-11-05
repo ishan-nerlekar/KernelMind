@@ -16,7 +16,7 @@ class BudgetExceeded(Exception):
     """The run's total spending cap was reached. Not a model failure: the attempt is not scored."""
 
 
-def get_agent(name: str, model: str | None, cost_per_attempt: float = 5.0):
+def get_agent(name: str, model: str | None, cost_per_attempt: float = 2.0):
     if name == "oracle":
         from .oracle import OracleAgent
         return OracleAgent()

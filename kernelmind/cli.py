@@ -94,12 +94,12 @@ def main(argv=None) -> int:
     s.add_argument("--backend", choices=["docker", "local"], default="docker")
     s.add_argument("--run-id", help="reuse an id to resume an interrupted run")
     s.add_argument("--max-cost", type=float, default=0.0, help="hard total USD cap for this run (required for models)")
-    s.add_argument("--cost-per-attempt", type=float, default=5.0, help="USD cap per attempt (default 5)")
+    s.add_argument("--cost-per-attempt", type=float, default=2.0, help="USD cap per attempt (default 2)")
     s.set_defaults(fn=cmd_run)
 
     s = sub.add_parser("report", help="leaderboard from one or more run directories")
     s.add_argument("runs", nargs="+")
-    s.add_argument("-k", type=int, default=3)
+    s.add_argument("-k", type=int, default=2)
     s.set_defaults(fn=cmd_report)
 
     args = p.parse_args(argv)

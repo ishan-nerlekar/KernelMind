@@ -35,7 +35,7 @@ def load(run_dirs: list[Path]) -> list[dict]:
     return [json.loads(p.read_text()) for d in run_dirs for p in sorted(d.glob("*/attempt-*/result.json"))]
 
 
-def summarize(records: list[dict], k: int = 3) -> list[dict]:
+def summarize(records: list[dict], k: int = 2) -> list[dict]:
     groups: dict[tuple, list[dict]] = defaultdict(list)
     for r in records:
         groups[(r["agent"], r.get("model") or "-")].append(r)
@@ -54,6 +54,7 @@ def summarize(records: list[dict], k: int = 3) -> list[dict]:
             vals = [p1[t] for t in p1 if tier_of[t] == tier]
             tiers[f"tier{tier}"] = statistics.fmean(vals)
         lo, hi = bootstrap_ci(list(p1.values()))
+        solved = sum(1 for r in scored if r["passed"])
         rows.append({
             "agent": agent, "model": model, "tasks": len(by_task), "attempts": len(scored),
             "errors": len(recs) - len(scored),
@@ -62,14 +63,15 @@ def summarize(records: list[dict], k: int = 3) -> list[dict]:
             f"pass@{k}": statistics.fmean(pk.values()) if pk else None,
             **tiers,
             "cost_usd": sum(r.get("cost_usd") or 0 for r in scored),
+            "cost_per_solve": (sum(r.get("cost_usd") or 0 for r in scored) / solved) if solved else None,
             "median_seconds": statistics.median([r["seconds"] for r in scored]) if scored else None,
         })
     return sorted(rows, key=lambda r: -r["pass@1"])
 
 
-def markdown(rows: list[dict], k: int = 3) -> str:
+def markdown(rows: list[dict], k: int = 2) -> str:
     tier_cols = sorted({c for r in rows for c in r if c.startswith("tier")})
-    head = ["Agent", "Model", "Tasks", "pass@1", "95% CI", f"pass@{k}", *tier_cols, "Cost ($)", "Median s", "Errors"]
+    head = ["Agent", "Model", "Tasks", "pass@1", "95% CI", f"pass@{k}", *tier_cols, "Cost ($)", "$/solve", "Median s", "Errors"]
     pct = lambda x: "-" if x is None or x != x else f"{100 * x:.1f}%"
     lines = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     for r in rows:
@@ -78,5 +80,6 @@ def markdown(rows: list[dict], k: int = 3) -> str:
             r["agent"], r["model"], str(r["tasks"]), pct(r["pass@1"]),
             "-" if lo != lo else f"{100 * lo:.0f}-{100 * hi:.0f}%", pct(r.get(f"pass@{k}")),
             *[pct(r.get(c)) for c in tier_cols], f"{r['cost_usd']:.2f}",
+            "-" if r["cost_per_solve"] is None else f"{r['cost_per_solve']:.2f}",
             "-" if r["median_seconds"] is None else f"{r['median_seconds']:.0f}", str(r["errors"])]) + " |")
     return "\n".join(lines)

@@ -57,7 +57,7 @@ def _done(run_dir: Path, task: Task, n: int) -> bool:
 
 
 def run(tasks: list[Task], agent: str, model: str | None, attempts: int, backend: str, jobs: int,
-        run_id: str | None = None, max_cost: float = 0.0, cost_per_attempt: float = 5.0) -> Path:
+        run_id: str | None = None, max_cost: float = 0.0, cost_per_attempt: float = 2.0) -> Path:
     if agent != "oracle" and backend != "docker":
         raise SystemExit("agents other than oracle must run with --backend docker (sandboxed)")
     if agent == "mini":

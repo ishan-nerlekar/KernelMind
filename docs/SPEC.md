@@ -72,7 +72,7 @@ Target: about 7 Tier 1, 18 Tier 2 and 8 Tier 3 tasks (~33), covering at least 20
    fail on their pinned checks) under Docker, 3 times in a row for Tier 3 (no flakiness).
 2. Manual review: the instruction alone is enough to find the bug; no leaks.
 3. **Tier calibration, not selection.** A task's tier is set by one probe run with
-   `claude-sonnet-5-5` and `gpt-6.1-terra`, which are excluded from the leaderboard. A task is never
+   `claude-haiku-5-5` and `gpt-6-luna`, which are excluded from the leaderboard. A task is never
    dropped or hardened *because a leaderboard model solved it*: that would bias the benchmark
    against those models. Tasks are dropped only if invalid.
 4. Any change after a leaderboard run is logged in `docs/CHANGELOG.md` with its reason.
@@ -80,6 +80,6 @@ Target: about 7 Tier 1, 18 Tier 2 and 8 Tier 3 tasks (~33), covering at least 20
 ## Scoring
 
 Primary: pass@1 (mean over attempts and tasks) with a 95% bootstrap CI over tasks, overall and per
-tier. Also reported: pass@3, cost per attempt and per solved task, median time and steps.
+tier. Also reported: pass@2, cost per attempt and per solved task, median time and steps.
 Infrastructure errors and spending-cap stops are excluded and counted separately. Same scaffold,
 prompt and limits for every model.

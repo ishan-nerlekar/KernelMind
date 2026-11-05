@@ -1,0 +1,11 @@
+--- a/internal/lease/lease.go
++++ b/internal/lease/lease.go
+@@ -102,6 +102,8 @@
+ 	c.Store.Update(c.Iface, func(i *store.Iface) {
+ 		i.Up = true
+ 		i.Addr = o.Addr
++		i.Gateway = cur.Gateway
++		i.DNS = append([]netip.Addr(nil), cur.DNS...)
+ 		i.LeaseEnd = now.Add(o.duration())
+ 	})
+ 	return nil

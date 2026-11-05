@@ -1,0 +1,2 @@
+# Throws the lease away and runs a fresh discover instead of renewing it
+TestRenewDoesNotRediscover

@@ -17,6 +17,7 @@ import hashlib
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 from dataclasses import dataclass
@@ -67,6 +68,17 @@ def _can_unshare() -> bool:
     return subprocess.run(["unshare", "-n", "true"], capture_output=True).returncode == 0
 
 
+# Runs inside the new network namespace: bring loopback up (as Docker's --network none does),
+# then exec the real command. Uses ioctl so no `ip` binary is needed.
+_LO_UP = (
+    "import fcntl,os,socket,struct,sys\n"
+    "s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)\n"
+    "f=struct.unpack('16sh',fcntl.ioctl(s,0x8913,struct.pack('16sh',b'lo',0)))[1]\n"
+    "fcntl.ioctl(s,0x8914,struct.pack('16sh',b'lo',f|1))\n"
+    "os.execvp(sys.argv[1],sys.argv[1:])\n"
+)
+
+
 class LocalEnv(Environment):
     def __init__(self, task: Task):
         self.task = task
@@ -75,7 +87,7 @@ class LocalEnv(Environment):
         for d in self.dirs.values():
             d.mkdir(parents=True, exist_ok=True)
         shutil.copytree(task.root / "environment" / "app", self.dirs["APP_DIR"], dirs_exist_ok=True)
-        self.prefix = ["unshare", "-n", "--"] if _can_unshare() else []
+        self.prefix = ["unshare", "-n", "--", sys.executable, "-c", _LO_UP] if _can_unshare() else []
 
     def _host(self, path: str) -> Path:
         for key, mount in PATHS.items():

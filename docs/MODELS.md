@@ -14,12 +14,12 @@ the benchmark discriminates. Two vendors at each level keeps it from looking lik
 
 | Role | Model | `--model` | $ in / out | Key | Checkpoint (Nov 12) | Full run (Nov 20) |
 |---|---|---|---|---|---|---|
-| Ceiling | Claude Fable 5.1 | `claude-fable-5-1` | 10 / 50 | ANTHROPIC_API_KEY | – | 1 attempt |
-| Ceiling | GPT-6 Astra | `gpt-6-astra` | 10 / 50 | OPENAI_API_KEY | – | 1 attempt |
-| Workhorse | Claude Opus 5.5 | `claude-opus-5-5` | 4 / 20 | ANTHROPIC_API_KEY | 1 attempt | 3 attempts |
-| Workhorse | GPT-6.1 Sol | `gpt-6.1-sol` | 2 / 10 | OPENAI_API_KEY | 1 attempt | 3 attempts |
-| Open-weight, hosted | DeepSeek V4 Pro | `deepseek/deepseek-v4-pro` | 1.32 / 3.96 (LiteLLM table) | DEEPSEEK_API_KEY (new) | optional | 3 attempts |
-| Open-weight, local | Qwen3 8B via Ollama | `ollama_chat/qwen3:8b` | free | none | 1 attempt | 3 attempts |
+| Ceiling | Claude Fable 5.1 | `claude-fable-5-1` | 10 / 50 | ANTHROPIC_API_KEY | – | 1 attempt, Tier 2/3 |
+| Ceiling | GPT-6 Astra | `gpt-6-astra` | 10 / 50 | OPENAI_API_KEY | – | 1 attempt, Tier 2/3 |
+| Workhorse | Claude Opus 5.5 | `claude-opus-5-5` | 4 / 20 | ANTHROPIC_API_KEY | 1 attempt | 2 attempts |
+| Workhorse | GPT-6.1 Sol | `gpt-6.1-sol` | 2 / 10 | OPENAI_API_KEY | 1 attempt | 2 attempts |
+| Open-weight, hosted | DeepSeek V4 Pro | `deepseek/deepseek-v4-pro` | 1.32 / 3.96 (LiteLLM table) | DEEPSEEK_API_KEY (new) | optional | 2 attempts |
+| Open-weight, local | Qwen3 8B via Ollama | `ollama_chat/qwen3:8b` | free | none | 1 attempt | 2 attempts |
 
 **GPT-6.1 Sol is deliberate:** it's the model all ten v1 pilots used (10/10 first-try passes). Its
 v2 score is the cleanest before/after evidence that the new tasks are harder.
@@ -29,25 +29,33 @@ The harness sets a 16K-token context window for Ollama models, because Ollama's 
 silently cuts off long agent conversations. It will be slow, so run it with `--jobs 1`. It anchors
 the bottom of the table for free.
 
-**Calibration probes, not on the leaderboard:** Claude Sonnet 5.5 (`claude-sonnet-5-5`) and GPT-6.1
-Terra (`gpt-6.1-terra`) get one run per new task to set its tier (see SPEC.md, admission rule 3).
+**Calibration probes, not on the leaderboard:** Claude Haiku 5.5 (`claude-haiku-5-5`) and GPT-6
+Luna (`gpt-6-luna`), the cheapest model from each vendor, get one run per new task to set its tier (see SPEC.md, admission rule 3).
 Keeping them off the leaderboard means no ranked model influenced which tasks exist.
 GLM-5.3 and Kimi K3 are strong open-weight alternatives via OpenRouter (would need an `OPENROUTER_API_KEY`).
 
-## Cost estimate (rough; replaced by measured numbers after the checkpoint)
+## Cost policy
 
-Assumes about 40 agent steps per attempt with prompt caching, roughly the equivalent of 0.2M
-full-price input plus 20K output tokens per attempt. Real tasks will vary a lot; the checkpoint run
-measures the true per-attempt cost, and the full-run budget gets set from that.
+The budget is set from measured costs, never guesses. Rules:
 
-| Run | Attempts | Estimate |
+1. **Measure before spending.** Each new model gets a smoke run on one task ($1 cap). The checkpoint
+   run measures real per-attempt cost by tier; the full-run budget is computed from it.
+2. **Spend attempts where they inform.** Tier 1 is saturated (a workhorse model solves it in under a
+   minute), so the ceiling models skip Tier 1 entirely and run once on Tier 2/3 only.
+3. **Two attempts for workhorses, not three.** Uncertainty comes mostly from the number of tasks,
+   so a third attempt buys little precision. pass@2 is reported instead of pass@3.
+4. **Cheap calibration.** Tier probes use the cheapest models of each vendor (Claude Haiku 5.5,
+   GPT-6 Luna, about $0.10/$0.50 per M tokens), plus the free local model.
+5. **Hard caps everywhere.** `--max-cost` per run (required), `--cost-per-attempt` $2 by default
+   (an attempt hitting it counts as a failure), 100 agent steps per attempt.
+
+| Run | What runs | Budget rule |
 |---|---|---|
-| Checkpoint: Opus + Sol on ~15 tasks, 1 attempt | 30 | ~$25 |
-| Full: workhorses ×3, ceilings ×1, DeepSeek ×3, 35 tasks | 385 | ~$400 |
+| Checkpoint (Nov 12) | Sol + Opus, 1 attempt, all tasks; Qwen3 8B local | cap $15 total |
+| Full (Nov 20) | Sol + Opus ×2; Fable + Astra ×1 on Tier 2/3; DeepSeek ×2 (optional); Qwen3 ×2 | measured cost per attempt × attempts, +20% |
 
-Every run requires `--max-cost`, a hard total cap: the run stops when it's reached and resumes from
-where it stopped with the same `--run-id`. Each attempt is also capped (`--cost-per-attempt`, default
-$5); an attempt that hits its own cap counts as a failure, like running out of time.
+Every run requires `--max-cost`, a hard total cap: the run stops when it's reached, the interrupted
+attempt is not scored, and the same command with the same `--run-id` resumes.
 
 ## Measured so far
 
@@ -59,11 +67,11 @@ $5); an attempt that hits its own cap counts as a failure, like running out of t
 
 ```sh
 # checkpoint (Nov 12)
-kernelmind run --agent mini --model claude-opus-5-5 --max-cost 20 --run-id ckpt-opus
-kernelmind run --agent mini --model gpt-6.1-sol     --max-cost 10 --run-id ckpt-sol
+kernelmind run --agent mini --model claude-opus-5-5 --max-cost 10 --run-id ckpt-opus
+kernelmind run --agent mini --model gpt-6.1-sol     --max-cost 5  --run-id ckpt-sol
 kernelmind run --agent mini --model ollama_chat/qwen3:8b --max-cost 1 --jobs 1 --run-id ckpt-qwen3
 kernelmind report results/ckpt-*
 ```
 
-Fairness rules: same scaffold (mini-swe-agent, `mini.yaml`), same limits (150 steps, task time
+Fairness rules: same scaffold (mini-swe-agent, `mini.yaml`), same limits (100 steps, $2 per attempt, task time
 limits), provider-default reasoning settings, no per-model prompt tuning.

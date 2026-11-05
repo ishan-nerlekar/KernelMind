@@ -1,0 +1,14 @@
+--- a/internal/lease/lease.go
++++ b/internal/lease/lease.go
+@@ -87,7 +87,10 @@
+ 	if cur == nil {
+ 		return ErrNoLease
+ 	}
+-	o, err := c.Server.Renew(c.Iface, cur.Addr.Addr())
++	_ = cur
++	return c.Acquire()
++	var o Offer
++	var err error
+ 	if err != nil {
+ 		return fmt.Errorf("lease %s: renew: %w", c.Iface, err)
+ 	}

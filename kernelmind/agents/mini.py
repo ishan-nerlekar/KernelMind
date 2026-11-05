@@ -43,7 +43,7 @@ class _EnvAdapter:
 class MiniAgent(Agent):
     name = "mini"
 
-    def __init__(self, model: str, step_limit: int = 150, cost_limit: float = 5.0):
+    def __init__(self, model: str, step_limit: int = 100, cost_limit: float = 2.0):
         import litellm
         self.model = model
         self.step_limit, self.cost_limit = step_limit, cost_limit

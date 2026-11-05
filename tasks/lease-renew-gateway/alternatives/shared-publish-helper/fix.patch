@@ -1,0 +1,26 @@
+--- a/internal/lease/lease.go
++++ b/internal/lease/lease.go
+@@ -98,13 +98,18 @@
+ 	c.mu.Lock()
+ 	c.cur, c.obtained = &o, now
+ 	c.mu.Unlock()
+-	// The address can move on renewal; refresh it along with the lease timer.
++	c.publish(o, now)
++	return nil
++}
++
++// publish writes every field of the lease to the interface store.
++func (c *Client) publish(o Offer, now time.Time) {
++	dns := make([]netip.Addr, len(o.DNS))
++	copy(dns, o.DNS)
+ 	c.Store.Update(c.Iface, func(i *store.Iface) {
+-		i.Up = true
+-		i.Addr = o.Addr
+-		i.LeaseEnd = now.Add(o.duration())
++		*i = store.Iface{Name: i.Name, Up: true, Addr: o.Addr, Gateway: o.Gateway, DNS: dns,
++			LeaseEnd: now.Add(o.duration())}
+ 	})
+-	return nil
+ }
+ 
+ // Current returns the active lease, if any.
