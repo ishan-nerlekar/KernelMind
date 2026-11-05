@@ -1,5 +1,5 @@
 id = "bgp-legacy-missing-routes"
-tier = 2
+tier = 1
 root_cause = "unchecked-precondition"
 origin = "incident-transplant"
 language = "go"
