@@ -164,3 +164,18 @@ The trap: `git revert` of that commit stops the disconnects and **all visible te
 revert also deletes the test the commit added. Grading restores that test, so the revert fails, as
 does treating "no such station" as transient. The fix is the lookup key. Built on apnet (2k lines) on
 purpose: if the history form works even where the code is easy to read, the form itself is what's hard.
+
+| Task | GPT-6 Luna (3 attempts) | Claude Haiku 5.5 (3 attempts) |
+|---|---|---|
+| ap-mlo-inactivity | 3/3 pass, 44–45 s (one 681 s attempt was an OpenAI timeout), 10–13 cmds | 3/3 pass, 44–59 s, 11–14 cmds |
+
+Every attempt started with `git tag` / `git log` and then `git diff 23.0 23.1`, read the commit that
+caused the change (including its message about clients that couldn't rejoin), and fixed the lookup key in
+`drv.go`. **No attempt reverted.** 5 of 6 wrote their own MLO test. The history made the task
+*easier*: it narrowed the search to one 56-line diff. Relabeled Tier 1.
+
+**After 8 rounds (20 tasks, 122 probe attempts, ~$1.10):** the cheapest current models pass every
+task. They use evidence (logs, repro scripts, git history) the way careful engineers do: they search
+for everything at once, re-verify after each fix, and read why a change was made before undoing it.
+Decision pending: stop trying to make tasks harder and package KernelMind as an evaluation framework
+plus this calibration study.

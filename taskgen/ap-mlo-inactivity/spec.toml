@@ -1,5 +1,5 @@
 id = "ap-mlo-inactivity"
-tier = 2
+tier = 1
 root_cause = "regression-from-fix"
 origin = "incident-transplant"
 language = "go"
