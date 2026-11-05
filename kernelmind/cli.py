@@ -86,7 +86,7 @@ def main(argv=None) -> int:
 
     s = sub.add_parser("run", help="run an agent on tasks")
     s.add_argument("--agent", default="mini", choices=["mini", "oracle"])
-    s.add_argument("--model", help="LiteLLM model name: claude-opus-5-5, gpt-6.1-sol, ollama_chat/gpt-oss:20b")
+    s.add_argument("--model", help="LiteLLM model name: claude-opus-5-5, gpt-6.1-sol, ollama_chat/qwen3:8b")
     s.add_argument("--tasks", nargs="*")
     s.add_argument("--tier", type=int)
     s.add_argument("--attempts", type=int, default=1)

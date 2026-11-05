@@ -54,6 +54,23 @@ class MiniAgent(Agent):
         self.priced = model in litellm.model_cost or model.split("/", 1)[-1] in litellm.model_cost
         if not self.priced:
             self.config.setdefault("model", {})["cost_tracking"] = "ignore_errors"
+        if model.startswith(("ollama/", "ollama_chat/")):
+            # Ollama's default context is a few thousand tokens and silently truncates long agent
+            # histories. 16K fits a 8B model plus Docker in 16 GB of RAM.
+            kwargs = self.config.setdefault("model", {}).setdefault("model_kwargs", {})
+            kwargs["num_ctx"] = 16384
+
+    def preflight(self) -> None:
+        """One tiny real request before any attempt starts: catches a bad key, model name, missing
+        dependency or stopped Ollama in seconds, instead of after minutes of retries."""
+        import litellm
+        kwargs = {k: v for k, v in self.config.get("model", {}).get("model_kwargs", {}).items()
+                  if k != "drop_params"}
+        try:
+            litellm.completion(model=self.model, messages=[{"role": "user", "content": "Reply with OK."}],
+                               max_tokens=256, drop_params=True, num_retries=0, **kwargs)
+        except Exception as e:
+            raise SystemExit(f"Preflight failed for model '{self.model}': {type(e).__name__}: {str(e)[:400]}")
 
     def run(self, env: Environment, task: Task, out_dir: Path) -> dict:
         limits = task.limits

@@ -60,6 +60,9 @@ def run(tasks: list[Task], agent: str, model: str | None, attempts: int, backend
         run_id: str | None = None, max_cost: float = 0.0, cost_per_attempt: float = 5.0) -> Path:
     if agent != "oracle" and backend != "docker":
         raise SystemExit("agents other than oracle must run with --backend docker (sandboxed)")
+    if agent == "mini":
+        print(f"preflight: checking {model} ...", flush=True)
+        get_agent(agent, model).preflight()
     if agent == "mini":  # mini-swe-agent enforces this total across every attempt in this process
         from minisweagent.models import GLOBAL_MODEL_STATS
         GLOBAL_MODEL_STATS.cost_limit = max_cost

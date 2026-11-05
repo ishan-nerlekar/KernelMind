@@ -32,6 +32,9 @@ class Agent:
     name: str
     model: str | None = None
 
+    def preflight(self) -> None:
+        """Fail fast before a run if the agent can't work (bad key, missing dependency)."""
+
     def run(self, env: Environment, task: Task, out_dir: Path) -> dict:
         """Work on the task in env. Returns {exit_status, steps, cost_usd}."""
         raise NotImplementedError
