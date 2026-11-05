@@ -10,6 +10,7 @@ cp -r "$T/visible/." "$APP/"
 cp -r "$T/hidden/." "$APP/"
 timeout 600 go test -count=1 -timeout 180s  -v ./... > "$LOGS/go-test.log" 2>&1
 status=$?
+
 failed=$(grep -oE '^[[:space:]]*--- FAIL: [A-Za-z0-9_]+' "$LOGS/go-test.log" | awk '{print $3}' | sort -u | tr '\n' ' ')
 grep -qE '\[(build|setup) failed\]' "$LOGS/go-test.log" && failed="$failed build_failed"
 grep -q 'panic: test timed out' "$LOGS/go-test.log" && failed="$failed test_timeout"
