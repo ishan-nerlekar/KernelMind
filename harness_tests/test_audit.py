@@ -39,3 +39,18 @@ def test_shell_redirects_are_not_comparisons():
 def test_mutants_spread_across_lines():
     lines = [n.rsplit("-L", 1)[1] for n, _ in mutants(SCRIPT, "s", n=4)]
     assert len(set(lines)) == len(lines)
+
+
+def test_classify_keeps_kind_and_summary_counts(tmp_path):
+    from kernelmind.audit import classify, summary_rows
+    from kernelmind.validate import Check
+    from kernelmind.verify import Verdict
+    meta = {"near-1-partial": {"source": "llm", "category": "partial"}, "alt-1": {"source": "llm"},
+            "mut-1-number-L1": {"source": "mutant"}}
+    checks = [Check("t", "near-1-partial", "control", "fail", Verdict(True), False, "", 0),
+              Check("t", "alt-1", "alternative", "pass", Verdict(True), True, "", 0),
+              Check("t", "mut-1-number-L1", "control", "fail", Verdict(False), True, "", 0)]
+    r = classify(checks, meta)
+    assert [c["kind"] for c in r["candidates"]] == ["control", "alternative", "control"]
+    row = summary_rows([{"task": "t", **r}])[2]
+    assert "| 1/1 | 0/1 | 1/1 | near-1-partial |" in row

@@ -120,7 +120,8 @@ def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int) -> tuple[di
     prompt = PROMPT.format(n_wrong=n_wrong, n_alt=n_alt, instruction=task.instruction[:8000], reference=reference,
                            categories="\n".join(f"- {k}: {v}" for k, v in CATEGORIES.items()))
     # Default temperature: some models (claude-haiku-5-5) accept no other value.
-    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=16000)
+    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=16000,
+                           timeout=240, num_retries=2)
     try:
         cost = float(litellm.completion_cost(r))
     except Exception:
@@ -138,10 +139,15 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
     meta, cost = {}, 0.0
 
     def write(kind: str, name: str, script: str, info: dict) -> None:
+        if info.get("source") == "llm" and "set -e" not in script:
+            # A model-written step that errors (e.g. a tool missing from the image) must make the candidate
+            # count as broken, not silently produce wrong output that looks like a grader verdict.
+            first, _, rest = script.partition("\n")
+            script = f"{first}\nset -e\n{rest}" if first.startswith("#!") else f"set -e\n{script}"
         d = dst / kind / name
         shutil.copytree(ref_dir, d)  # keep any files the reference solution ships next to solve.sh
         (d / "solve.sh").write_text(script if script.endswith("\n") else script + "\n")
-        meta[name] = {"kind": kind, **info}
+        meta[name] = info
 
     for name, script in mutants((ref_dir / "solve.sh").read_text(), task.id, n_mut):
         write("controls", name, script, {"source": "mutant"})

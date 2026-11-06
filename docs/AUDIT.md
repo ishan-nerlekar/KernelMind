@@ -48,3 +48,53 @@ kernelmind audit --tasks-dir external/tb2 --out results/audit-pilot --model clau
 
 First pilot attempt (Nov 6) crashed before grading anything: the model rejected `temperature=0.7`.
 Fixed in the next commit (default temperature; a failed generation no longer stops the run).
+
+## Pilot results (Nov 6): 5 tasks, $0.02 of generation
+
+| Task | Baseline | Mutants caught | Near misses caught | Alternatives accepted | Confirmed findings |
+|---|---|---|---|---|---|
+| cancel-async-tasks | ok | – (none generated) | 4/4 | 2/2 | – |
+| large-scale-text-editing | ok | 6/6 | 4/4 | 2/2 | – |
+| log-summary-date-ranges | image build failed (transient) | – | – | – | rerun |
+| regex-log | ok | 3/6 | 3/4 | 1/1 (1 broken) | **4 lenient** |
+| sqlite-db-truncate | ok | 2/5 (1 broken) | 3/4 | 1/2 | – |
+
+(The summary table the run printed undercounted model-written candidates because of a bug, now fixed.
+These counts come from the per-task JSON.)
+
+### regex-log: 4 confirmed lenient findings
+
+The verifier accepts four regexes that are wrong by the instruction's own words. Each was confirmed by
+a differential probe: one log line where the reference regex is right and the candidate is wrong.
+
+| Candidate | Change | Probe line | Instruction says | Candidate returns |
+|---|---|---|---|---|
+| near-1 (model-written, "partial") | February limited to 28 days | `Login from 10.0.0.1 on 2021-02-29` | match: "February can have up to 29 days in all years" | no match |
+| mut-3 | 30-day months accept day 31 | `Login from 10.0.0.1 on 2020-04-31` | no match (not a date) | `2020-04-31` |
+| mut-2 | month `05` replaced by `6` | `Login from 10.0.0.1 on 2020-05-20` | match | no match |
+| mut-5 | last IPv4 octet rejects 250 | `Login from 10.0.0.250 on 2020-01-01` | match | no match |
+
+Root causes in `tests/test_outputs.py`:
+- **Confounded negative samples.** The two samples commented "invalid date 30th February" and
+  "invalid date 31th April" also contain the invalid IP `172.16.0.256`, so they are rejected for the
+  IP. With a valid date they are still rejected, so they never test the date rule.
+- **No positive sample for February 29**, though the instruction states it explicitly.
+- **Months 04–11 never appear in a matching line** except via the confounded samples; octets 250–254
+  never appear in the last position.
+
+### sqlite-db-truncate: no findings
+- The 3 surviving mutants are equivalent (byte-search start offset, step size, JSON indent): run on
+  the task's real `trunc.db`, each recovers the same 8 rows as the reference.
+- The surviving near miss (stops at the first undecodable row) also recovers all 8 rows on this
+  database, so it is not wrong on the graded input.
+- The strict suspect (`alt-1`) called the `sqlite3` CLI, which the image doesn't have; the script
+  kept going and wrote an empty file. A broken candidate, not a strict grader.
+- Observation, not counted: the test passes with 7 of the 8 rows and ignores invented rows, while the
+  instruction says "recover as many of the rows as possible". Possibly a deliberate tolerance.
+
+### Harness fixes from the pilot
+- Candidate metadata overwrote `kind`, so the summary miscounted. Fixed, with a unit test.
+- Model-written candidates now run with `set -e`, so a failing step makes them broken instead of
+  producing misleading output (the `alt-1` case).
+- Image builds retry once; tasks whose baseline broke are re-audited on resume; model calls time out
+  after 240 s with 2 retries (one call hung for 600 s).

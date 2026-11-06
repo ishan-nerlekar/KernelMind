@@ -129,7 +129,10 @@ def build_image(task: Task) -> str:
     cmd = ["docker", "build", "-q", "-t", tag]
     if base := os.environ.get("KM_BASE_IMAGE"):  # offline development only
         cmd += ["--build-arg", f"BASE_IMAGE={base}"]
-    r = _run([*cmd, str(context)], timeout=1800)
+    for _ in range(2):  # one retry: registry pulls fail transiently
+        r = _run([*cmd, str(context)], timeout=1800)
+        if not r.returncode:
+            break
     if r.returncode:
         raise RuntimeError(f"docker build failed for {task.id}:\n{r.output[-3000:]}")
     return tag

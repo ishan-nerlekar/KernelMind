@@ -71,8 +71,8 @@ def cmd_audit(args) -> int:
     spent, results = 0.0, []
     for task in load_tasks(args.tasks or None, None, root):
         done = out / f"{task.id}.json"
-        if done.exists():  # resume: finished tasks are kept
-            results.append(json.loads(done.read_text()))
+        if done.exists() and (prev := json.loads(done.read_text()))["baseline_ok"]:  # resume: keep finished tasks
+            results.append(prev)
             continue
         if args.model and spent >= args.max_cost:
             print(f"stopping: generation spend ${spent:.2f} reached --max-cost; rerun with the same --out to resume")
