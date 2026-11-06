@@ -41,6 +41,13 @@ def run_tests(env: Environment) -> Verdict:
             details = json.loads(raw)
         except json.JSONDecodeError:
             pass
+    if not details and (ctrf := env.read_text("/logs/verifier/ctrf.json")):  # Terminal-Bench / Harbor tests
+        try:
+            tests = json.loads(ctrf)["results"]["tests"]
+            details = {"failed_checks": [t["name"] for t in tests if t.get("status") != "passed"],
+                       "checks_total": len(tests), "checks_passed": sum(t.get("status") == "passed" for t in tests)}
+        except (json.JSONDecodeError, KeyError, TypeError):
+            pass
     note = "timed out" if r.timed_out else ("" if reward else "verifier wrote no reward: " + r.output[-500:])
     return Verdict(passed=reward == "1", failed_checks=sorted(set(details.get("failed_checks", []))),
                    checks_total=details.get("checks_total"), checks_passed=details.get("checks_passed"),

@@ -6,3 +6,4 @@ results/*
 !results/.gitkeep
 !results/published/
 .DS_Store
+external/

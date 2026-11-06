@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from .task import TIERS, load_tasks
+from .task import TASKS_DIR, TIERS, load_tasks
 
 
 def cmd_list(args) -> int:
@@ -25,7 +25,8 @@ def cmd_validate(args) -> int:
     from .validate import validate_task
     all_ok = True
     report = []
-    for task in load_tasks(args.tasks or None, args.tier):
+    root = Path(args.tasks_dir).expanduser().resolve() if args.tasks_dir else TASKS_DIR
+    for task in load_tasks(args.tasks or None, args.tier, root):
         checks = validate_task(task, args.backend)
         ok = all(c.ok for c in checks)
         all_ok &= ok
@@ -82,6 +83,7 @@ def main(argv=None) -> int:
     s.add_argument("--tier", type=int)
     s.add_argument("--backend", choices=["docker", "local"], default="docker")
     s.add_argument("--json", help="write a JSON report here")
+    s.add_argument("--tasks-dir", help="validate tasks from another directory, e.g. a Terminal-Bench 2.0 checkout")
     s.set_defaults(fn=cmd_validate)
 
     s = sub.add_parser("run", help="run an agent on tasks")

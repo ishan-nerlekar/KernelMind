@@ -7,7 +7,7 @@ Every environment exposes the same paths, so task scripts work unchanged in both
     /solution       a fix script being applied during validation (SOLUTION_DIR)
     /logs/verifier  verifier output: reward.txt and results.json (LOGS_DIR)
 
-DockerEnv is the real backend: no network, capped memory/CPU/pids, fresh container per attempt.
+DockerEnv is the real backend: no network (unless an external task needs it), capped memory/CPU/pids, fresh container per attempt.
 LocalEnv runs on the host in a temp directory (network-isolated with unshare when possible).
 It exists only for fast task development and CI without Docker; never run agents with it.
 """
@@ -141,7 +141,7 @@ class DockerEnv(Environment):
         self.image = build_image(task)
         self.name = f"km-{task.id}-{uuid.uuid4().hex[:8]}"
         d = task.docker
-        cmd = ["docker", "run", "-d", "--name", self.name, "--network", "none",
+        cmd = ["docker", "run", "-d", "--name", self.name, "--network", d.get("network", "none"),
                "--memory", d["memory"], "--cpus", str(d["cpus"]), "--pids-limit", "2048",
                "--security-opt", "no-new-privileges"]
         for cap in d["cap_add"]:

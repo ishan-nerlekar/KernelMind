@@ -72,6 +72,9 @@ class Task:
 
     def problems(self) -> list[str]:
         """Structural checks that need no execution."""
+        if self.meta.get("external"):  # someone else's task being audited: only what grading needs
+            return [f"missing {rel}" for rel in ("environment/Dockerfile", "tests/test.sh", "solution/solve.sh")
+                    if not (self.root / rel).exists()]
         errs = [f"task.toml missing '{k}'" for k in REQUIRED if k not in self.meta]
         if self.meta.get("id") != self.root.name:
             errs.append(f"id '{self.meta.get('id')}' does not match directory '{self.root.name}'")
@@ -87,12 +90,26 @@ class Task:
         return errs
 
 
+def _from_harbor(path: Path, m: dict) -> dict:
+    """Map a Harbor-format task.toml (Terminal-Bench 2.0) onto KernelMind's fields."""
+    env = m.get("environment", {})
+    return {"id": path.name, "tier": 0, "origin": "terminal-bench-2", "external": True,
+            "root_cause": m.get("metadata", {}).get("category", "unknown"),
+            "limits": {"agent_timeout_sec": int(m.get("agent", {}).get("timeout_sec", 1800)),
+                       "test_timeout_sec": int(m.get("verifier", {}).get("timeout_sec", 600))},
+            "docker": {"memory": f"{env.get('memory_mb', 4096)}m", "cpus": str(env.get("cpus", 2)),
+                       "network": "bridge" if env.get("allow_internet") else "none"}}
+
+
 def load_task(path: Path) -> Task:
-    return Task(path, tomllib.loads((path / "task.toml").read_text()))
+    meta = tomllib.loads((path / "task.toml").read_text())
+    if "name" in meta.get("task", {}):
+        meta = _from_harbor(path, meta)
+    return Task(path, meta)
 
 
-def load_tasks(ids: list[str] | None = None, tier: int | None = None) -> list[Task]:
-    tasks = [load_task(p) for p in sorted(TASKS_DIR.iterdir()) if (p / "task.toml").exists()]
+def load_tasks(ids: list[str] | None = None, tier: int | None = None, root: Path = TASKS_DIR) -> list[Task]:
+    tasks = [load_task(p) for p in sorted(root.iterdir()) if (p / "task.toml").exists()]
     if ids:
         known = {t.id for t in tasks}
         missing = [i for i in ids if i not in known]
