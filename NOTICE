@@ -1,0 +1,8 @@
+KernelMind includes or derives from third-party work:
+
+- GoBGP v3.37.0 (https://github.com/osrg/gobgp), Apache License 2.0, in substrate/gobgp/ and in the
+  generated tasks built on it. KernelMind adds new feature code and planted bugs to copies of it; the
+  original license is in substrate/gobgp/LICENSE.
+- Terminal-Bench 2.0 (https://github.com/harbor-framework/terminal-bench-2), Apache License 2.0. Not
+  vendored. audit/disclosures/ contains short solution scripts derived from its tasks' reference
+  solutions, and test changes proposed to its maintainers.

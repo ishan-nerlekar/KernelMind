@@ -1,65 +1,61 @@
 # KernelMind
 
-A benchmark of **systems debugging** tasks for coding agents. Each task drops an agent into a
-sandboxed codebase with a symptom (a bug report, logs, a failing command) and checks, with hidden
-tests, whether it found and fixed the root cause without breaking anything else.
+Tools for building and **auditing** agent benchmarks whose grading you can trust, plus a benchmark of
+systems-debugging tasks drawn from real production incidents.
 
-Tasks come from two sources: patterns from real production networking incidents (rewritten as
-original code, no proprietary material) and original bugs planted in purpose-built network systems.
+## Headline result: verifier gaps in Terminal-Bench 2.0
 
-> **Status (Nov 5, 2026):** 11 validated tasks: 2 Tier 1 (ported from v1), 8 Tier 2 and 1 Tier 3 built on
-> [apnet](substrate/apnet), a Go control plane for simulated Wi-Fi APs. First multi-model results
-> due Nov 12. See [docs/ROADMAP.md](docs/ROADMAP.md).
+`kernelmind audit` probes a task's verifier with solutions whose correct verdict is known: near misses
+that each break one stated requirement, mutants of the reference solution, and alternatives that meet
+every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
 
-## Results
+- **8 tasks (31%) accept a solution that is wrong by the instruction's own words.** Examples: a Coq
+  "proof" that assumes the theorem as an axiom, a repository "cleaned" of a leaked secret that still
+  returns it to `git show`, and a deploy hook that ignores the push and writes the expected text.
+- All 16 wrong solutions were **reproduced under Terminal-Bench's own harness** (Harbor) and **reported
+  upstream with test fixes**: [#92–#99](https://github.com/harbor-framework/terminal-bench-2/issues/92).
+- The auditor's own error rates are measured on planted flaws: gross flaws 4/4, subtle flaws 2/7, so
+  31% is a lower bound.
+- Under $0.25 of model calls for the whole audit.
 
-No model results yet. The first checkpoint run is scheduled for Nov 12.
+Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
+
+## The KernelMind benchmark
+
+20 systems-debugging tasks (Go and Python): a Wi-Fi AP control plane and GoBGP (95k lines), many
+transplanting the causal chain of a real networking incident into new code, with logs, live
+reproductions or git history as evidence. Every grader is validated three ways: the starter fails,
+alternative correct fixes pass, and at least three plausible wrong fixes fail on the check aimed at
+each. That validation method is what became the auditor.
+
+Difficulty study: over 8 rounds and 122 attempts, the cheapest current models (Claude Haiku 5.5, GPT-6
+Luna) solved every task design we tried. What didn't make tasks harder, and why, is written up in
+[docs/CALIBRATION.md](docs/CALIBRATION.md).
 
 ## Quickstart
 
 ```sh
-pip install -e ".[agents]"
-kernelmind list
-kernelmind validate                         # every task: starter fails, fixes pass, wrong fixes fail
-kernelmind run --agent oracle               # pipeline check: must score 100%
-export ANTHROPIC_API_KEY=...                # or OPENAI_API_KEY, etc.
-kernelmind run --agent mini --model claude-opus-5-5 --attempts 3 --max-cost 20   # see docs/MODELS.md
-kernelmind report results/<run-id>
+pip install -e ".[agents]"                  # Python 3.11+, Docker
+kernelmind validate                         # every KernelMind task: starter fails, fixes pass, wrong fixes fail
+kernelmind run --agent mini --model claude-haiku-5-5 --attempts 3 --max-cost 2
+
+# audit someone else's benchmark (Harbor / Terminal-Bench format)
+git clone https://github.com/harbor-framework/terminal-bench-2 external/tb2
+kernelmind audit --tasks-dir external/tb2 --out results/audit --model claude-haiku-5-5 --max-cost 1 regex-log
+audit/disclosures/repro.sh                  # re-check the 8 findings under Harbor (uv tool install harbor)
 ```
-
-Requires Python 3.11+ and Docker. `--backend local` runs validation without Docker for task
-development only; agents always run in Docker.
-
-## How a task is graded
-
-1. Fresh container from the task's Dockerfile: no network, capped memory/CPU/processes.
-2. The agent (mini-swe-agent; same prompt, tools and budget for every model) works in `/app`.
-3. Hidden tests are copied in only after the agent stops, then run.
-4. Pass = all hidden checks pass. Scores: pass@1 with bootstrap 95% CI, pass@k, per tier.
-
-## Task tiers
-
-| Tier | Agent gets | Must do |
-|---|---|---|
-| 1 Localized | Small codebase plus an explicit contract | Fix one function |
-| 2 Diagnose | Real codebase, bug report, logs | Find the faulty component, fix without regressions |
-| 3 Investigate | Running multi-process system | Reproduce, observe, isolate, fix |
-
-## Task validation
-
-A task is admitted only if `kernelmind validate` shows the starter failing on the intended check,
-the reference and alternative fixes passing, and at least three plausible wrong fixes failing on
-the checks that target their mistakes. See [docs/TASK_FORMAT.md](docs/TASK_FORMAT.md).
 
 ## Repository
 
 ```
-kernelmind/   harness: tasks, sandbox, validation, agents, scoring
-tasks/        one directory per task (Go tasks are generated; edit taskgen/, not tasks/)
-substrate/    apnet, the Go system Tier 2/3 bugs are planted in
-taskgen/      bug specs, hidden tests and symptom reports for generated tasks
-tools/        taskgen.py
-docs/         spec, task format, models, roadmap, changelog
-learning/     lessons written alongside the build
-results/      run outputs (not committed except published runs)
+kernelmind/          harness: tasks, Docker sandbox, validation, agents, scoring, audit
+tasks/               KernelMind tasks (generated from taskgen/; edit there)
+taskgen/, tools/     task generator (incident transplants, git history, planted-flaw tooling)
+substrate/           apnet (own code) and GoBGP v3.37.0 (Apache-2.0), where bugs are planted
+audit/disclosures/   the 8 Terminal-Bench findings: wrong solutions, issue texts, test fixes, repro.sh
+docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty study), SPEC, TASK_FORMAT
+learning/            notes written while building this
 ```
+
+Terminal-Bench 2.0 is Apache-2.0 (harbor-framework/terminal-bench-2); its tasks are not vendored here,
+except short derived solution scripts in `audit/disclosures/`.
