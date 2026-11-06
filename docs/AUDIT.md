@@ -358,3 +358,31 @@ confirmed under Terminal-Bench's own harness.
 | sparql-university | [#99](https://github.com/harbor-framework/terminal-bench-2/issues/99) |
 
 All 8 filed by Ishan on Nov 7, 2026.
+
+## Two follow-up experiments (planned Nov 7, before any results)
+
+### E1: does a QA reviewer that reads the tests find these gaps?
+`tools/qa_baseline.py`: a reviewer model gets what a QA agent or human reviewer would (instruction, tests,
+environment files, reference solution) for each of the 26 graded tasks and lists up to 6 ways a wrong
+solution could pass, each with a script. It reads the tests; it executes nothing. Reviewers:
+`claude-haiku-5-5` (the auditor's own generator) and two frontier models, `claude-opus-5-5` and
+`gpt-6.1-sol`. Their training data predates issues #92–#99.
+
+Metrics, fixed now:
+- **Recall on the 14 known gaps** (`audit/qa/known_gaps.json`), judged by hand: a flag matches if it names the
+  same unchecked requirement and a wrong solution that would exploit it. This ground truth is biased toward
+  what the auditor finds, so it can't show the auditor is better; it shows what review alone misses.
+- **The other direction:** flags on the 18 tasks with no known gap. For the best reviewer, its scripts are run
+  against the tests (`grade`); a passing script that is wrong by the instruction's words is a gap the
+  auditor missed. Same manual confirmation as before.
+- Flags raised, and cost.
+
+### E2: one near miss per requirement
+Subtle recall was 2/7 with 4 near misses per task. New mode `--near-miss-mode requirement`: the model first lists
+the instruction's checkable requirements (at most 12, cached so both arms share them), then writes one near miss
+per requirement. Control arm `repeat`: the original category prompt, called until it yields the same number of
+near misses, so the comparison is targeting, not volume. Both run on the 7 subtle planted flaws only, near
+misses only (mutants found none of them), with the same regrade against the sound tests.
+
+Prediction: requirement mode beats repeat on subtle recall, because each subtle flaw lets through one specific
+requirement's violation (gateway updated but not DNS, and so on). If repeat does as well, the gain is volume.

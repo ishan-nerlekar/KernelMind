@@ -8,6 +8,10 @@
    KernelMind's own tests. Each needs a manual look before it counts as a false positive.
 
     python3 tools/audit_planted.py --model claude-haiku-5-5 --max-cost 1     # resumable
+
+Recall experiment (subtle flaws only, near misses only; both arms share one requirement list per task):
+    python3 tools/audit_planted.py --model claude-haiku-5-5 --mode requirement --subtle-only
+    python3 tools/audit_planted.py --model claude-haiku-5-5 --mode repeat --subtle-only
 """
 from __future__ import annotations
 
@@ -34,13 +38,18 @@ def main() -> int:
     p.add_argument("--max-cost", type=float, default=1.0)
     p.add_argument("--out", default=str(REPO / "results" / "audit-planted"))
     p.add_argument("--backend", default="docker")
+    p.add_argument("--mode", choices=["category", "requirement", "repeat"], default="category")
+    p.add_argument("--subtle-only", action="store_true")
     a = p.parse_args()
+    if a.mode != "category" and a.out == p.get_default("out"):
+        a.out += f"-{a.mode}"
     out, regrade = Path(a.out), Path(a.out) / "regrade"
+    req_cache = REPO / "results" / "requirements-planted"
     regrade.mkdir(parents=True, exist_ok=True)
     flaws = {f["task"]: f for f in json.loads((PLANTED / "planted.json").read_text())}
     spent, rows = 0.0, []
     for task in load_tasks(root=PLANTED):
-        if task.id in SKIP:
+        if task.id in SKIP or (a.subtle_only and flaws[task.id].get("gross")):
             continue
         done = out / f"{task.id}.json"
         if done.exists() and (r := json.loads(done.read_text()))["baseline_ok"]:
@@ -50,7 +59,9 @@ def main() -> int:
                 print("stopping at --max-cost; rerun to resume")
                 break
             print(f"auditing weakened {task.id} ...", flush=True)
-            weak, cost = audit_task(task, out, a.backend, a.model, 6, 4, 2)
+            # The new arms add near misses only: mutants found no subtle flaw in the original run.
+            n = (6, 4, 2) if a.mode == "category" else (0, 1, 0)
+            weak, cost = audit_task(task, out, a.backend, a.model, *n, a.mode, req_cache)
             spent += cost
         rg = regrade / f"{task.id}.json"
         if rg.exists():
@@ -87,6 +98,7 @@ def main() -> int:
         lines.append(f"\n{kind}: detected {sum(r['detected'] for r in sel)}/{len(sel)}")
     lines.append(f"\nsuspects against sound graders (need manual review): {sum(len(r['sound_grader_suspects']) for r in rows)}"
                  f" across {len(rows)} tasks; generation cost this run ${spent:.2f}")
+    lines.append(f"near misses graded: {sum(r['graded'] for r in rows)} (+{sum(r['broken'] for r in rows)} broken)")
     (out / "T4.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
     return 0

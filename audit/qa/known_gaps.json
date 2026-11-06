@@ -1,0 +1,25 @@
+{
+ "_note": "Ground truth for tools/qa_baseline.py: the 14 distinct verifier gaps behind the 16 confirmed wrong solutions (issues #92-#99). A reviewer's flag matches a gap if it names the same unchecked requirement and a wrong solution that would exploit it.",
+ "prove-plus-comm": [
+  {"id": "axiom", "issue": 94, "gap": "the proof may rely on an Axiom stating the theorem; tests never ask Coq for the proof's assumptions"},
+  {"id": "admitted", "issue": 94, "gap": "Admitted. passes when Qed. appears in a comment; the admit check is a case-sensitive string match"}],
+ "git-leak-recovery": [
+  {"id": "recoverable", "issue": 93, "gap": "the secret stays recoverable from a dangling commit's blob; the unreachable-objects check reads commit headers, not contents"},
+  {"id": "messages", "issue": 93, "gap": "commit messages can be rewritten; the check is a substring match"}],
+ "configure-git-webserver": [
+  {"id": "hardcoded", "issue": 95, "gap": "the hook can write a literal 'hello world' without deploying the push; the test pushes exactly the instruction's example"}],
+ "modernize-scientific-stack": [
+  {"id": "do-not-modify", "issue": 97, "gap": "the script marked DO NOT MODIFY can be edited"},
+  {"id": "version-pins", "issue": 97, "gap": "the required version constraints in the dependency file are not checked"}],
+ "db-wal-recovery": [
+  {"id": "wal-not-fixed", "issue": 96, "gap": "step 1, fixing the WAL file, is never checked; only the JSON output is"}],
+ "cobol-modernization": [
+  {"id": "rejection-path", "issue": 98, "gap": "every graded transaction is a valid sale, so a port without the seller-owns-book validation passes"}],
+ "regex-log": [
+  {"id": "confounded-dates", "issue": 92, "gap": "invalid-date negative samples also contain an invalid IP, so invalid dates (April 31, Feb 30) are never tested"},
+  {"id": "feb-29", "issue": 92, "gap": "no Feb 29 positive sample, though the instruction explicitly allows it"},
+  {"id": "coverage", "issue": 92, "gap": "no matching sample with a May date or a last octet of 250-254"}],
+ "sparql-university": [
+  {"id": "non-eu", "issue": 99, "gap": "the graph has no non-EU country such as GB, so a wrong EU-membership list passes"},
+  {"id": "exactly-10", "issue": 99, "gap": "no department has exactly 10 students, so >= 10 passes for 'more than 10'"}]
+}

@@ -77,3 +77,27 @@ def test_patch_mutants_touch_only_added_code_lines():
         changed = [i for i, (x, y) in enumerate(zip(before, after)) if x != y]
         assert changed == [5], (name, changed)  # only the added code line, never context or the added comment
         assert "delete-step" not in name
+
+
+def test_requirement_and_repeat_modes_share_requirements_and_budget(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from kernelmind import audit
+    root = tmp_path / "t"
+    (root / "solution").mkdir(parents=True)
+    (root / "solution" / "solve.sh").write_text("#!/bin/bash\necho ok\n")
+    task = SimpleNamespace(id="t", root=root, instruction="do things")
+    calls = []
+
+    def fake(model, prompt, max_tokens=16000):
+        calls.append(prompt)
+        if prompt.startswith("Below is the instruction"):
+            return {"requirements": [f"r{i}" for i in range(6)]}, 0.01
+        return {"near_misses": [{"violates": "x", "solve_sh": "#!/bin/bash"}] * 9}, 0.0  # over-long replies are cut
+
+    monkeypatch.setattr(audit, "complete", fake)
+    req, _ = audit.llm_candidates(task, "m", 1, 0, "requirement", tmp_path / "cache")
+    rep, _ = audit.llm_candidates(task, "m", 1, 0, "repeat", tmp_path / "cache")
+    assert len(calls) == 1 + 2 + 2  # requirements extracted once (cached), then 2 chunks per arm
+    assert "1. r0" in calls[1] and "2. r5" in calls[2]
+    assert len(req["near_misses"]) == len(rep["near_misses"]) == 6  # one per requirement in both arms
+    assert all(nm["category"] == "req" for nm in req["near_misses"])

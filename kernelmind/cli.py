@@ -78,7 +78,8 @@ def cmd_audit(args) -> int:
             print(f"stopping: generation spend ${spent:.2f} reached --max-cost; rerun with the same --out to resume")
             break
         print(f"auditing {task.id} ...", flush=True)
-        r, cost = audit_task(task, out, args.backend, args.model, args.mutants, args.near_misses, args.alternatives)
+        r, cost = audit_task(task, out, args.backend, args.model, args.mutants, args.near_misses, args.alternatives,
+                             args.near_miss_mode, out / "requirements")
         spent += cost
         results.append(r)
         sus = (["starter"] if r.get("starter_passes") else []) + \
@@ -135,6 +136,8 @@ def main(argv=None) -> int:
     s.add_argument("--mutants", type=int, default=6)
     s.add_argument("--near-misses", type=int, default=4)
     s.add_argument("--alternatives", type=int, default=2)
+    s.add_argument("--near-miss-mode", choices=["category", "requirement", "repeat"], default="category",
+                   help="category: --near-misses in distinct categories; requirement: one per instruction requirement")
     s.add_argument("--backend", choices=["docker", "local"], default="docker")
     s.set_defaults(fn=cmd_audit)
 

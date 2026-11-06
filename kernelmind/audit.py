@@ -119,16 +119,52 @@ def _parse(text: str) -> dict:
     return json.loads(m.group(0), strict=False) if m else {}  # scripts often contain raw newlines
 
 
-def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int) -> tuple[dict, float]:
-    import litellm
+REQ_PROMPT = """Below is the instruction for a benchmark task. List every requirement it states or clearly \
+implies that could be checked in the final state of the container: behaviors, edge cases it names, things it \
+forbids or says to keep unchanged, names, formats and locations. One requirement per item, quoted as closely as \
+possible in the instruction's own words, at most {k}. Reply with JSON only: {{"requirements": ["...", "..."]}}
+
+=== INSTRUCTION ===
+{instruction}
+"""
+
+PER_REQ_PROMPT = """You are auditing the grader of a benchmark task. An AI agent receives the instruction below and \
+works in a Linux container (working directory /app, network available). Its work is graded by hidden tests \
+that check the final state of the container. Below is the reference solution, a bash script run in /app.
+
+For EACH requirement listed below, write one NEAR MISS: a complete bash script (starts with #!/bin/bash, runs in \
+/app) that a capable but careless engineer might plausibly submit, which meets every other requirement but \
+violates that one, so that by the instruction's own words it is NOT a correct solution. Make the violation real \
+and observable in the final state, not just a comment.
+
+Don't guess what the tests check; work from the instruction. Keep dependencies close to the reference's.
+Reply with JSON only:
+{{"near_misses": [{{"requirement": 1, "violates": "...", "solve_sh": "..."}}]}}
+
+=== REQUIREMENTS TO VIOLATE (one near miss each) ===
+{requirements}
+
+=== INSTRUCTION ===
+{instruction}
+
+=== REFERENCE SOLUTION (solve.sh) ===
+{reference}
+"""
+
+MAX_REQS, CHUNK = 12, 4
+
+
+def _reference(task: Task) -> str:
     reference = (task.root / "solution" / "solve.sh").read_text()
     if (patch := task.root / "solution" / "fix.patch").exists():  # KernelMind-style: solve.sh applies a patch
         reference += "\n=== fix.patch (applied by solve.sh) ===\n" + patch.read_text()
-    reference = reference[:15000]
-    prompt = PROMPT.format(n_wrong=n_wrong, n_alt=n_alt, instruction=task.instruction[:8000], reference=reference,
-                           categories="\n".join(f"- {k}: {v}" for k, v in CATEGORIES.items()))
+    return reference[:15000]
+
+
+def complete(model: str, prompt: str, max_tokens: int = 16000) -> tuple[dict, float]:
+    import litellm
     # Default temperature: some models (claude-haiku-5-5) accept no other value.
-    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=16000,
+    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=max_tokens,
                            timeout=240, num_retries=2)
     try:
         cost = float(litellm.completion_cost(r))
@@ -137,8 +173,52 @@ def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int) -> tuple[di
     return _parse(r.choices[0].message.content or ""), cost
 
 
-def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, n_alt: int) -> tuple[Task, float]:
-    """Copy the task to out/<id>/ with candidates as controls (should fail) and alternatives (should pass)."""
+def requirements(task: Task, model: str, cache: Path | None) -> tuple[list[str], float]:
+    """The instruction's checkable requirements, cached so every arm of an experiment uses the same list."""
+    f = cache / f"{task.id}.json" if cache else None
+    if f and f.exists():
+        return json.loads(f.read_text()), 0.0
+    gen, cost = complete(model, REQ_PROMPT.format(k=MAX_REQS, instruction=task.instruction[:8000]), 4000)
+    reqs = [str(r) for r in gen.get("requirements", [])][:MAX_REQS]
+    if f and reqs:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(reqs, indent=1))
+    return reqs, cost
+
+
+def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int, mode: str = "category",
+                   req_cache: Path | None = None) -> tuple[dict, float]:
+    """mode "category": one call, n_wrong near misses in distinct categories (the original auditor).
+    mode "requirement": one near miss per requirement of the instruction, in calls of CHUNK.
+    mode "repeat": the category call repeated until it yields as many near misses as "requirement" would
+    (the control arm: same budget, no targeting). The last two write near misses only."""
+    reference, instruction = _reference(task), task.instruction[:8000]
+    cats = "\n".join(f"- {k}: {v}" for k, v in CATEGORIES.items())
+    if mode == "category":
+        return complete(model, PROMPT.format(n_wrong=n_wrong, n_alt=n_alt, instruction=instruction,
+                                             reference=reference, categories=cats))
+    reqs, cost = requirements(task, model, req_cache)
+    out: dict = {"near_misses": [], "alternatives": [], "requirements": reqs}
+    for i in range(0, len(reqs), CHUNK):
+        chunk = reqs[i:i + CHUNK]
+        if mode == "requirement":
+            listed = "\n".join(f"{j}. {r}" for j, r in enumerate(chunk, 1))
+            gen, c = complete(model, PER_REQ_PROMPT.format(requirements=listed, instruction=instruction,
+                                                           reference=reference))
+            for nm in gen.get("near_misses", []):
+                nm["category"] = "req"
+        else:
+            gen, c = complete(model, PROMPT.format(n_wrong=len(chunk), n_alt=0, instruction=instruction,
+                                                   reference=reference, categories=cats))
+        cost += c
+        out["near_misses"] += gen.get("near_misses", [])[:len(chunk)]  # equal counts in both arms
+    return out, cost
+
+
+def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, n_alt: int,
+            mode: str = "category", req_cache: Path | None = None, given: dict | None = None) -> tuple[Task, float]:
+    """Copy the task to out/<id>/ with candidates as controls (should fail) and alternatives (should pass).
+    given: pre-generated {"near_misses": [...]} to grade instead of calling the model."""
     dst = out / "tasks" / task.id
     if dst.exists():
         shutil.rmtree(dst)
@@ -160,15 +240,20 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
     target = "fix.patch" if (ref_dir / "fix.patch").exists() else "solve.sh"
     for name, text in mutants((ref_dir / target).read_text(), task.id, n_mut, patch=target == "fix.patch"):
         write("controls", name, text, {"source": "mutant"}, file=target)
-    if model and (n_wrong or n_alt):
+    if given is not None:
+        gen = given
+        for i, c in enumerate(gen.get("near_misses", []), 1):
+            write("controls", f"qa-{i}", c.get("solve_sh", ""), {"source": "llm", "category": "qa",
+                                                                 "violates": c.get("violates", "")})
+    elif model and (n_wrong or n_alt):
         try:
-            gen, cost = llm_candidates(task, model, n_wrong, n_alt)
+            gen, cost = llm_candidates(task, model, n_wrong, n_alt, mode, req_cache)
         except Exception as e:  # the mutants are still worth grading
             print(f"  generation failed for {task.id}: {str(e)[:300]}")
             gen = {}
         if not gen:
             print(f"  no model-written candidates for {task.id} (failed call or unparsable reply)")
-        for i, c in enumerate(gen.get("near_misses", [])[:n_wrong], 1):
+        for i, c in enumerate(gen.get("near_misses", [])[:n_wrong if mode == "category" else None], 1):
             cat = re.sub(r"[^a-z-]", "", str(c.get("category", "near-miss")).lower()) or "near-miss"
             write("controls", f"near-{i}-{cat}", c.get("solve_sh", ""), {"source": "llm", "category": cat,
                                                                           "violates": c.get("violates", "")})
@@ -202,11 +287,12 @@ def classify(checks, meta: dict) -> dict:
             "candidates": rows}
 
 
-def audit_task(task: Task, out: Path, backend: str, model: str | None, n_mut: int, n_wrong: int, n_alt: int) -> tuple[dict, float]:
-    copy, cost = prepare(task, out, model, n_mut, n_wrong, n_alt)
+def audit_task(task: Task, out: Path, backend: str, model: str | None, n_mut: int, n_wrong: int, n_alt: int,
+               mode: str = "category", req_cache: Path | None = None, given: dict | None = None) -> tuple[dict, float]:
+    copy, cost = prepare(task, out, model, n_mut, n_wrong, n_alt, mode, req_cache, given)
     checks = validate_task(copy, backend)
     meta = json.loads((copy.root / "audit_candidates.json").read_text())
-    result = {"task": task.id, "category": task.meta.get("root_cause"), "generation_cost": cost,
+    result = {"task": task.id, "category": task.meta.get("root_cause"), "generation_cost": cost, "mode": mode,
               **classify(checks, meta), "checks": [{**asdict(c), "verdict": c.verdict.to_dict() if c.verdict else None}
                                                    for c in checks]}
     (out / f"{task.id}.json").write_text(json.dumps(result, indent=1, default=str))
