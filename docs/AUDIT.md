@@ -330,3 +330,12 @@ audited and found nothing: #85 says raman-fitting's verifier locks unstated conv
 it), and #84 says sanitize-git-repo's verifier crashes when history is rewritten (an alternative
 our generator didn't produce). Both point at the auditor's weak side: alternatives (strictness
 probes) are much harder to generate correctly than near misses.
+
+## T7 disclosure packages (Nov 7)
+
+`audit/disclosures/`: for each of the 8 tasks, the wrong solutions, a draft issue, and a suggested
+test fix. 7 of 8 fixes were checked locally: the reference passes, each wrong solution fails. That
+needed Coq 8.18, GnuCOBOL 3.1 and rdflib in the workspace. While checking prove-plus-comm, a second
+bypass was **confirmed** against the current tests: `Admitted. (* Qed. *)` passes, because the
+`admit` check is case-sensitive and `Qed.` may sit in a comment. `repro.sh` re-checks every finding
+under Harbor's oracle agent before filing.
