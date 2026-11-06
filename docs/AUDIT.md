@@ -45,3 +45,6 @@ Pilot command:
 kernelmind audit --tasks-dir external/tb2 --out results/audit-pilot --model claude-haiku-5-5 --max-cost 1 \
   cancel-async-tasks regex-log sqlite-db-truncate log-summary-date-ranges large-scale-text-editing
 ```
+
+First pilot attempt (Nov 6) crashed before grading anything: the model rejected `temperature=0.7`.
+Fixed in the next commit (default temperature; a failed generation no longer stops the run).

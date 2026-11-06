@@ -119,8 +119,8 @@ def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int) -> tuple[di
     reference = (task.root / "solution" / "solve.sh").read_text()[:15000]
     prompt = PROMPT.format(n_wrong=n_wrong, n_alt=n_alt, instruction=task.instruction[:8000], reference=reference,
                            categories="\n".join(f"- {k}: {v}" for k, v in CATEGORIES.items()))
-    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=16000,
-                           temperature=0.7)
+    # Default temperature: some models (claude-haiku-5-5) accept no other value.
+    r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=16000)
     try:
         cost = float(litellm.completion_cost(r))
     except Exception:
@@ -146,7 +146,13 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
     for name, script in mutants((ref_dir / "solve.sh").read_text(), task.id, n_mut):
         write("controls", name, script, {"source": "mutant"})
     if model and (n_wrong or n_alt):
-        gen, cost = llm_candidates(task, model, n_wrong, n_alt)
+        try:
+            gen, cost = llm_candidates(task, model, n_wrong, n_alt)
+        except Exception as e:  # the mutants are still worth grading
+            print(f"  generation failed for {task.id}: {str(e)[:300]}")
+            gen = {}
+        if not gen:
+            print(f"  no model-written candidates for {task.id} (failed call or unparsable reply)")
         for i, c in enumerate(gen.get("near_misses", [])[:n_wrong], 1):
             cat = re.sub(r"[^a-z-]", "", str(c.get("category", "near-miss")).lower()) or "near-miss"
             write("controls", f"near-{i}-{cat}", c.get("solve_sh", ""), {"source": "llm", "category": cat,
