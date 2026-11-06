@@ -229,3 +229,42 @@ Recurring causes:
 **Mutants: 47 lenient survivors, not yet triaged.** Survivors include equivalent mutants (all 3 in
 the pilot's sqlite-db-truncate were equivalent; all 3 in regex-log were real), so mutation scores are
 an upper bound on leniency until sampled.
+
+## T4 results (Nov 7): the auditor's own error rates
+
+Run: `python3 tools/audit_planted.py --model claude-haiku-5-5 --max-cost 1` on the Mac, 11 planted
+flaws, $0.05 of generation.
+
+| | Detected | Found by |
+|---|---|---|
+| Gross flaws (the weakened grader also passes the untouched starter) | **4/4** | the starter itself, plus 2–3 near misses each |
+| Subtle flaws (the starter still fails) | **2/7 (29%)** | ap-mlo-inactivity (near-1-symptom, near-3-hardcoded), seq-wraparound (near-2-symptom) |
+
+Missed subtle flaws: config-override-precedence, lease-renew-gateway, peer-timeout-flap,
+ssid-dva-global-vlans, x-lease-oblique. In each, the planted flaw only lets through one *specific*
+wrong fix (for example, updating the gateway but not the DNS servers), and none of the 4 model-written
+near misses or ≤6 mutants made that mistake.
+
+**What this means for the Terminal-Bench numbers:** the auditor finds gross gaps reliably but misses
+most narrow ones, so 7 of 24 tasks with confirmed gaps is a **lower bound**. Obvious improvements to
+test: more near misses per task, and one near miss per instruction sentence instead of per category.
+
+### Suspects against KernelMind's sound graders (18)
+
+Running the same candidates against KernelMind's original tests is also an audit of KernelMind itself.
+
+| Verdict | Count | Details |
+|---|---|---|
+| Real gap in KernelMind's tests | 2 | peer-timeout-flap: a NotFound result sets `Stale = true` and no test checks `Stale` after NotFound (mutant). seq-wraparound: `Next(65535)` returns 1 instead of wrapping to 0 and no test checks the wrap (near-4; minor) |
+| Possible strictness in KernelMind | 1 | peer-timeout-flap alt-2 fixes the symptom in the caller (a timeout is never reported to the tracker as a miss) instead of in `peer.Tracker`; the hidden tests unit-test the tracker, so a caller-level fix fails. Needs a decision: is the tracker the only acceptable fix location? |
+| Equivalent mutants | 2 | seq-wraparound `> 0` → `>= 0` (with `a != b` never 0); neigh-roam-flush per-interface counter (no longer observable after the fix) |
+| Near misses that weren't wrong | 6 | the claimed flaw didn't apply (config-override isolation default already `false`; neigh-roam capacity check `>=` not present), didn't exist (rate-counter "packet counters": apnet has none; radio "second push path": there isn't one), or is unobservable (neigh-roam near-1, near-2: per-interface counts) |
+| Alternatives that were wrong | 7 | 3 don't compile; 3 fail the behavior the task is about; 1 hangs (ap-mlo alt-2, probably a lock taken twice) |
+
+**Raw suspects are mostly noise on sound graders:** 3 of 18 were worth a human's attention. On
+Terminal-Bench's graders the model-written lenient suspects confirmed at a much higher rate (11 of
+17 including the pilot), consistent with those graders having real gaps. Either way, every finding
+needs the manual confirmation step; the auditor ranks where to look, it doesn't decide.
+
+KernelMind follow-ups (log in CHANGELOG when done): add a `Stale`-after-NotFound check to
+peer-timeout-flap and a wrap check for `Next` to seq-wraparound; decide on the caller-level fix.
