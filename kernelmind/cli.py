@@ -63,6 +63,32 @@ def cmd_run(args) -> int:
     return 0
 
 
+def cmd_audit(args) -> int:
+    from .audit import audit_task, summary_rows
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    root = Path(args.tasks_dir).expanduser().resolve()
+    spent, results = 0.0, []
+    for task in load_tasks(args.tasks or None, None, root):
+        done = out / f"{task.id}.json"
+        if done.exists():  # resume: finished tasks are kept
+            results.append(json.loads(done.read_text()))
+            continue
+        if args.model and spent >= args.max_cost:
+            print(f"stopping: generation spend ${spent:.2f} reached --max-cost; rerun with the same --out to resume")
+            break
+        print(f"auditing {task.id} ...", flush=True)
+        r, cost = audit_task(task, out, args.backend, args.model, args.mutants, args.near_misses, args.alternatives)
+        spent += cost
+        results.append(r)
+        sus = [c["candidate"] for c in r["candidates"] if c["outcome"].endswith("suspect")]
+        print(f"  baseline {'ok' if r['baseline_ok'] else 'BROKEN'}; suspects: {', '.join(sus) or 'none'}; ${cost:.3f}")
+    table = "\n".join(summary_rows(results))
+    (out / "summary.md").write_text(table + "\n")
+    print("\n" + table + f"\n\ngeneration cost this run: ${spent:.2f}; details in {out}/<task>.json")
+    return 0
+
+
 def cmd_report(args) -> int:
     from .report import load, markdown, summarize
     rows = summarize(load([Path(d) for d in args.runs]), k=args.k)
@@ -98,6 +124,18 @@ def main(argv=None) -> int:
     s.add_argument("--max-cost", type=float, default=0.0, help="hard total USD cap for this run (required for models)")
     s.add_argument("--cost-per-attempt", type=float, default=2.0, help="USD cap per attempt (default 2)")
     s.set_defaults(fn=cmd_run)
+
+    s = sub.add_parser("audit", help="probe another benchmark's verifiers with near-miss and alternative solutions")
+    s.add_argument("tasks", nargs="*")
+    s.add_argument("--tasks-dir", required=True, help="e.g. external/tb2")
+    s.add_argument("--out", required=True, help="results directory; rerun with the same one to resume")
+    s.add_argument("--model", help="LiteLLM model for near misses and alternatives (omit for mutants only)")
+    s.add_argument("--max-cost", type=float, default=1.0, help="USD cap on generation for this run")
+    s.add_argument("--mutants", type=int, default=6)
+    s.add_argument("--near-misses", type=int, default=4)
+    s.add_argument("--alternatives", type=int, default=2)
+    s.add_argument("--backend", choices=["docker", "local"], default="docker")
+    s.set_defaults(fn=cmd_audit)
 
     s = sub.add_parser("report", help="leaderboard from one or more run directories")
     s.add_argument("runs", nargs="+")

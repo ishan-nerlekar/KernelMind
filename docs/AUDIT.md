@@ -21,3 +21,27 @@ kernelmind validate --tasks-dir external/tb2 cancel-async-tasks regex-log sqlite
 
 Expected: for each task, the starter (no solution) fails and the reference `solve.sh` passes.
 Record build time, test time, and any task that doesn't build or run on Apple Silicon.
+
+**Result (Nov 6):** all three valid under Docker on the Mac (starter fails, reference passes).
+
+## T2/T3: candidates and the pilot
+
+`kernelmind audit` (in `kernelmind/audit.py`) copies each task, adds candidates, and grades them with
+`validate`:
+
+| Candidate | Made by | Should | If it doesn't |
+|---|---|---|---|
+| Mutant: one changed number, comparison or boolean in the reference solution, or one deleted shell step | Code, deterministic per task | Fail | Lenient suspect, unless the mutant is equivalent (still correct) |
+| Near miss: breaks exactly one sentence of the instruction (categories: partial, edge-case, symptom, over-broad, hardcoded, format) | A cheap model, shown the instruction and reference solution but never the tests | Fail | Lenient suspect |
+| Alternative: meets every requirement in a different way | Same model | Pass | Strict suspect |
+
+A candidate whose own script crashes is `broken-candidate` and says nothing about the grader.
+Suspects are only findings after confirmation (T6). Mutant comparisons skip shell redirects; mutants
+are spread across lines; dependency pins and URLs are never mutated.
+
+Pilot command:
+
+```sh
+kernelmind audit --tasks-dir external/tb2 --out results/audit-pilot --model claude-haiku-5-5 --max-cost 1 \
+  cancel-async-tasks regex-log sqlite-db-truncate log-summary-date-ranges large-scale-text-editing
+```
