@@ -1,3 +1,8 @@
 regex-log https://github.com/harbor-framework/terminal-bench-2/issues/92
 git-leak-recovery https://github.com/harbor-framework/terminal-bench-2/issues/93
 prove-plus-comm https://github.com/harbor-framework/terminal-bench-2/issues/94
+configure-git-webserver https://github.com/harbor-framework/terminal-bench-2/issues/95
+db-wal-recovery https://github.com/harbor-framework/terminal-bench-2/issues/96
+modernize-scientific-stack https://github.com/harbor-framework/terminal-bench-2/issues/97
+cobol-modernization https://github.com/harbor-framework/terminal-bench-2/issues/98
+sparql-university https://github.com/harbor-framework/terminal-bench-2/issues/99

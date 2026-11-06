@@ -351,4 +351,10 @@ confirmed under Terminal-Bench's own harness.
 | regex-log | [#92](https://github.com/harbor-framework/terminal-bench-2/issues/92) |
 | git-leak-recovery | [#93](https://github.com/harbor-framework/terminal-bench-2/issues/93) |
 | prove-plus-comm | [#94](https://github.com/harbor-framework/terminal-bench-2/issues/94) |
-| configure-git-webserver, db-wal-recovery, modernize-scientific-stack, cobol-modernization, sparql-university | to file |
+| configure-git-webserver | [#95](https://github.com/harbor-framework/terminal-bench-2/issues/95) |
+| db-wal-recovery | [#96](https://github.com/harbor-framework/terminal-bench-2/issues/96) |
+| modernize-scientific-stack | [#97](https://github.com/harbor-framework/terminal-bench-2/issues/97) |
+| cobol-modernization | [#98](https://github.com/harbor-framework/terminal-bench-2/issues/98) |
+| sparql-university | [#99](https://github.com/harbor-framework/terminal-bench-2/issues/99) |
+
+All 8 filed by Ishan on Nov 7, 2026.
