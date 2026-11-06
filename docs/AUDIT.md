@@ -98,3 +98,18 @@ Root causes in `tests/test_outputs.py`:
   producing misleading output (the `alt-1` case).
 - Image builds retry once; tasks whose baseline broke are re-audited on resume; model calls time out
   after 240 s with 2 retries (one call hung for 600 s).
+
+## T5 task selection (fixed Nov 6, before any T5 results)
+
+Eligible: no GPU; category not model-training, machine-learning or video-processing; Dockerfile with
+at most 4 RUN/COPY steps; reference `solve.sh` at most 250 lines; at most 8 GB of memory; agent
+timeout at most 1,200 s; the reference solution downloads models or builds large projects at most
+once (regex `huggingface|from_pretrained|wget|git clone|make -j|opam|cargo build`); not in the pilot.
+33 tasks are eligible; 25 were sampled with `random.Random(20261106)`. The heaviness rules were
+added after a first draw included CompCert and model downloads, before anything was run.
+
+break-filter-js-from-html build-pmars cobol-modernization code-from-image configure-git-webserver
+constraints-scheduling db-wal-recovery fix-git git-leak-recovery git-multibranch headless-terminal
+merge-diff-arc-agi-task modernize-scientific-stack openssl-selfsigned-cert overfull-hbox
+password-recovery polyglot-c-py polyglot-rust-c prove-plus-comm raman-fitting sanitize-git-repo
+sparql-university torch-pipeline-parallelism torch-tensor-parallelism tune-mjcf
