@@ -94,6 +94,7 @@ def _from_harbor(path: Path, m: dict) -> dict:
     """Map a Harbor-format task.toml (Terminal-Bench 2.0) onto KernelMind's fields."""
     env = m.get("environment", {})
     return {"id": path.name, "tier": 0, "origin": "terminal-bench-2", "external": True,
+            "prebuilt_image": env.get("docker_image"),
             "root_cause": m.get("metadata", {}).get("category", "unknown"),
             "limits": {"agent_timeout_sec": int(m.get("agent", {}).get("timeout_sec", 1800)),
                        "test_timeout_sec": int(m.get("verifier", {}).get("timeout_sec", 600))},

@@ -133,6 +133,11 @@ def build_image(task: Task) -> str:
         r = _run([*cmd, str(context)], timeout=1800)
         if not r.returncode:
             break
+    if r.returncode and (pre := task.meta.get("prebuilt_image")):
+        # The source build can rot (e.g. it clones a repository that no longer exists); the task's own
+        # harness runs this published image, so fall back to it.
+        if not _run(["docker", "pull", "-q", pre], timeout=1800).returncode:
+            return pre
     if r.returncode:
         raise RuntimeError(f"docker build failed for {task.id}:\n{r.output[-3000:]}")
     return tag
@@ -154,6 +159,10 @@ class DockerEnv(Environment):
         if r.returncode:
             raise RuntimeError(f"docker run failed: {r.output}")
         self.exec("mkdir -p " + " ".join(PATHS.values()))
+        if task.meta.get("external") and "tmux" in (task.root / "solution" / "solve.sh").read_text():
+            # Harbor runs agents inside tmux, so tasks may assume it exists; best effort.
+            self.exec("command -v tmux >/dev/null || (apt-get update -qq && apt-get install -y -qq tmux) >/dev/null 2>&1",
+                      timeout=300)
 
     def exec(self, command: str, timeout: int = 120) -> ExecResult:
         envs = [x for k, v in PATHS.items() for x in ("-e", f"{k}={v}")]

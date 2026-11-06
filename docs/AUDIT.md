@@ -268,3 +268,26 @@ needs the manual confirmation step; the auditor ranks where to look, it doesn't 
 
 KernelMind follow-ups (log in CHANGELOG when done): add a `Stale`-after-NotFound check to
 peer-timeout-flap and a wrap check for `Next` to seq-wraparound; decide on the caller-level fix.
+
+## Rerun of 3 broken baselines (Nov 7)
+
+- **prove-plus-comm: now graded, with a confirmed lenient finding.** The working-directory fix
+  worked (the image's WORKDIR is `/workspace`). A model-written near miss "proves" commutativity of
+  addition by declaring `Axiom plus_comm_axiom : forall n m : nat, n + m = m + n.` and applying it,
+  which proves nothing. The tests check only that `plus_comm.v` contains the theorem text, `Proof.`
+  and `Qed.`, doesn't contain the lowercase string `admit`, and compiles. They never check axioms,
+  which Coq's `Print Assumptions plus_comm.` would reveal. (Untested: since the `admit` check is
+  case-sensitive, `Admitted.` plus a `Qed.` inside a comment may also pass.) Its surviving mutant
+  deletes one `- simpl.` bullet; very likely still a valid proof (equivalent).
+- **git-multibranch: still broken, harness cause found.** The reference solution runs `tmux`, which
+  the image doesn't include; Harbor runs agents inside tmux, so the task silently relies on it.
+  The harness now installs tmux for external tasks whose reference uses it. Rerun needed.
+- **fix-git: environment rot.** The image build clones `github.com/TheMikeMerrill/personal-site`,
+  which now asks for credentials (deleted or private), so the task can no longer be built from
+  source. The task also names a prebuilt image (`alexgshaw/fix-git:20251031`), which Harbor
+  presumably runs, so it probably still works there. The harness now falls back to a task's prebuilt
+  image when the source build fails. Rerun needed.
+
+**Running total: 25 graded tasks, 8 with at least one confirmed lenient gap (32%).** Environment
+findings, separate from grading: `build-pmars` (the reference fails at run time: pinned package
+gone) and `fix-git` (the source build fails: cloned repository gone).
