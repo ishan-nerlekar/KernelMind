@@ -306,3 +306,27 @@ gone) and `fix-git` (the source build fails: cloned repository gone).
 **Final T5 tally: 26 graded tasks (4 pilot + 22), 8 with at least one confirmed lenient gap (31%).**
 Excluded: break-filter-js-from-html, tune-mjcf, git-multibranch (harness or hardware), build-pmars
 (environment drift, a finding of its own).
+
+## Already known? Terminal-Bench 2.0 tracker check (Nov 7)
+
+All 91 issues and PRs (open and closed) on `harbor-framework/terminal-bench-2`, read through the
+public GitHub API.
+
+| Our finding | Already reported? |
+|---|---|
+| build-pmars: reference fails (pinned `dpkg-dev` gone) | **yes**: #59 "`build-pmars` failing with oracle solution" (open) |
+| git-multibranch: reference needs tmux | **yes**: #52 "`solve.sh` calls tmux without install" (open) |
+| fix-git: source build clones a repository that's gone | no (#63/#64 and #30 are about other fix-git details; #66 proposes digest-pinning `docker_image`) |
+| configure-git-webserver: hardcoded `hello world` passes | **no**. Open PR #39 rewrites this verifier's auth, but its new `verify.sh` still pushes and checks exactly `hello world`, so the gap stays |
+| regex-log, git-leak-recovery, db-wal-recovery, modernize-scientific-stack, cobol-modernization, sparql-university, prove-plus-comm | **no** issues or PRs mention these tasks |
+
+So **all 8 lenient-gap findings are unreported**; 2 of our 3 environment findings already were.
+
+The tracker also calibrates the auditor. People are filing exactly this class of report (#67
+"make-doom-for-mips passes without a DOOM binary built", #89 on filter-js-from-html, #62
+gpt2-codegolf), which confirms the problem matters to the community. Two reports are on tasks we
+audited and found nothing: #85 says raman-fitting's verifier locks unstated conventions (a
+*strictness* claim; our 0 accepted alternatives there were all broken candidates, so we never tested
+it), and #84 says sanitize-git-repo's verifier crashes when history is rewritten (an alternative
+our generator didn't produce). Both point at the auditor's weak side: alternatives (strictness
+probes) are much harder to generate correctly than near misses.
