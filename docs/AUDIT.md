@@ -386,3 +386,27 @@ misses only (mutants found none of them), with the same regrade against the soun
 
 Prediction: requirement mode beats repeat on subtle recall, because each subtle flaw lets through one specific
 requirement's violation (gateway updated but not DNS, and so on). If repeat does as well, the gain is volume.
+
+## E1 results, part 1 (Nov 7): reviewers reading the tests
+
+| Reviewer | Known gaps found | Flags raised (26 tasks) | Tasks with no flags | Cost |
+|---|---|---|---|---|
+| claude-haiku-5-5 | 9/14 | 61 | 0 | $0.07 |
+| claude-opus-5-5 | 12/14 | 82 | 0 | $2.16 |
+
+`gpt-6.1-sol` was not run (the OpenAI account had no credits). Judgments: `audit/qa/judged-<model>.json`.
+
+- **A frontier reviewer that is asked the right question sees most of these gaps by reading.** Opus missed
+  only `git-leak-recovery` "recoverable" (it flagged a different hiding place, a plaintext copy in
+  `.git/description`) and `regex-log` "coverage" (May and octets 250–254). Haiku missed all three regex-log gaps,
+  the commit-message check and the exactly-10 boundary.
+- So the gaps were not hard to see. They survived because nobody asked a reviewer to *construct a wrong
+  solution that passes*. Terminal-Bench's QA includes LLM checks of instruction/test consistency; the framing of
+  this prompt, not the model, is likely the difference. (Not tested: we don't have their exact prompt.)
+- **Neither reviewer ever said "the tests look sound"**: every task got 1–6 flags. Reading alone can't say which
+  flags are real. Next step: run the Opus reviewer's scripts against the tests (`qa_baseline.py grade`) to
+  measure how many of its 82 claims hold, and whether any are gaps the auditor missed.
+- Candidate new gaps raised by both reviewers, to check after grading: `sparql-university` (the query, including
+  the reference's, counts students across all of a professor's departments instead of per department; the data
+  can't tell the difference), `db-wal-recovery` (values of ids 3–11 are never checked, so fabricated data passes),
+  `cobol-modernization` (no insufficient-funds or buyer-equals-seller case).

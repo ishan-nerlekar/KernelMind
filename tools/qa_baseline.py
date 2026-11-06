@@ -89,7 +89,7 @@ def slug(model: str) -> str:
 def cmd_review(a) -> None:
     out = REPO / "results" / f"qa-{slug(a.model)}"
     out.mkdir(parents=True, exist_ok=True)
-    spent = 0.0
+    spent, failures = 0.0, 0
     for task in load_tasks(TASKS, None, Path(a.tasks_dir).expanduser().resolve()):
         f = out / f"{task.id}.json"
         if f.exists():
@@ -106,8 +106,12 @@ def cmd_review(a) -> None:
             gen, cost = complete(a.model, prompt, 16000)
         except Exception as e:
             print(f"  failed: {str(e)[:300]}")
+            failures += 1
+            if failures == 3:  # out of credits, bad key, outage: don't burn through every task
+                print("stopping after 3 failures in a row; rerun to resume")
+                break
             continue
-        spent += cost
+        failures, spent = 0, spent + cost
         gaps = gen.get("gaps", [])[:MAX_GAPS]
         f.write_text(json.dumps({"task": task.id, "model": a.model, "cost": cost, "gaps": gaps}, indent=1))
         print(f"  {len(gaps)} gaps flagged; ${cost:.3f}")

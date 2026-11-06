@@ -1,0 +1,9 @@
+{"_note": "Known gap id -> matching flag number (1-based) in results/qa-claude-opus-5-5/<task>.json, or null. Judged Nov 7 by hand.",
+ "prove-plus-comm": {"axiom": 2, "admitted": 1},
+ "git-leak-recovery": {"recoverable": null, "messages": 3},
+ "configure-git-webserver": {"hardcoded": 2},
+ "modernize-scientific-stack": {"do-not-modify": 5, "version-pins": 2},
+ "db-wal-recovery": {"wal-not-fixed": 2},
+ "cobol-modernization": {"rejection-path": 2},
+ "regex-log": {"confounded-dates": 2, "feb-29": 4, "coverage": null},
+ "sparql-university": {"non-eu": 3, "exactly-10": 5}}

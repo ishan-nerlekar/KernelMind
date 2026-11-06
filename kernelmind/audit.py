@@ -163,6 +163,7 @@ def _reference(task: Task) -> str:
 
 def complete(model: str, prompt: str, max_tokens: int = 16000) -> tuple[dict, float]:
     import litellm
+    litellm.suppress_debug_info = True
     # Default temperature: some models (claude-haiku-5-5) accept no other value.
     r = litellm.completion(model=model, messages=[{"role": "user", "content": prompt}], max_tokens=max_tokens,
                            timeout=240, num_retries=2)
