@@ -1,0 +1,171 @@
+[
+ {
+  "task": "lease-renew-gateway",
+  "witness": "gateway-only",
+  "removed_tests": [
+   "TestRenewPublishesNewDNS"
+  ],
+  "stripped": [
+   "tests/hidden/internal/lease/renew_hidden_test.go:TestRenewPublishesNewDNS"
+  ],
+  "gross": false
+ },
+ {
+  "task": "ssid-dva-global-vlans",
+  "witness": "ignores-enabled",
+  "removed_tests": [
+   "TestDVAGlobalVLANsDisabledSSID",
+   "TestDeriveDisabledSSID"
+  ],
+  "stripped": [
+   "tests/hidden/internal/state/dva_hidden_test.go:TestDVAGlobalVLANsDisabledSSID",
+   "tests/visible/internal/state/state_test.go:TestDeriveDisabledSSID"
+  ],
+  "gross": false
+ },
+ {
+  "task": "radio-monitor-capability",
+  "witness": "check-after-programming",
+  "removed_tests": [
+   "TestPushMonitorOnIncapableRadioRejected",
+   "TestMonitorNeedsCapability",
+   "TestMonitorNeedsMonitorNotMesh"
+  ],
+  "stripped": [
+   "tests/hidden/internal/agent/monitor_hidden_test.go:TestPushMonitorOnIncapableRadioRejected",
+   "tests/hidden/internal/radio/monitor_hidden_test.go:TestMonitorNeedsCapability",
+   "tests/hidden/internal/radio/monitor_hidden_test.go:TestMonitorNeedsMonitorNotMesh"
+  ],
+  "gross": true
+ },
+ {
+  "task": "peer-timeout-flap",
+  "witness": "timeout-creates-peer",
+  "removed_tests": [
+   "TestTimeoutForUnknownPeer"
+  ],
+  "stripped": [
+   "tests/hidden/internal/peer/timeout_hidden_test.go:TestTimeoutForUnknownPeer"
+  ],
+  "gross": false
+ },
+ {
+  "task": "neigh-roam-flush",
+  "witness": "clamp-at-zero",
+  "removed_tests": [
+   "TestRoamThenFlushNewInterface",
+   "TestCountMatchesEntriesUnderChurn",
+   "TestRoamThenFlushOldInterface"
+  ],
+  "stripped": [
+   "tests/hidden/internal/neigh/roam_hidden_test.go:TestRoamThenFlushNewInterface",
+   "tests/hidden/internal/neigh/roam_hidden_test.go:TestCountMatchesEntriesUnderChurn",
+   "tests/hidden/internal/neigh/roam_hidden_test.go:TestRoamThenFlushOldInterface"
+  ],
+  "gross": true
+ },
+ {
+  "task": "rate-counter-wrap",
+  "witness": "absolute-difference",
+  "removed_tests": [
+   "TestRateAcrossWrap",
+   "TestTrackerAcrossWrap"
+  ],
+  "stripped": [
+   "tests/hidden/internal/stats/wrap_hidden_test.go:TestRateAcrossWrap",
+   "tests/hidden/internal/stats/wrap_hidden_test.go:TestTrackerAcrossWrap"
+  ],
+  "gross": true
+ },
+ {
+  "task": "seq-wraparound",
+  "witness": "any-different",
+  "removed_tests": [
+   "TestOlderRejectedAcrossWrap",
+   "TestNewer",
+   "TestPushAcceptedAfterSequenceWrap",
+   "TestStalePush"
+  ],
+  "stripped": [
+   "tests/hidden/internal/agent/wrap_hidden_test.go:TestPushAcceptedAfterSequenceWrap",
+   "tests/hidden/internal/seqnum/wrap_hidden_test.go:TestOlderRejectedAcrossWrap",
+   "tests/visible/internal/agent/agent_test.go:TestStalePush",
+   "tests/visible/internal/seqnum/seqnum_test.go:TestNewer"
+  ],
+  "gross": false
+ },
+ {
+  "task": "config-override-precedence",
+  "witness": "all-or-nothing",
+  "removed_tests": [
+   "TestDefaultFillsUnsetOverride",
+   "TestDeriveSortedAndSettings"
+  ],
+  "stripped": [
+   "tests/hidden/internal/config/precedence_hidden_test.go:TestDefaultFillsUnsetOverride",
+   "tests/visible/internal/state/state_test.go:TestDeriveSortedAndSettings"
+  ],
+  "gross": false
+ },
+ {
+  "task": "frame-partial-read",
+  "witness": "buffered-single-read",
+  "removed_tests": [
+   "TestReadAcrossShortReads",
+   "TestLargePushOverChunkingLink",
+   "TestReadTruncatedPayloadErrors",
+   "TestRoundTrip"
+  ],
+  "stripped": [
+   "tests/hidden/internal/controller/chunking_hidden_test.go:TestLargePushOverChunkingLink",
+   "tests/hidden/internal/frame/partial_hidden_test.go:TestReadAcrossShortReads",
+   "tests/hidden/internal/frame/partial_hidden_test.go:TestReadTruncatedPayloadErrors",
+   "tests/visible/internal/frame/frame_test.go:TestRoundTrip",
+   "tests/visible/internal/wire/tlv_test.go:TestRoundTrip"
+  ],
+  "gross": true
+ },
+ {
+  "task": "x-lease-oblique",
+  "witness": "gateway-only",
+  "removed_tests": [
+   "TestRenewPublishesNewDNS"
+  ],
+  "stripped": [
+   "tests/hidden/internal/lease/renew_hidden_test.go:TestRenewPublishesNewDNS"
+  ],
+  "gross": false
+ },
+ {
+  "task": "x-push-lost-update",
+  "witness": "persist-in-background",
+  "removed_tests": [
+   "TestPersistFailureRejects",
+   "TestApplyPush",
+   "TestConcurrentPushesKeepNewest",
+   "TestConcurrentPushesPersistNewest"
+  ],
+  "stripped": [
+   "tests/hidden/internal/agent/concurrent_hidden_test.go:TestPersistFailureRejects",
+   "tests/hidden/internal/agent/concurrent_hidden_test.go:TestConcurrentPushesKeepNewest",
+   "tests/hidden/internal/agent/concurrent_hidden_test.go:TestConcurrentPushesPersistNewest",
+   "tests/visible/internal/agent/agent_test.go:TestApplyPush"
+  ],
+  "gross": false
+ },
+ {
+  "task": "ap-mlo-inactivity",
+  "witness": "mlo-lookup-is-transient",
+  "removed_tests": [
+   "TestMLOIdleStationDisconnected",
+   "TestInactiveSecMLO",
+   "TestVanishedStationCanRejoin"
+  ],
+  "stripped": [
+   "tests/hidden/internal/drv/mlo_hidden_test.go:TestInactiveSecMLO",
+   "tests/hidden/internal/station/mlo_hidden_test.go:TestMLOIdleStationDisconnected",
+   "tests/visible/internal/station/rejoin_test.go:TestVanishedStationCanRejoin"
+  ],
+  "gross": false
+ }
+]

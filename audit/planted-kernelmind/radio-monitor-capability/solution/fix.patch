@@ -1,0 +1,12 @@
+--- a/internal/radio/radio.go
++++ b/internal/radio/radio.go
+@@ -21,7 +21,8 @@
+ 
+ // modeNeeds lists the capability each non-default mode requires. "ap" needs none.
+ var modeNeeds = map[string]Capability{
+-	"mesh": CapMesh,
++	"monitor": CapMonitor,
++	"mesh":    CapMesh,
+ }
+ 
+ // Hardware is the driver interface. Calls take effect immediately.

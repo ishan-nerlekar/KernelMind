@@ -1,0 +1,15 @@
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -175,11 +175,7 @@
+ 	}
+ 
+ 	if a.statePath != "" {
+-		// Writing flash can take tens of milliseconds; don't hold up state readers meanwhile.
+-		a.mu.Unlock()
+-		err := store.SaveJSON(a.statePath, cfg)
+-		a.mu.Lock()
+-		if err != nil {
++		if err := store.SaveJSON(a.statePath, cfg); err != nil {
+ 			rollback()
+ 			return reject(p, fmt.Errorf("persist config: %w", err))
+ 		}

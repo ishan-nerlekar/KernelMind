@@ -1,0 +1,24 @@
+--- a/internal/neigh/cache.go
++++ b/internal/neigh/cache.go
+@@ -43,7 +43,11 @@
+ 	}
+ 	c.mu.Lock()
+ 	defer c.mu.Unlock()
+-	if _, ok := c.entries[e.IP]; ok {
++	if old, ok := c.entries[e.IP]; ok {
++		if old.Iface != e.Iface {
++			c.perIface[old.Iface]--
++			c.perIface[e.Iface]++
++		}
+ 		c.entries[e.IP] = e
+ 		return nil
+ 	}
+@@ -79,7 +83,7 @@
+ 			n++
+ 		}
+ 	}
+-	c.total -= c.perIface[iface]
++	c.total -= n
+ 	delete(c.perIface, iface)
+ 	return n
+ }

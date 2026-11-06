@@ -1,0 +1,19 @@
+--- a/internal/frame/frame.go
++++ b/internal/frame/frame.go
+@@ -2,6 +2,7 @@
+ package frame
+ 
+ import (
++	"bufio"
+ 	"encoding/binary"
+ 	"errors"
+ 	"fmt"
+@@ -39,7 +40,7 @@
+ 		return nil, fmt.Errorf("%w: %d bytes", ErrTooLarge, n)
+ 	}
+ 	payload := make([]byte, n)
+-	if _, err := r.Read(payload); err != nil {
++	if _, err := bufio.NewReader(r).Read(payload); err != nil {
+ 		return nil, fmt.Errorf("frame: read payload: %w", err)
+ 	}
+ 	return payload, nil

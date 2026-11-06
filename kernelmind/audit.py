@@ -64,18 +64,23 @@ SHELL_OPS = (("-lt", "-le"), ("-le", "-lt"), ("-gt", "-ge"), ("-ge", "-gt"), ("-
 _HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
 
 
-def mutants(text: str, seed: str, n: int = 6) -> list[tuple[str, str]]:
-    """Up to n single-site mutations of a solve.sh, chosen deterministically from seed."""
+def mutants(text: str, seed: str, n: int = 6, patch: bool = False) -> list[tuple[str, str]]:
+    """Up to n single-site mutations of a solve.sh, chosen deterministically from seed. With patch=True,
+    text is a unified diff and only its added code lines are mutated, so the patch still applies."""
     lines = text.splitlines(keepends=True)
     sites, end = [], None
     for i, line in enumerate(lines):
-        shell_level = end is None
+        if patch:
+            code = line[1:].strip()
+            if not line.startswith("+") or line.startswith("+++") or code.startswith(("//", "#")):
+                continue
+        shell_level = end is None and not patch
         if end is not None and line.strip() == end:
             end = None
             continue
-        if shell_level and (m := _HEREDOC.search(line)):
+        if shell_level and (m := _HEREDOC.search(line)):  # never true for patches
             end = m.group(1)
-        if _SKIP.search(line) or i == 0:
+        if _SKIP.search(line) or (i == 0 and not patch):
             continue
         for m in re.finditer(r"(?<![\w.])(\d+)(?![\w.])", line):
             sites.append(("number", i, m.start(), m.end(), str(int(m.group(1)) + 1)))
@@ -116,7 +121,10 @@ def _parse(text: str) -> dict:
 
 def llm_candidates(task: Task, model: str, n_wrong: int, n_alt: int) -> tuple[dict, float]:
     import litellm
-    reference = (task.root / "solution" / "solve.sh").read_text()[:15000]
+    reference = (task.root / "solution" / "solve.sh").read_text()
+    if (patch := task.root / "solution" / "fix.patch").exists():  # KernelMind-style: solve.sh applies a patch
+        reference += "\n=== fix.patch (applied by solve.sh) ===\n" + patch.read_text()
+    reference = reference[:15000]
     prompt = PROMPT.format(n_wrong=n_wrong, n_alt=n_alt, instruction=task.instruction[:8000], reference=reference,
                            categories="\n".join(f"- {k}: {v}" for k, v in CATEGORIES.items()))
     # Default temperature: some models (claude-haiku-5-5) accept no other value.
@@ -138,7 +146,7 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
     ref_dir = task.root / "solution"
     meta, cost = {}, 0.0
 
-    def write(kind: str, name: str, script: str, info: dict) -> None:
+    def write(kind: str, name: str, script: str, info: dict, file: str = "solve.sh") -> None:
         if info.get("source") == "llm" and "set -e" not in script:
             # A model-written step that errors (e.g. a tool missing from the image) must make the candidate
             # count as broken, not silently produce wrong output that looks like a grader verdict.
@@ -146,11 +154,12 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
             script = f"{first}\nset -e\n{rest}" if first.startswith("#!") else f"set -e\n{script}"
         d = dst / kind / name
         shutil.copytree(ref_dir, d)  # keep any files the reference solution ships next to solve.sh
-        (d / "solve.sh").write_text(script if script.endswith("\n") else script + "\n")
+        (d / file).write_text(script if script.endswith("\n") else script + "\n")
         meta[name] = info
 
-    for name, script in mutants((ref_dir / "solve.sh").read_text(), task.id, n_mut):
-        write("controls", name, script, {"source": "mutant"})
+    target = "fix.patch" if (ref_dir / "fix.patch").exists() else "solve.sh"
+    for name, text in mutants((ref_dir / target).read_text(), task.id, n_mut, patch=target == "fix.patch"):
+        write("controls", name, text, {"source": "mutant"}, file=target)
     if model and (n_wrong or n_alt):
         try:
             gen, cost = llm_candidates(task, model, n_wrong, n_alt)
@@ -170,11 +179,13 @@ def prepare(task: Task, out: Path, model: str | None, n_mut: int, n_wrong: int, 
 
 
 def classify(checks, meta: dict) -> dict:
-    """Turn validate's checks into audit outcomes."""
-    rows, ref_ok = [], True
+    """Turn validate's checks into audit outcomes. The baseline is the reference solution passing; a
+    grader that also passes the untouched starter accepts doing nothing, which is itself a finding."""
+    by = {c.subject: c for c in checks}
+    ref, starter = by.get("reference"), by.get("starter")
+    rows = []
     for c in checks:
         if c.subject in ("starter", "reference"):
-            ref_ok &= c.ok
             continue
         info = meta.get(c.subject, {})
         if c.verdict is None:
@@ -185,7 +196,10 @@ def classify(checks, meta: dict) -> dict:
             outcome = "accepted" if c.verdict.passed else "strict-suspect"
         rows.append({"candidate": c.subject, "kind": c.kind, "outcome": outcome, **info,
                      "failed_checks": c.verdict.failed_checks if c.verdict else [], "note": c.reason[:300]})
-    return {"baseline_ok": ref_ok, "candidates": rows}
+    return {"baseline_ok": bool(ref and ref.verdict and ref.verdict.passed),
+            "starter_passes": bool(starter and starter.verdict and starter.verdict.passed),
+            "baseline_note": "" if ref and ref.verdict and ref.verdict.passed else (ref.reason[:300] if ref else "no reference"),
+            "candidates": rows}
 
 
 def audit_task(task: Task, out: Path, backend: str, model: str | None, n_mut: int, n_wrong: int, n_alt: int) -> tuple[dict, float]:
@@ -209,7 +223,8 @@ def summary_rows(results: list[dict]) -> list[str]:
         def frac(pred, good):
             xs = [x for x in c if pred(x) and x["outcome"] != "broken-candidate"]
             return f"{sum(x['outcome'] == good for x in xs)}/{len(xs)}"
-        sus = [x["candidate"] for x in c if x["outcome"].endswith("suspect")]
+        sus = (["starter (doing nothing passes)"] if r.get("starter_passes") else []) + \
+            [x["candidate"] for x in c if x["outcome"].endswith("suspect")]
         rows.append(f"| {r['task']} | {'ok' if r['baseline_ok'] else 'BROKEN'} "
                     f"| {frac(lambda x: x.get('source') == 'mutant', 'caught')} "
                     f"| {frac(lambda x: x['kind'] == 'control' and x.get('source') == 'llm', 'caught')} "

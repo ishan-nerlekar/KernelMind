@@ -50,7 +50,30 @@ def test_classify_keeps_kind_and_summary_counts(tmp_path):
     checks = [Check("t", "near-1-partial", "control", "fail", Verdict(True), False, "", 0),
               Check("t", "alt-1", "alternative", "pass", Verdict(True), True, "", 0),
               Check("t", "mut-1-number-L1", "control", "fail", Verdict(False), True, "", 0)]
-    r = classify(checks, meta)
+    r = classify(checks + [Check("t", "reference", "reference", "pass", Verdict(True), True, "", 0),
+                           Check("t", "starter", "starter", "fail", Verdict(True), False, "", 0)], meta)
     assert [c["kind"] for c in r["candidates"]] == ["control", "alternative", "control"]
+    assert r["baseline_ok"] and r["starter_passes"]
     row = summary_rows([{"task": "t", **r}])[2]
-    assert "| 1/1 | 0/1 | 1/1 | near-1-partial |" in row
+    assert "| 1/1 | 0/1 | 1/1 | starter (doing nothing passes), near-1-partial |" in row
+
+
+PATCH = """--- a/x.go
++++ b/x.go
+@@ -1,3 +1,3 @@
+ // keep 1
+-if n >= 10 {
++if n > 10 && ok == true {
++	// limit 5
+ 	return 3
+"""
+
+
+def test_patch_mutants_touch_only_added_code_lines():
+    out = mutants(PATCH, "s", n=20, patch=True)
+    assert out
+    for name, text in out:
+        before, after = PATCH.splitlines(), text.splitlines()
+        changed = [i for i, (x, y) in enumerate(zip(before, after)) if x != y]
+        assert changed == [5], (name, changed)  # only the added code line, never context or the added comment
+        assert "delete-step" not in name

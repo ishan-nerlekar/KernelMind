@@ -1,0 +1,21 @@
+--- a/internal/state/state.go
++++ b/internal/state/state.go
+@@ -20,7 +20,8 @@
+ 
+ // Derive computes per-SSID operational state.
+ //
+-// DVA is operational when the SSID is up, its effective DVA setting is true, and it has VLANs.
++// DVA is operational when the SSID is up, its effective DVA setting is true, and VLANs are
++// available to it: either its own VLAN list or any AP-wide global VLAN mapping.
+ // VLANs lists every VLAN ID the SSID can assign: its own list followed by the global mappings,
+ // without duplicates.
+ func Derive(c *config.Config) ([]SSID, error) {
+@@ -38,7 +39,7 @@
+ 		out = append(out, SSID{
+ 			Name:       s.Name,
+ 			Up:         s.Enabled,
+-			DVA:        s.Enabled && eff.DVA && len(s.VLANs) > 0,
++			DVA:        s.Enabled && eff.DVA && len(vlans) > 0,
+ 			VLANs:      vlans,
+ 			Band:       eff.Band,
+ 			MaxClients: eff.MaxClients,

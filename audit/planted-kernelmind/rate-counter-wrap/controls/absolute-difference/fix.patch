@@ -1,0 +1,16 @@
+--- a/internal/stats/stats.go
++++ b/internal/stats/stats.go
+@@ -25,7 +25,12 @@
+ var ErrInterval = errors.New("stats: samples not in time order")
+ 
+ // delta is the counter increase from a to b. Widen first so large counters can't overflow.
+-func delta(a, b uint32) uint64 { return uint64(b) - uint64(a) }
++func delta(a, b uint32) uint64 {
++	if b < a {
++		return uint64(a) - uint64(b)
++	}
++	return uint64(b) - uint64(a)
++}
+ 
+ // Between computes the rate from prev to cur.
+ func Between(prev, cur Sample) (Rate, error) {

@@ -1,0 +1,18 @@
+--- a/internal/peer/peer.go
++++ b/internal/peer/peer.go
+@@ -53,7 +53,15 @@
+ 		}
+ 		p.LastSeen, p.Misses, p.Stale = now, 0, false
+ 	case NotFound, Timeout:
++		if !ok && r == Timeout {
++			t.peers[name] = &Peer{Name: name, Stale: true}
++			return
++		}
+ 		if !ok {
++			return
++		}
++		if r == Timeout {
++			p.Stale = true
+ 			return
+ 		}
+ 		p.Misses++

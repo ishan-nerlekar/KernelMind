@@ -113,3 +113,46 @@ constraints-scheduling db-wal-recovery fix-git git-leak-recovery git-multibranch
 merge-diff-arc-agi-task modernize-scientific-stack openssl-selfsigned-cert overfull-hbox
 password-recovery polyglot-c-py polyglot-rust-c prove-plus-comm raman-fitting sanitize-git-repo
 sparql-university torch-pipeline-parallelism torch-tensor-parallelism tune-mjcf
+
+## T5 early notes (run in progress)
+
+- `build-pmars`: **Terminal-Bench's own reference solution fails.** `solve.sh` pins
+  `dpkg-dev=1.22.21`, which the Debian archive no longer serves, so the oracle can't run today. A
+  different finding class from leniency/strictness: environment drift breaks the task itself. Confirm
+  on x86 / Harbor before reporting.
+- `break-filter-js-from-html`: the reference runs but fails its own test, which drives headless
+  Chromium through Selenium. Most likely our container (Apple Silicon, shared memory, process limits),
+  so: baseline broken in our harness, excluded, not a finding.
+
+## T4: auditor validated on planted flaws
+
+`tools/plant_flaws.py` copies 12 fast KernelMind tasks (apnet) to `audit/planted-kernelmind/` and
+disables (renames) the tests that catch the task's first wrong-fix control. That control is the
+witness: it must now pass the weakened grader. Planting took three passes:
+1. Disabling only the pinned check left 9 of 12 witnesses still caught: wrong fixes usually fail
+   more checks than the one they're pinned to.
+2. Disabling every check the witness failed made 11 of 12 pass.
+3. `x-push-lost-update` (the concurrency task) was dropped: its witness passes on some runs and fails
+   on others, so it has no stable ground truth.
+
+Result: **11 planted flaws**. In 4 (`frame-partial-read`, `neigh-roam-flush`,
+`radio-monitor-capability`, `rate-counter-wrap`) the weakened grader also passes the untouched
+starter: gross flaws. The other 7 are subtle (the starter still fails).
+
+`tools/audit_planted.py` audits each weakened copy, then regrades the **same** candidates against the
+original tests:
+- detected = some candidate (or the untouched starter) passes the weakened grader and fails the sound one;
+- suspects against the sound grader = equivalent mutants, bad candidates, or real gaps in KernelMind's tests.
+
+Dry run, mutants only (no model): gross 4/4 detected (via the starter), subtle 0/7. So subtle
+detection has to come from the model-written near misses; the real run measures that.
+
+The dry run also audited KernelMind's own graders (3 suspects against sound graders):
+- `seq-wraparound` `int16(a-b) > 0` → `>= 0`: equivalent (with `a != b` the difference is never 0).
+- `neigh-roam-flush` per-interface count not moved on roam: equivalent after the fix, because the
+  per-interface counter no longer affects anything observable.
+- `peer-timeout-flap` NotFound sets `Stale = true`: **a real gap in KernelMind's tests.** `Stale` is
+  documented as "the last poll timed out", and no test checks it after a NotFound result.
+
+Also from the dry run: `baseline_ok` now means "the reference passes". A grader that passes the
+untouched starter is reported as its own finding, "doing nothing passes".

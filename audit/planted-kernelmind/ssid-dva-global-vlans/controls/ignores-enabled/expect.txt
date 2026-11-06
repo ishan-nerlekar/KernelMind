@@ -1,0 +1,2 @@
+# Reports DVA on SSIDs that are switched off
+TestDVAGlobalVLANsDisabledSSID

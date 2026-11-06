@@ -1,0 +1,2 @@
+# Wraps the connection in a bufio.Reader, which still returns short reads
+TestReadAcrossShortReads

@@ -81,7 +81,8 @@ def cmd_audit(args) -> int:
         r, cost = audit_task(task, out, args.backend, args.model, args.mutants, args.near_misses, args.alternatives)
         spent += cost
         results.append(r)
-        sus = [c["candidate"] for c in r["candidates"] if c["outcome"].endswith("suspect")]
+        sus = (["starter"] if r.get("starter_passes") else []) + \
+            [c["candidate"] for c in r["candidates"] if c["outcome"].endswith("suspect")]
         print(f"  baseline {'ok' if r['baseline_ok'] else 'BROKEN'}; suspects: {', '.join(sus) or 'none'}; ${cost:.3f}")
     table = "\n".join(summary_rows(results))
     (out / "summary.md").write_text(table + "\n")

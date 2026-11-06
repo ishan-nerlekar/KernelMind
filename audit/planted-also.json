@@ -1,0 +1,112 @@
+[
+ {
+  "task": "ap-mlo-inactivity",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestInactiveSecMLO",
+    "TestVanishedStationCanRejoin"
+   ]
+  }
+ },
+ {
+  "task": "config-override-precedence",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestDeriveSortedAndSettings"
+   ]
+  }
+ },
+ {
+  "task": "frame-partial-read",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestLargePushOverChunkingLink",
+    "TestReadTruncatedPayloadErrors",
+    "TestRoundTrip"
+   ]
+  }
+ },
+ {
+  "task": "lease-renew-gateway",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": []
+  }
+ },
+ {
+  "task": "neigh-roam-flush",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestCountMatchesEntriesUnderChurn",
+    "TestRoamThenFlushOldInterface"
+   ]
+  }
+ },
+ {
+  "task": "peer-timeout-flap",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": []
+  }
+ },
+ {
+  "task": "radio-monitor-capability",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestMonitorNeedsMonitorNotMesh"
+   ]
+  }
+ },
+ {
+  "task": "rate-counter-wrap",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestTrackerAcrossWrap"
+   ]
+  }
+ },
+ {
+  "task": "seq-wraparound",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestNewer",
+    "TestPushAcceptedAfterSequenceWrap",
+    "TestStalePush"
+   ]
+  }
+ },
+ {
+  "task": "ssid-dva-global-vlans",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestDeriveDisabledSSID"
+   ]
+  }
+ },
+ {
+  "task": "x-lease-oblique",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": []
+  }
+ },
+ {
+  "task": "x-push-lost-update",
+  "kind": "control",
+  "verdict": {
+   "failed_checks": [
+    "TestApplyPush",
+    "TestConcurrentPushesKeepNewest",
+    "TestConcurrentPushesPersistNewest"
+   ]
+  }
+ }
+]
