@@ -291,3 +291,18 @@ peer-timeout-flap and a wrap check for `Next` to seq-wraparound; decide on the c
 **Running total: 25 graded tasks, 8 with at least one confirmed lenient gap (32%).** Environment
 findings, separate from grading: `build-pmars` (the reference fails at run time: pinned package
 gone) and `fix-git` (the source build fails: cloned repository gone).
+
+### Second rerun (Nov 7)
+
+- **fix-git: graded on its prebuilt image; no findings.** Both "strict" suspects are wrong
+  alternatives: they take line 4 of `git reflog` (newest first), while the reference takes line 4 of
+  `.git/logs/HEAD` (oldest first), so they merge a different commit and fail the content checks
+  correctly. The surviving mutant deletes `git checkout master`, which is redundant because setup
+  already leaves the repo on master (equivalent).
+- **git-multibranch: excluded.** With tmux installed, the reference gets through its own script, but
+  the grader fails without writing test results; it probably relies on more of Harbor's runtime (the
+  git server's SSH setup). Not investigated further.
+
+**Final T5 tally: 26 graded tasks (4 pilot + 22), 8 with at least one confirmed lenient gap (31%).**
+Excluded: break-filter-js-from-html, tune-mjcf, git-multibranch (harness or hardware), build-pmars
+(environment drift, a finding of its own).
