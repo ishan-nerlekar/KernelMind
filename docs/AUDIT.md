@@ -410,3 +410,57 @@ requirement's violation (gateway updated but not DNS, and so on). If repeat does
   the reference's, counts students across all of a professor's departments instead of per department; the data
   can't tell the difference), `db-wal-recovery` (values of ids 3–11 are never checked, so fabricated data passes),
   `cobol-modernization` (no insufficient-funds or buyer-equals-seller case).
+
+## E1 results, part 2 (Nov 8): running the Opus reviewer's scripts
+
+`qa_baseline.py grade --model claude-opus-5-5`: each of the 82 flags' scripts graded by the task's own tests.
+**80 passed, 2 were caught.** (`configure-git-webserver`'s reference failed in this run, a known flaky
+network step; its flags were graded anyway.) Passing the tests only means the tests accept it, so every flag
+got a manual verdict against the instruction (`audit/qa/verdicts-claude-opus-5-5.json`). 13 scripts were read
+in full; all 13 did what their flag claimed.
+
+| Verdict | Flags | Meaning |
+|---|---|---|
+| plausible | 32 | wrong by the instruction's explicit words; a mistake or shortcut an agent could make without seeing the tests |
+| deliberate | 35 | wrong, but only as intentional gaming: decoys, sabotage, overwriting the checker's inputs |
+| test-aware | 11 | hardcodes values only the hidden tests reveal |
+| debatable | 2 | the instruction isn't explicit enough to call it wrong |
+| caught | 2 | the tests reject it |
+
+- **Every one of the 26 tasks accepts at least one wrong solution; 18 (69%) accept a plausible one**, against 8
+  (31%) found by the original auditor. 25 of 26 accept one that needs no knowledge of the hidden tests.
+- Examples the auditor missed: `torch-pipeline-parallelism` accepts a pipeline that never runs a backward pass
+  (the test compares only the hooks that fired) and an interleaved schedule instead of AFAB (the order check
+  walks dict insertion order); `torch-tensor-parallelism` accepts a row-parallel layer that adds the bias once per
+  rank; `headless-terminal` accepts a terminal that drops Ctrl-C; `large-scale-text-editing` accepts macros that
+  use Vimscript functions it forbids; `sqlite-db-truncate` accepts recovering 7 of 8 rows; `fix-git` accepts
+  copying the files without merging; `openssl-selfsigned-cert` accepts a CA-signed (not self-signed) certificate.
+- **The `sparql-university` reference solution is itself wrong.** It groups by professor only, so it counts
+  students across all of a professor's departments instead of requiring one department with more than 10. On the
+  test graph plus one professor with 6 students in each of two departments, the reference returns that professor
+  and a per-department query doesn't (`audit/qa/probe_sparql_split_departments.py`). The test data can't tell.
+- For Opus, execution filtered almost nothing (80 of 82 claims held). Its value was turning claims into
+  reproducible evidence. Haiku's scripts were not graded, so its precision is unknown.
+- Caveats: one judge (me), verdicts on 69 flags made from the flag text and the tests rather than the script;
+  "plausible" vs "deliberate" is a judgement call. None of the new findings is reproduced under Harbor or filed.
+
+## E2 results (Nov 8): one near miss per requirement did not help
+
+| Arm (7 subtle planted flaws, Haiku) | Near misses graded | Detected |
+|---|---|---|
+| original: 4 per task, one per category | 28 | 2/7 |
+| requirement: one per requirement (6–12 per task) | 54 (+5 broken) | 2/7 |
+| repeat: original prompt, same count as requirement | 59 | **4/7** |
+
+The prediction was wrong. Targeting requirements found nothing new; more near misses from the original prompt
+found two more (`ssid-dva-global-vlans`, `x-lease-oblique`). With 7 flaws the difference between 2 and 4 is
+within noise (Fisher exact p ≈ 0.6), so the honest reading is "no evidence that targeting helps".
+
+Why targeting failed, from the candidates: the model *did* write the right violation, but broke something else
+too. In `lease-renew-gateway`, near-5 "never refreshes the DNS resolver" is exactly the planted flaw's witness,
+yet it also failed `TestRenewPublishesNewGateway`; in `x-lease-oblique`, near-8 and near-9 (DNS not refreshed) also
+failed `TestAcquirePublishes`. A near miss only exposes a subtle gap if it is wrong in *exactly* one way. Next
+idea (not run): build near misses as one-hunk edits of the reference patch instead of rewritten scripts.
+
+Combined with E1: the cheapest way to raise recall is not a smarter blind generator but letting a strong model
+read the tests and write the exploit, then running it.

@@ -23,6 +23,11 @@ This report describes a cheap, mostly automated way to probe verifiers, and what
 - The auditor's own error rates were measured on planted flaws: it finds gross verifier flaws reliably
   (4/4) but misses most subtle ones (2/7), and its raw suspects need human confirmation. The 31% is
   therefore a lower bound.
+- **Follow-up (§3.4): a frontier model that reads the tests and writes the exploit does much better.** Claude
+  Opus 5.5, given each task's instruction, tests and reference, found 12 of the 14 known gaps by reading, and
+  80 of its 82 proposed wrong solutions passed the tests. By manual verdict, **all 26 tasks accept some wrong
+  solution and 18 (69%) accept one an agent could plausibly produce**; Terminal-Bench's own reference for
+  `sparql-university` is wrong. These newer results are single-judge and not yet reproduced under Harbor.
 
 The audit grew out of KernelMind, a systems-debugging benchmark built from patterns in real production
 incidents. Its main result was negative (the cheapest current models solve all 20 of its tasks), and
@@ -132,7 +137,11 @@ tests (`tools/plant_flaws.py`, `tools/audit_planted.py`).
 | Subtle (only one specific wrong fix gets through) | 2/7 |
 
 With four near misses per task, the model rarely makes the one specific mistake a subtle flaw lets
-through. More near misses, or one per instruction sentence, is the obvious next experiment.
+through. A follow-up tested two fixes on the 7 subtle flaws: one near miss per instruction requirement (2/7,
+no better) and simply more near misses from the original prompt (4/7). With 7 flaws neither difference is
+significant. The candidates showed why targeting failed: the model wrote the right violation but broke a second
+tested behavior too, so another test caught it. A near miss exposes a subtle gap only if it is wrong in exactly
+one way.
 
 ### 3.2 Precision of raw suspects
 
@@ -147,6 +156,35 @@ Terminal-Bench were not triaged; in the pilot, 3 of 6 were real and 3 equivalent
 
 Generation cost $0.16 for the Terminal-Bench audit and $0.05 for the planted-flaw study. Grading took
 roughly 10–15 minutes of container time per task on a laptop (Apple Silicon, some images emulated).
+
+### 3.4 Compared with a reviewer that reads the tests
+
+The auditor's generator never sees the tests, so its near misses stand for honest mistakes. A QA reviewer
+(human or agent) does read them. To compare, a reviewer model got each task's instruction, tests, environment
+files and reference, and listed up to 6 ways a wrong solution could pass, each with a script
+(`tools/qa_baseline.py`). The models' training data predates issues #92–#99.
+
+| Reviewer | Known gaps found by reading (of 14) | Flags | Flags whose script passed the tests | Cost |
+|---|---|---|---|---|
+| Claude Haiku 5.5 | 9 | 61 | not run | $0.07 |
+| Claude Opus 5.5 | 12 | 82 | 80 | $2.16 |
+
+Each passing Opus flag was judged against the instruction: 32 plausible mistakes, 35 deliberate gaming
+(decoys, sabotage, overwriting the checker's inputs), 11 that hardcode values only the tests reveal, 2 debatable.
+Every task accepts at least one wrong solution; 18 of 26 (69%) accept a plausible one, against 8 found by the
+auditor. Among the new ones: `torch-pipeline-parallelism` accepts a training step with no backward pass, because
+the test compares only the gradient hooks that fired; `torch-tensor-parallelism` accepts a bias added once per
+rank; `headless-terminal` accepts a terminal that drops Ctrl-C. Terminal-Bench's reference query for
+`sparql-university` counts students across all of a professor's departments instead of per department, and a
+two-line change to the test graph shows it (`audit/qa/probe_sparql_split_departments.py`).
+
+Three lessons. First, the gaps were not hard to see: the strong reviewer found most of them by reading, once
+asked to *construct a wrong solution that passes* rather than to check consistency. Second, a reviewer that only
+reads can't tell real flags from false ones (neither model ever called a task's tests sound), so its claims
+need running; for Opus they almost all held, which made running them a cheap way to turn claims into evidence.
+Third, for this benchmark a stronger model reading the tests beat a cheap model guessing blind, at about $2 for
+26 tasks. Caveats: one judge, 69 of the 80 verdicts made from the flag and the tests without reading the script,
+"plausible" vs "deliberate" is a judgement call, and none of the new findings is yet reproduced under Harbor.
 
 ## 4. Background: KernelMind and the difficulty study
 
@@ -175,6 +213,7 @@ is about.
 - Confirmation is manual judgement against the instruction's wording; we report only cases where the
   instruction is explicit.
 - Strictness is barely covered (§2.4).
+- §3.4's verdicts are one person's, and its new findings have not been reproduced under Harbor or reported.
 - Some grading ran on Apple Silicon with emulated images; the findings themselves were re-confirmed
   under Harbor.
 
