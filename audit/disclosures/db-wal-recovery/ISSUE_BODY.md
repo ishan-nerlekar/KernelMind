@@ -12,6 +12,8 @@ All tests read `/app/recovered.json`; none opens `/app/main.db`.
 **Suggested fix** (below): open `/app/main.db` read-only with `sqlite3` and require 11 rows in `items`.
 Checked locally: the reference solution passes; near-4 fails with "SQLite still sees 5 records".
 
+Confirmed with Harbor 0.25 (`harbor trial start -a oracle`): the reference and each solution below score reward 1.0.
+
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
 cp -R db-wal-recovery /tmp/db-wal-recovery-check

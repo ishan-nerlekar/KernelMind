@@ -14,6 +14,8 @@
 **Suggested fix** (below): require a version specifier for numpy and pandas and the presence of matplotlib or scipy; compare the legacy script's SHA-256 with the shipped file (`112e2626…65dd0`).
 Checked locally: the reference solution passes; near-1 fails the first new test and near-4 the second.
 
+Confirmed with Harbor 0.25 (`harbor trial start -a oracle`): the reference and each solution below score reward 1.0.
+
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
 cp -R modernize-scientific-stack /tmp/modernize-scientific-stack-check

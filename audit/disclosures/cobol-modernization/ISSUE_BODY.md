@@ -12,6 +12,8 @@
 **Suggested fix** (below): from the same initial state, run `U002U001B0030000000010` (U001 doesn't own B003) and require all three .DAT files unchanged. That is GnuCOBOL 3.1's behavior for `program.cbl`; we checked that the same build reproduces the existing test's expected files.
 Checked locally: the reference `program.py` passes; near-2 fails.
 
+Confirmed with Harbor 0.25 (`harbor trial start -a oracle`): the reference and each solution below score reward 1.0.
+
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
 cp -R cobol-modernization /tmp/cobol-modernization-check

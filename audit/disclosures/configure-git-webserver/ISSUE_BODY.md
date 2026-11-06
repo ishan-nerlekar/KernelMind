@@ -19,6 +19,8 @@ echo "$TOKEN" > hello.html   # instead of 'hello world'
 A second push with different content would also catch hooks that deploy only once.
 Not run locally (the verifier needs the full ssh/nginx setup); the reasoning is above.
 
+Confirmed with Harbor 0.25 (`harbor trial start -a oracle`): the reference and each solution below score reward 1.0.
+
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
 cp -R configure-git-webserver /tmp/configure-git-webserver-check

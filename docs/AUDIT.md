@@ -339,3 +339,16 @@ needed Coq 8.18, GnuCOBOL 3.1 and rdflib in the workspace. While checking prove-
 bypass was **confirmed** against the current tests: `Admitted. (* Qed. *)` passes, because the
 `admit` check is case-sensitive and `Qed.` may sit in a comment. `repro.sh` re-checks every finding
 under Harbor's oracle agent before filing.
+
+## Confirmed under Harbor, and filed (Nov 7)
+
+`audit/disclosures/repro.sh` on the Mac with Harbor 0.25: for all 8 tasks the reference solution and
+**every** wrong solution scored reward 1.0 with Harbor's oracle agent (21 trials). All 8 findings are
+confirmed under Terminal-Bench's own harness.
+
+| Task | Issue |
+|---|---|
+| regex-log | [#92](https://github.com/harbor-framework/terminal-bench-2/issues/92) |
+| git-leak-recovery | [#93](https://github.com/harbor-framework/terminal-bench-2/issues/93) |
+| prove-plus-comm | [#94](https://github.com/harbor-framework/terminal-bench-2/issues/94) |
+| configure-git-webserver, db-wal-recovery, modernize-scientific-stack, cobol-modernization, sparql-university | to file |

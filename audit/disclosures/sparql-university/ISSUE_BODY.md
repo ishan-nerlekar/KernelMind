@@ -13,6 +13,8 @@ The graph contains no `"GB"` literal and no department with exactly 10 current s
 **Suggested fix** (below): two extra tests that run the agent's query on modified copies of the graph: NKUA moved to `GB`, and HistoryAndPhilosophy_NKUA reduced from 12 to exactly 10 current students. In both, Aristotle Tympas must drop out. The expected rows come from the reference query.
 Checked locally with rdflib: the reference passes both; near-1 fails the GB test and near-2 the 10-student test.
 
+Confirmed with Harbor 0.25 (`harbor trial start -a oracle`): the reference and each solution below score reward 1.0.
+
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
 cp -R sparql-university /tmp/sparql-university-check
