@@ -1,0 +1,1 @@
+git-leak-recovery: the secret can stay in the repo (blob of a dangling commit) and commit messages can be rewritten, and both pass

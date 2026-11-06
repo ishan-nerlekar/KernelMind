@@ -1,0 +1,1 @@
+db-wal-recovery: step 1 ("Fix the WAL file so SQLite can read it") is never checked

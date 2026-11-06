@@ -1,0 +1,1 @@
+configure-git-webserver: a post-receive hook that ignores the push and writes a literal "hello world" passes

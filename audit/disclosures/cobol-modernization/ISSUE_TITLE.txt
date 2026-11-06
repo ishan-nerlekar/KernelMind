@@ -1,0 +1,1 @@
+cobol-modernization: every graded transaction is a valid sale, so a port that skips the COBOL validation passes

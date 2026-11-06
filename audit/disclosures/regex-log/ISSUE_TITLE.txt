@@ -1,0 +1,1 @@
+regex-log: two "invalid date" samples are rejected for their IP, so the date rules (and Feb 29) are never tested

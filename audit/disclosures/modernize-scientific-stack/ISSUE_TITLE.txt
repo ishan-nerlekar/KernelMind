@@ -1,0 +1,1 @@
+modernize-scientific-stack: the "DO NOT MODIFY" script and the version-constraint requirement are never checked
