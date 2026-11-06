@@ -29,8 +29,8 @@ def _history_nkua_exactly_ten(g, uni):
             g.remove((s, uni.isEnrolledIn, c))
 
 
-EXPECTED_GB = [('Orfeas Menis', 'GR, US'), ('Pepe Attanasio', 'PT, GR')]  # from the reference query
-EXPECTED_TEN = [('Orfeas Menis', 'GR, US'), ('Pepe Attanasio', 'PT, GR')]  # from the reference query
+EXPECTED_GB = [('Alex Dimakis', 'US, ES, CH'), ('Chrysoula Zerva', 'PT, GR'), ('Giorgos Stamou', 'GR, US')]  # from the reference query, on tests/university_graph_test.ttl
+EXPECTED_TEN = [('Alex Dimakis', 'US, ES, CH'), ('Chrysoula Zerva', 'PT, GR'), ('Giorgos Stamou', 'GR, US')]  # from the reference query, on tests/university_graph_test.ttl
 
 
 def test_non_eu_country_excluded():

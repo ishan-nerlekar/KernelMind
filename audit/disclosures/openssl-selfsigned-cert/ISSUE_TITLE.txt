@@ -1,0 +1,1 @@
+openssl-selfsigned-cert: a CA-signed certificate, a key with mode 077, and a PEM with an unrelated key pair all pass

@@ -1,0 +1,24 @@
+--- a/torch-tensor-parallelism/tests/test_outputs.py	2026-11-06 17:34:37.752768843 +0000
++++ b/torch-tensor-parallelism/tests/test_outputs.py	2026-11-06 17:34:37.786657376 +0000
+@@ -78,6 +78,10 @@
+         assert torch.allclose(parallel_layer.bias, expected_bias_slice, atol=1e-5), (
+             f"ColumnParallelLinear bias mismatch on rank {rank}."
+         )
++        # A zero bias hides a bias applied the wrong number of times; give it values before the forward check.
++        with torch.no_grad():
++            reference_layer.bias.copy_(torch.linspace(-1, 1, out_features))
++            parallel_layer.bias.copy_(reference_layer.bias[start_idx:end_idx])
+ 
+     # Test forward pass
+     input_tensor = torch.randn(batch_size, in_features)
+@@ -146,6 +150,10 @@
+         assert torch.allclose(parallel_layer.bias, reference_layer.bias, atol=1e-5), (
+             f"RowParallelLinear bias mismatch on rank {rank}."
+         )
++        # A zero bias hides a bias added once per rank (before the all_reduce); give it values first.
++        with torch.no_grad():
++            reference_layer.bias.copy_(torch.linspace(-1, 1, out_features))
++            parallel_layer.bias.copy_(reference_layer.bias)
+ 
+     # Test forward pass
+     # Note: In a row parallel setup, the input would be scattered to each rank.

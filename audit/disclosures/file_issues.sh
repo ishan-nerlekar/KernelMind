@@ -5,8 +5,10 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO=harbor-framework/terminal-bench-2
 command -v gh >/dev/null || { echo "install the GitHub CLI: brew install gh, then gh auth login"; exit 1; }
-tasks=("$@"); [ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$HERE" && ls -d */ | tr -d /))
+tasks=("$@"); [ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$HERE" && ls -d [a-z]*/ | tr -d /))
 for t in "${tasks[@]}"; do
+  grep -q "^$t " "$HERE/FILED.txt" 2>/dev/null && { echo "$t: already filed, skipping"; continue; }
+  [ -f "$HERE/$t/ISSUE_TITLE.txt" ] || { echo "$t: no ISSUE_TITLE.txt (a comment, not an issue?), skipping"; continue; }
   title="$(cat "$HERE/$t/ISSUE_TITLE.txt")"
   echo; echo "== $t: $title"
   read -r -p "File this issue? [y/N] " ok

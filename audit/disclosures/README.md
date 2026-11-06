@@ -24,3 +24,19 @@ both score 1.
 | cobol-modernization | Python port without the ownership check | yes (expected files from GnuCOBOL 3.1) |
 | sparql-university | GB counted as EU; `>= 10` | yes (rdflib) |
 | prove-plus-comm | theorem assumed as an axiom; `Admitted.` + `(* Qed. *)` | yes (Coq 8.18) |
+
+## Batch 2 (Nov 8): found by the test-reading reviewer (docs/AUDIT.md, E1)
+
+Wrong solutions written by Claude Opus 5.5 while reviewing the tests (`tools/qa_baseline.py`), then judged
+by hand. Not in the tracker as of Nov 8.
+
+| Task | Wrong solutions | Suggested fix checked |
+|---|---|---|
+| torch-pipeline-parallelism | no backward pass at all; interleaved schedule instead of AFAB | under Harbor (`repro.sh --fixed`) |
+| torch-tensor-parallelism | RowParallelLinear adds the bias once per rank | under Harbor (`repro.sh --fixed`) |
+| headless-terminal | terminal that drops Ctrl-C | locally (pytest + tmux), 5/5 |
+| openssl-selfsigned-cert | CA-signed cert; key mode 077; PEM with an unrelated key pair; CN/O only in OU/SAN | locally (pytest + OpenSSL 3) |
+| sparql-university (comment on #99) | the reference itself counts students across departments; #99's suggested test had expected values from the wrong graph | locally (rdflib) |
+
+`repro.sh --fixed <task>` applies `test_fix.patch` before running: the reference should score 1 and every
+wrong solution 0. `_local/check.sh` runs a task's tests natively (no Docker) for quick checks.

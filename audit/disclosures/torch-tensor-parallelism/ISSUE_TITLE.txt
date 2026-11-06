@@ -1,0 +1,1 @@
+torch-tensor-parallelism: the bias is zero in every test, so a RowParallelLinear that adds it once per rank passes

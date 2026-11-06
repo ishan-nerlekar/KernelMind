@@ -1,0 +1,55 @@
+--- a/openssl-selfsigned-cert/tests/test_outputs.py	2026-11-06 17:32:51.856976580 +0000
++++ b/openssl-selfsigned-cert/tests/test_outputs.py	2026-11-06 17:32:51.882326786 +0000
+@@ -19,7 +19,8 @@
+ 
+     # Check key permissions (should be restrictive)
+     key_permissions = os.stat(key_file).st_mode & 0o777
+-    assert key_permissions <= 0o600, f"Key permissions too open: {key_permissions:o}"
++    # A numeric <= also accepts modes like 077; require no group/other access instead.
++    assert key_permissions & 0o077 == 0, f"Key permissions too open: {key_permissions:o}"
+ 
+     # Verify key is 2048 bits
+     process = subprocess.run(
+@@ -53,6 +54,24 @@
+         "Certificate does not have correct Organization Name"
+     )
+ 
++    # The certificate must be self-signed by server.key, with CN and O in the subject itself.
++    def _out(*args):
++        return subprocess.run(["openssl", *args], capture_output=True, text=True).stdout.strip()
++
++    subject = _out("x509", "-in", cert_file, "-noout", "-subject", "-nameopt", "multiline")
++    assert re.search(r"commonName\s*=\s*dev-internal\.company\.local\s*$", subject, re.M), (
++        "Certificate subject CN is not dev-internal.company.local"
++    )
++    assert re.search(r"organizationName\s*=\s*devops team\s*$", subject, re.M | re.I), (
++        "Certificate subject O is not DevOps Team"
++    )
++    assert _out("x509", "-in", cert_file, "-noout", "-issuer").split("=", 1)[1] == \
++        _out("x509", "-in", cert_file, "-noout", "-subject").split("=", 1)[1], "Certificate is not self-signed"
++    verify = subprocess.run(["openssl", "verify", "-CAfile", cert_file, cert_file], capture_output=True, text=True)
++    assert verify.returncode == 0, f"Certificate is not self-signed: {verify.stdout}{verify.stderr}"
++    assert _out("x509", "-in", cert_file, "-noout", "-modulus") == \
++        _out("rsa", "-in", "/app/ssl/server.key", "-noout", "-modulus"), "Certificate does not match server.key"
++
+     # Get certificate validity dates
+     dates_process = subprocess.run(
+         ["openssl", "x509", "-in", cert_file, "-noout", "-dates"],
+@@ -101,6 +120,17 @@
+     )
+     assert process.returncode == 0, "Failed to extract certificate from PEM file"
+ 
++    # The combined file must hold server.key and server.crt, not some other key pair.
++    def _out(*args):
++        return subprocess.run(["openssl", *args], capture_output=True, text=True).stdout.strip()
++
++    cert_fp = _out("x509", "-in", "/app/ssl/server.crt", "-noout", "-fingerprint", "-sha256")
++    assert cert_fp and _out("x509", "-in", pem_file, "-noout", "-fingerprint", "-sha256") == cert_fp, (
++        "PEM file does not contain server.crt"
++    )
++    assert _out("rsa", "-in", pem_file, "-noout", "-modulus") == \
++        _out("rsa", "-in", "/app/ssl/server.key", "-noout", "-modulus"), "PEM file does not contain server.key"
++
+ 
+ def test_verification_file():
+     """Test that the verification file exists with correct content."""

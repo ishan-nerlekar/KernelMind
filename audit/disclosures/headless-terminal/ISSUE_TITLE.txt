@@ -1,0 +1,1 @@
+headless-terminal: test_cancel_command passes without Ctrl-C working (the file it checks can't exist yet)

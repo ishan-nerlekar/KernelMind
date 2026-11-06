@@ -1,0 +1,15 @@
+--- a/headless-terminal/tests/test_outputs.py	2026-11-06 17:33:38.184193781 +0000
++++ b/headless-terminal/tests/test_outputs.py	2026-11-06 17:33:38.206646398 +0000
+@@ -67,6 +67,12 @@
+ 
+     assert not path.exists()
+ 
++    # cancel.txt is absent at this point whether or not Ctrl-C worked (the sleep has 9 s left), so also
++    # check that the shell is free again: a new command must run now, not after the sleep finishes.
++    terminal.send_keystrokes("echo after > /app/after_cancel.txt")
++    terminal.send_keystrokes("\n", wait_sec=1)
++    assert Path("/app/after_cancel.txt").exists(), "the shell is still busy: Ctrl-C did not interrupt the command"
++
+ 
+ def test_startup_files():
+     """

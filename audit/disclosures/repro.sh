@@ -4,9 +4,14 @@
 # solution/solve.sh, with Harbor's oracle agent. A finding is confirmed when the reference scores 1
 # and the wrong solution also scores 1.
 #
+# With --fixed, the task's tests/ get its test_fix.patch first: then the reference should score 1 and
+# every wrong solution 0, which checks the suggested fix under Harbor too.
+#
 #   uv tool install harbor            # once
 #   audit/disclosures/repro.sh        # all findings, or name tasks: repro.sh regex-log prove-plus-comm
+#   audit/disclosures/repro.sh --fixed headless-terminal
 set -uo pipefail
+FIXED=0; [ "${1:-}" = --fixed ] && { FIXED=1; shift; }
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 TB2="$REPO/external/tb2"
@@ -28,20 +33,29 @@ PY
 }
 
 run() {  # task, case name, solve.sh to use ("" = the task's own reference)
-  local task=$1 case=$2 solve=$3 dir="$WORK/$1-$2"
+  local task=$1 case=$2 solve=$3 dir="$WORK/$1-$2" name="$1-$2"
   cp -R "$TB2/$task" "$dir"
+  if [ $FIXED = 1 ]; then
+    (cd "$dir" && patch -s -p2 < "$HERE/$task/test_fix.patch") || { echo "$task: test_fix.patch does not apply"; return; }
+    name="$name-fixed"
+  fi
   [ -n "$solve" ] && cp "$solve" "$dir/solution/solve.sh"
-  harbor trial start -p "$dir" -a oracle --trials-dir "$OUT" --trial-name "$task-$case" >/dev/null 2>&1
-  printf '%-28s %-22s %s\n' "$task" "$case" "$(reward "$OUT/$task-$case")"
+  harbor trial start -p "$dir" -a oracle --trials-dir "$OUT" --trial-name "$name" >/dev/null 2>&1
+  printf '%-28s %-28s %s\n' "$task" "$case" "$(reward "$OUT/$name")"
 }
 
 tasks=("$@")
-[ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$HERE" && ls -d */ | tr -d /))
-printf '%-28s %-22s %s\n' TASK CASE REWARD
+[ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$HERE" && ls -d [a-z]*/ | tr -d /))
+[ $FIXED = 1 ] && tasks=($(for t in "${tasks[@]}"; do [ -f "$HERE/$t/test_fix.patch" ] && echo "$t"; done))
+printf '%-28s %-28s %s\n' TASK CASE REWARD
 for t in "${tasks[@]}"; do
   run "$t" reference ""
   for s in "$HERE/$t"/*/solve.sh; do
     run "$t" "$(basename "$(dirname "$s")")" "$s"
   done
 done
-echo "trials in $OUT; a wrong solution with reward 1 confirms the finding under Harbor"
+if [ $FIXED = 1 ]; then
+  echo "trials in $OUT; with the fix, the reference should score 1 and every wrong solution 0"
+else
+  echo "trials in $OUT; a wrong solution with reward 1 confirms the finding under Harbor"
+fi
