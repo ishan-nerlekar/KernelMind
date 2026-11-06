@@ -156,3 +156,76 @@ The dry run also audited KernelMind's own graders (3 suspects against sound grad
 
 Also from the dry run: `baseline_ok` now means "the reference passes". A grader that passes the
 untouched starter is reported as its own finding, "doing nothing passes".
+
+## T5 results (Nov 6–7): 26 tasks, $0.12 of generation
+
+Graded 20 of 26 (6 broken baselines, below). With the pilot that makes **24 graded Terminal-Bench
+2.0 tasks**. Candidate outcomes on the 20 graded T5 tasks:
+
+| | Caught / accepted (as they should be) | Suspect | Broken candidate |
+|---|---|---|---|
+| Mutants (should fail) | 42 | 47 lenient | 19 |
+| Model-written near misses (should fail) | 40 | 16 lenient | 8 |
+| Model-written alternatives (should pass) | 19 | 7 strict | 6 |
+
+Generation failed for 4 tasks (Haiku returned invalid JSON for `torch-pipeline-parallelism` and
+`torch-tensor-parallelism`, nothing parsable for `constraints-scheduling` and `polyglot-rust-c`); only
+their mutants were graded.
+
+### Broken baselines (not grader findings)
+
+| Task | Cause | Status |
+|---|---|---|
+| prove-plus-comm | our harness ran commands in `/app`; the image's `WORKDIR` is `/workspace` | **harness fixed**: external tasks now run in their image's WORKDIR |
+| git-multibranch | reference `solve.sh` failed while creating users and setting up the git server; our sandbox set `no-new-privileges` | **harness fixed** for external tasks; rerun to confirm |
+| fix-git | image build failed in the task's own `setup.sh` (error cut off) | undetermined; rerun |
+| break-filter-js-from-html | the reference fails its own headless-Chromium test | probably our container on Apple Silicon; excluded |
+| tune-mjcf | the reference fails `test_model_speed` | hardware-dependent timing test; excluded |
+| build-pmars | the reference pins `dpkg-dev=1.22.21`, no longer served by Debian | **possible finding (environment drift)**; confirm on x86 under Harbor |
+
+### Triage of the 23 model-written suspects (T6, first pass)
+
+**Confirmed lenient: 10 suspects in 6 tasks.** Each candidate breaks a requirement stated in the
+instruction, and the official tests pass it.
+
+| Task | What the passing candidate does wrong | Why the tests miss it |
+|---|---|---|
+| git-leak-recovery (near-1, near-3) | leaves the secret recoverable: `git show bd81824` (a dangling commit) prints it | the "unreachable objects" check runs `cat-file -p` on dangling *commits*, which prints the commit header, not the blob holding the secret; reflog-reachable objects are never "dangling" |
+| git-leak-recovery (near-4) | rewrites every commit message (`[sanitized] chore: init …`) although "commit messages remain untouched" | the test checks that one message *contains* `chore: init …` |
+| configure-git-webserver (near-4) | the post-receive hook writes a literal `hello world` file, ignoring what was pushed | `verify.sh` pushes exactly the instruction's example, `hello world`, and checks for exactly that |
+| db-wal-recovery (near-4) | writes the right JSON but never fixes the WAL ("1. Fix the WAL file so SQLite can read it") | only `recovered.json` is checked |
+| modernize-scientific-stack (near-1) | `requirements.txt` with no version constraints ("Specify version constraints using >=, ==, or ~=") | only the file's existence is checked |
+| modernize-scientific-stack (near-4) | edits the original script marked "DO NOT MODIFY" | the original is never checked |
+| cobol-modernization (near-2) | the Python port skips the COBOL program's seller-owns-book check | all three graded transactions are valid sales, so the rejection path is never exercised |
+| sparql-university (near-1) | counts `GB` as an EU member (the UK left in 2020; the reference date is 2025-08-16) | the graph has no `GB` literal at all |
+| sparql-university (near-2) | `COUNT(...) >= 10` for "more than 10 students" | no department has exactly 10 |
+
+With the pilot's `regex-log` (4 confirmed), **7 of 24 graded tasks (29%) have at least one confirmed
+lenient verifier gap.**
+
+Recurring causes:
+1. **Requirements stated but never tested** (modernize ×2, db-wal, git-leak commit messages).
+2. **One fixed input that lacks the distinguishing case** (cobol, sparql ×2, regex-log Feb 29).
+3. **Test input identical to the instruction's example**, so hardcoding passes (configure-git-webserver).
+4. **Confounded negative samples**: a sample meant to test rule A also breaks rule B (regex-log).
+5. **The check inspects the wrong object** (git-leak: commit headers instead of their contents).
+
+**Rejected: 6 near misses that weren't real violations.**
+- password-recovery ×2: the instruction allows multiple guesses, and the tests check that the true
+  password is among them.
+- openssl-selfsigned-cert ×2: the "unconditional success" script actually loads the certificate; the
+  other only crashes instead of reporting.
+- sanitize-git-repo: the test compares lowercased text, so the claimed case-variant leftover would be
+  caught (the candidate's premise was false).
+- overfull-hbox: a fixed table of word swaps is a legitimate solution for this one document.
+
+**Strict suspects (7): none confirmed.**
+- sparql-university ×2: the alternatives return different (wrong) answers. Rejected.
+- headless-terminal ×2: both fail the interactive, cancel and background tests. Either the
+  alternatives are wrong or the tests are timing-sensitive. **Unresolved**: needs a run in the container.
+- code-from-image, log-summary-date-ranges, overfull-hbox: each alternative fails the task's main
+  outcome check. Not yet examined; likely bad candidates.
+
+**Mutants: 47 lenient survivors, not yet triaged.** Survivors include equivalent mutants (all 3 in
+the pilot's sqlite-db-truncate were equivalent; all 3 in regex-log were real), so mutation scores are
+an upper bound on leniency until sampled.

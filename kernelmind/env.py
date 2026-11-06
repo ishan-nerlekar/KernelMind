@@ -145,8 +145,9 @@ class DockerEnv(Environment):
         self.name = f"km-{task.id}-{uuid.uuid4().hex[:8]}"
         d = task.docker
         cmd = ["docker", "run", "-d", "--name", self.name, "--network", d.get("network", "none"),
-               "--memory", d["memory"], "--cpus", str(d["cpus"]), "--pids-limit", "2048",
-               "--security-opt", "no-new-privileges"]
+               "--memory", d["memory"], "--cpus", str(d["cpus"]), "--pids-limit", "2048"]
+        if not task.meta.get("external"):  # audited tasks may need su/sudo, as under their own harness
+            cmd += ["--security-opt", "no-new-privileges"]
         for cap in d["cap_add"]:
             cmd += ["--cap-add", cap]
         r = _run([*cmd, self.image, "sleep", "infinity"], timeout=120)
@@ -156,7 +157,9 @@ class DockerEnv(Environment):
 
     def exec(self, command: str, timeout: int = 120) -> ExecResult:
         envs = [x for k, v in PATHS.items() for x in ("-e", f"{k}={v}")]
-        return _run(["docker", "exec", "-w", "/app", *envs, self.name, "bash", "-c", command], timeout)
+        # External tasks run in their image's WORKDIR, as under their own harness; KernelMind's in /app.
+        wd = [] if self.task.meta.get("external") else ["-w", "/app"]
+        return _run(["docker", "exec", *wd, *envs, self.name, "bash", "-c", command], timeout)
 
     def copy_in(self, src: Path, dst: str) -> None:
         self.exec(f"mkdir -p {dst}")
