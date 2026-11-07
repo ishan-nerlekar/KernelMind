@@ -27,6 +27,7 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
   approaches find largely different gaps (REPORT §5).
 
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
+Blog post: [The grader said yes](https://thegradersaidyes.hashnode.dev/the-grader-said-yes-auditing-terminal-bench-2-0-with-near-miss-solutions).
 
 ## The KernelMind benchmark
 
