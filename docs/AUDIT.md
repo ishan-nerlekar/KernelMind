@@ -484,4 +484,4 @@ torch-tensor fix fails the wrong solution on exactly `test_row_parallel_linear[2
 | Task | Finding | Link |
 |---|---|---|
 | torch-pipeline-parallelism | a step with no backward pass, or an interleaved schedule, passes | [#102](https://github.com/harbor-framework/terminal-bench-2/issues/102) |
-| torch-tensor-parallelism | bias is always zero in the tests, so a bias added once per rank passes | ready to file |
+| torch-tensor-parallelism | bias is always zero in the tests, so a bias added once per rank passes | [#103](https://github.com/harbor-framework/terminal-bench-2/issues/103) |

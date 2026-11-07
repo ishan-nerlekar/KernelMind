@@ -14,11 +14,12 @@ This report describes a cheap, mostly automated way to probe verifiers, and what
   one stated requirement (should fail), **mutants** of the reference solution (should fail) and
   **alternatives** that meet every requirement differently (should pass). Then run the task's own
   tests on all of them.
-- On 26 graded tasks, **8 (31%) accepted at least one solution that is wrong by the instruction's own
-  words**: 16 confirmed wrong solutions, including a proof that proves nothing and a "cleaned" repository
-  that still contains the leaked secret. All were **reproduced under the benchmark's own harness**
-  (Harbor) and **reported upstream with test fixes**: issues
-  [#92–#99](https://github.com/harbor-framework/terminal-bench-2/issues/92).
+- On 26 graded tasks, the auditor found **8 (31%) that accepted at least one solution that is wrong by the
+  instruction's own words**: 16 confirmed wrong solutions, including a proof that proves nothing and a
+  "cleaned" repository that still contains the leaked secret. All were **reproduced under the benchmark's
+  own harness** (Harbor) and **reported upstream with test fixes**: issues
+  [#92–#99](https://github.com/harbor-framework/terminal-bench-2/issues/92). A follow-up (§3.4) added 4 more
+  tasks, also Harbor-confirmed and filed (#100–#103): **12 of 26 (46%) in total, 24 wrong solutions.**
 - Model cost for the whole audit was under $0.25; the real cost is container time.
 - The auditor's own error rates were measured on planted flaws: it finds gross verifier flaws reliably
   (4/4) but misses most subtle ones (2/7), and its raw suspects need human confirmation. The 31% is
@@ -27,7 +28,8 @@ This report describes a cheap, mostly automated way to probe verifiers, and what
   Opus 5.5, given each task's instruction, tests and reference, found 12 of the 14 known gaps by reading, and
   80 of its 82 proposed wrong solutions passed the tests. By manual verdict, **all 26 tasks accept some wrong
   solution and 18 (69%) accept one an agent could plausibly produce**; Terminal-Bench's own reference for
-  `sparql-university` is wrong. These newer results are single-judge and not yet reproduced under Harbor.
+  `sparql-university` is wrong. The 69% is a single judge's verdict; the strongest new findings were
+  reproduced under Harbor and filed as #100–#103 (§3.4).
 
 The audit grew out of KernelMind, a systems-debugging benchmark built from patterns in real production
 incidents. Its main result was negative (the cheapest current models solve all 20 of its tasks), and
@@ -184,7 +186,20 @@ reads can't tell real flags from false ones (neither model ever called a task's 
 need running; for Opus they almost all held, which made running them a cheap way to turn claims into evidence.
 Third, for this benchmark a stronger model reading the tests beat a cheap model guessing blind, at about $2 for
 26 tasks. Caveats: one judge, 69 of the 80 verdicts made from the flag and the tests without reading the script,
-"plausible" vs "deliberate" is a judgement call, and none of the new findings is yet reproduced under Harbor.
+"plausible" vs "deliberate" is a judgement call.
+
+Filed from this follow-up, each confirmed under Harbor with its fix validated under Harbor (`repro.sh --fixed`):
+
+| Task | Wrong solution that passes | Issue |
+|---|---|---|
+| headless-terminal | a terminal that drops Ctrl-C (the test checks a file that can't exist yet) | [#100](https://github.com/harbor-framework/terminal-bench-2/issues/100) |
+| openssl-selfsigned-cert | a CA-signed certificate; key mode 077 (passes a numeric `<=`); a PEM with an unrelated key; CN/O outside the subject | [#101](https://github.com/harbor-framework/terminal-bench-2/issues/101) |
+| torch-pipeline-parallelism | no backward pass; an interleaved schedule instead of AFAB | [#102](https://github.com/harbor-framework/terminal-bench-2/issues/102) |
+| torch-tensor-parallelism | a bias added once per rank (the tests' bias is always zero) | [#103](https://github.com/harbor-framework/terminal-bench-2/issues/103) |
+| sparql-university | the reference counts students across departments | [comment on #99](https://github.com/harbor-framework/terminal-bench-2/issues/99#issuecomment-6702427766) |
+
+While preparing these, we found that #99's suggested test used expected values computed on the agent-visible
+graph rather than the test graph; the comment corrects it.
 
 ## 4. Background: KernelMind and the difficulty study
 
@@ -213,7 +228,7 @@ is about.
 - Confirmation is manual judgement against the instruction's wording; we report only cases where the
   instruction is explicit.
 - Strictness is barely covered (§2.4).
-- §3.4's verdicts are one person's, and its new findings have not been reproduced under Harbor or reported.
+- §3.4's verdicts are one person's; only its strongest findings were reproduced under Harbor and reported.
 - Some grading ran on Apple Silicon with emulated images; the findings themselves were re-confirmed
   under Harbor.
 

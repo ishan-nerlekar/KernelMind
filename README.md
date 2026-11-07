@@ -9,14 +9,18 @@ systems-debugging tasks drawn from real production incidents.
 that each break one stated requirement, mutants of the reference solution, and alternatives that meet
 every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
 
-- **8 tasks (31%) accept a solution that is wrong by the instruction's own words.** Examples: a Coq
-  "proof" that assumes the theorem as an axiom, a repository "cleaned" of a leaked secret that still
-  returns it to `git show`, and a deploy hook that ignores the push and writes the expected text.
-- All 16 wrong solutions were **reproduced under Terminal-Bench's own harness** (Harbor) and **reported
-  upstream with test fixes**: [#92–#99](https://github.com/harbor-framework/terminal-bench-2/issues/92).
-- The auditor's own error rates are measured on planted flaws: gross flaws 4/4, subtle flaws 2/7, so
-  31% is a lower bound.
-- Under $0.25 of model calls for the whole audit.
+- **12 tasks (46%) accept a solution that is wrong by the instruction's own words**, each confirmed under
+  Terminal-Bench's own harness (Harbor) and **reported upstream with a test fix**: issues
+  [#92–#103](https://github.com/harbor-framework/terminal-bench-2/issues/92), 24 wrong solutions in all.
+  Examples: a Coq "proof" that assumes the theorem as an axiom, a "cleaned" repository that still returns
+  the leaked secret to `git show`, a pipeline-parallel training step that never runs the backward pass, and
+  a terminal that ignores Ctrl-C. One task's own reference solution is wrong.
+- Two methods: a cheap blind auditor (near misses that each break one requirement, plus mutants; under $0.25)
+  found the first 8; a strong model that **reads the tests and writes the exploit**, with every exploit run
+  against the real tests, found 12 of those 14 gaps by reading and the rest (about $2 for 26 tasks).
+- By manual verdict, every audited task accepts *some* wrong solution and 18 of 26 accept one an agent could
+  plausibly produce (single judge; not all filed).
+- The auditor's own error rates are measured on planted flaws: gross flaws 4/4, subtle flaws 2/7.
 
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
 
