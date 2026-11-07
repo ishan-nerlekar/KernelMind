@@ -10,6 +10,8 @@
 #   uv tool install harbor            # once
 #   audit/disclosures/repro.sh        # all findings, or name tasks: repro.sh regex-log prove-plus-comm
 #   audit/disclosures/repro.sh --fixed headless-terminal
+#   UV_HTTP_TIMEOUT=600 audit/disclosures/repro.sh torch-tensor-parallelism   # slow networks: the torch
+#     tasks download ~3 GB at verify time; this exports the timeout inside the copied tests/test.sh only.
 set -uo pipefail
 FIXED=0; [ "${1:-}" = --fixed ] && { FIXED=1; shift; }
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -35,6 +37,10 @@ PY
 run() {  # task, case name, solve.sh to use ("" = the task's own reference)
   local task=$1 case=$2 solve=$3 dir="$WORK/$1-$2" name="$1-$2"
   cp -R "$TB2/$task" "$dir"
+  if [ -n "${UV_HTTP_TIMEOUT:-}" ]; then  # install step only; the graded tests are unchanged
+    f="$dir/tests/test.sh"; { head -n 1 "$f"; echo "export UV_HTTP_TIMEOUT=$UV_HTTP_TIMEOUT"; tail -n +2 "$f"; } > "$f.new"
+    cat "$f.new" > "$f"  # cat keeps test.sh's permissions
+  fi
   if [ $FIXED = 1 ]; then
     (cd "$dir" && patch -s -p2 < "$HERE/$task/test_fix.patch") || { echo "$task: test_fix.patch does not apply"; return; }
     name="$name-fixed"

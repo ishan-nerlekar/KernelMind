@@ -9,6 +9,7 @@
 
 **Suggested fix** (below): after the existing assertion, type a new command and check it runs within a second. If Ctrl-C didn't interrupt the sleep, the shell is still busy and the new command hasn't run.
 Checked locally (pytest with tmux, no Docker): the reference passes 5 of 5 runs; the solution above fails.
+Confirmed under Harbor 0.25 (`harbor trial start -a oracle`): on the current tests the reference and every solution above score reward 1.0; with the patch below, the reference scores 1.0 and every solution 0.0.
 
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash

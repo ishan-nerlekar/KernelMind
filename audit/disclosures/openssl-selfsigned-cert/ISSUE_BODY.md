@@ -17,6 +17,7 @@
 
 **Suggested fix** (below): require no group/other bits on the key; check the subject's CN and O fields, issuer equals subject, `openssl verify -CAfile server.crt server.crt`, and that the certificate matches `server.key`; check that the PEM's certificate and key are `server.crt` and `server.key`.
 Checked locally (pytest with OpenSSL 3, no Docker): the reference passes; each solution above fails.
+Confirmed under Harbor 0.25 (`harbor trial start -a oracle`): on the current tests the reference and every solution above score reward 1.0; with the patch below, the reference scores 1.0 and every solution 0.0.
 
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
