@@ -11,7 +11,7 @@
 - The AFAB check walks `pipeline_dict` in key order. A dict keeps each key at its *first* insertion, so for any schedule the keys appear as all `.fwd` (from microbatch 0) followed by `.bwd`. The check can't see a forward that runs after a backward.
 
 **Suggested fix** (below): record hook calls in time order and require (1) that every module which ran forward on this rank also ran backward, when it does in the reference, and (2) no forward after the first backward.
-{{HARBOR_FIX_CHECK}}
+Confirmed under Harbor 0.25 (`harbor trial start -a oracle`): on the current tests the reference and both solutions above score reward 1.0; with the patch below, the reference scores 1.0 and both solutions 0.0.
 
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
