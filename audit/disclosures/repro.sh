@@ -16,8 +16,8 @@ set -uo pipefail
 FIXED=0; [ "${1:-}" = --fixed ] && { FIXED=1; shift; }
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
-TB2="$REPO/external/tb2"
-OUT="$REPO/results/harbor-repro"
+TB2="${TB2:-$REPO/external/tb2}"  # or TB2=results/upstream-tasks: fixes already applied, so expect reference 1, wrong 0
+OUT="${OUT:-$REPO/results/harbor-repro}"
 WORK="$(mktemp -d)"
 mkdir -p "$OUT"
 command -v harbor >/dev/null || { echo "harbor not found: uv tool install harbor"; exit 1; }
