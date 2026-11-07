@@ -474,6 +474,14 @@ read the tests and write the exploit, then running it.
 | sparql-university | reference counts students across departments; correction to #99's suggested test (expected values were from the agent-visible graph) | [comment on #99](https://github.com/harbor-framework/terminal-bench-2/issues/99#issuecomment-6702427766) |
 
 Both issues were confirmed under Harbor (wrong solutions 1.0) and their fixes validated under Harbor
-(`repro.sh --fixed`: reference 1.0, wrong solutions 0.0). The torch-pipeline and torch-tensor findings are
-drafted but unconfirmed: every Harbor trial failed while downloading PyTorch at verify time; rerun with
-`UV_HTTP_TIMEOUT=600`.
+(`repro.sh --fixed`: reference 1.0, wrong solutions 0.0).
+
+The torch pair needed reruns: the first Harbor trials all failed downloading PyTorch at verify time, so
+`repro.sh` gained an opt-in `UV_HTTP_TIMEOUT` (install step only). With it, both were confirmed (wrong
+solutions 1.0 on the current tests) and both fixes validated (reference 1.0, wrong solutions 0.0; the
+torch-tensor fix fails the wrong solution on exactly `test_row_parallel_linear[2-True]` and `[4-True]`).
+
+| Task | Finding | Link |
+|---|---|---|
+| torch-pipeline-parallelism | a step with no backward pass, or an interleaved schedule, passes | [#102](https://github.com/harbor-framework/terminal-bench-2/issues/102) |
+| torch-tensor-parallelism | bias is always zero in the tests, so a bias added once per rank passes | ready to file |

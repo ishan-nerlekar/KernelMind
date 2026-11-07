@@ -8,7 +8,7 @@
 The instruction says to initialize the bias to zero, and the tests check the output while it is still zero, so `world_size × 0 = 0`. The bias gradient is still correct for this bug, so the backward check doesn't catch it either. The same blind spot applies to ColumnParallelLinear's bias in the forward check.
 
 **Suggested fix** (below): after checking that the bias was initialized to zero, give the reference and parallel biases the same non-zero values, then run the existing forward and backward checks.
-Confirmed under Harbor 0.25 (`harbor trial start -a oracle`): on the current tests the reference and the solution above score reward 1.0. With the patch below, the solution fails exactly `test_row_parallel_linear[2-True]` and `[4-True]` (with one rank the bias is added once, so world size 1 still passes). {{REF_FIXED}}
+Confirmed under Harbor 0.25 (`harbor trial start -a oracle`): on the current tests the reference and the solution above score reward 1.0. With the patch below, the solution fails exactly `test_row_parallel_linear[2-True]` and `[4-True]` (with one rank the bias is added once, so world size 1 still passes). With the patch, the reference still scores reward 1.0 and the solution 0.0.
 
 **Reproduce** (Harbor oracle agent with the solution swapped in):
 ```bash
