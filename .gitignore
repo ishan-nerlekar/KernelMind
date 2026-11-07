@@ -7,3 +7,4 @@ results/*
 !results/published/
 .DS_Store
 external/
+build/
