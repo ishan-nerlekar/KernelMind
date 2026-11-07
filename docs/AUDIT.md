@@ -400,9 +400,11 @@ requirement's violation (gateway updated but not DNS, and so on). If repeat does
   only `git-leak-recovery` "recoverable" (it flagged a different hiding place, a plaintext copy in
   `.git/description`) and `regex-log` "coverage" (May and octets 250–254). Haiku missed all three regex-log gaps,
   the commit-message check and the exactly-10 boundary.
-- So the gaps were not hard to see. They survived because nobody asked a reviewer to *construct a wrong
-  solution that passes*. Terminal-Bench's QA includes LLM checks of instruction/test consistency; the framing of
-  this prompt, not the model, is likely the difference. (Not tested: we don't have their exact prompt.)
+- So the gaps were not hard to see once a reviewer is asked to *construct a wrong solution that passes*.
+  (Correction, Nov 7: this line originally said Terminal-Bench's QA used LLM consistency checks. The paper
+  describes human review, about three reviewer-hours per task. Prior work, Terminal Wrench (Zhong et al.,
+  arXiv 2606.08960), did prompt models to hack TB2 without the tests and found 13 of 89 tasks hackable; 2
+  overlap with ours. See docs/REPORT.md §5.)
 - **Neither reviewer ever said "the tests look sound"**: every task got 1–6 flags. Reading alone can't say which
   flags are real. Next step: run the Opus reviewer's scripts against the tests (`qa_baseline.py grade`) to
   measure how many of its 82 claims hold, and whether any are gaps the auditor missed.

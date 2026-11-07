@@ -181,7 +181,8 @@ rank; `headless-terminal` accepts a terminal that drops Ctrl-C. Terminal-Bench's
 two-line change to the test graph shows it (`audit/qa/probe_sparql_split_departments.py`).
 
 Three lessons. First, the gaps were not hard to see: the strong reviewer found most of them by reading, once
-asked to *construct a wrong solution that passes* rather than to check consistency. Second, a reviewer that only
+asked to *construct a wrong solution that passes*. (Terminal-Bench's own review was human, about three
+reviewer-hours per task, covering instruction/test agreement, solvability and resistance to shortcuts.) Second, a reviewer that only
 reads can't tell real flags from false ones (neither model ever called a task's tests sound), so its claims
 need running; for Opus they almost all held, which made running them a cheap way to turn claims into evidence.
 Third, for this benchmark a stronger model reading the tests beat a cheap model guessing blind, at about $2 for
@@ -220,7 +221,25 @@ information is *missing*, not when it is spread out or disguised. We have not te
 The negative result is in `docs/CALIBRATION.md`. The validation method behind it is what this report
 is about.
 
-## 5. Limitations
+## 5. Related work
+
+The closest work is Terminal Wrench ([Zhong et al., 2026](https://arxiv.org/abs/2606.08960), arXiv 2606.08960, June 2026). It prompted frontier models to
+reward-hack 1,968 tasks from five terminal benchmarks, without seeing the verifiers, ran the attempts, and
+found 13 of Terminal-Bench 2.0's 89 environments hackable; it also proposes a hacker–fixer loop that patches
+verifiers. Two of their 13 are among our 12: `configure-git-webserver`, where their hack is the same gap as our
+#95 (they found it first), and `cobol-modernization`, where their hack (a Python wrapper that runs the COBOL
+binary) is a different gap from our #98. The other 10 of our 12 are not in their set; of their remaining 11, one (`git-multibranch`) was in our
+sample but excluded (§1.3) and 10 are outside it. The approaches differ in what they elicit: they ask for deliberate hacks,
+which find tampering and spoofing (fake binaries, wrapped system tools); our near misses ask for an honest
+mistake that breaks one stated requirement, and the test-reading reviewer targets the tests' blind spots.
+Within the 26 tasks both studies cover, the overlap is 2 tasks and 1 shared gap, which suggests the
+approaches are complementary. They did not report issues
+upstream; every finding here was reported with a test fix validated under Harbor.
+
+For SWE-style benchmarks, PatchDiff-style differential testing addresses the same leniency question by
+comparing a candidate patch's behavior with the reference on generated inputs.
+
+## 6. Limitations
 
 - 26 of 89 tasks, chosen by rules that exclude heavy tasks; "31% of tasks" may not hold for the rest.
 - One generator model, four near misses and up to six mutants per task. Recall on subtle flaws is low,
@@ -232,7 +251,7 @@ is about.
 - Some grading ran on Apple Silicon with emulated images; the findings themselves were re-confirmed
   under Harbor.
 
-## 6. Reproducing
+## 7. Reproducing
 
 ```sh
 pip install -e ".[agents]" && uv tool install harbor
