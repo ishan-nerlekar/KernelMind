@@ -487,3 +487,18 @@ torch-tensor fix fails the wrong solution on exactly `test_row_parallel_linear[2
 |---|---|---|
 | torch-pipeline-parallelism | a step with no backward pass, or an interleaved schedule, passes | [#102](https://github.com/harbor-framework/terminal-bench-2/issues/102) |
 | torch-tensor-parallelism | bias is always zero in the tests, so a bias added once per rank passes | [#103](https://github.com/harbor-framework/terminal-bench-2/issues/103) |
+
+## Terminal-Bench 2.1 and the main tracker (Nov 7)
+
+Terminal-Bench 2.1 is released (`harbor-framework/terminal-bench-2-1`, issue #53 of the 2.0 repo); active
+task maintenance happens there and in `harbor-framework/terminal-bench` (TB3 work, older tasks tagged
+"[legacy]"). Our issues were filed in the 2.0 repo, which sees little maintainer activity.
+
+- **All 12 gaps persist in 2.1.** For 11 tasks the tests are byte-identical. configure-git-webserver's verifier
+  switched from password to key-based SSH but still pushes and checks exactly `hello world`;
+  torch-tensor-parallelism's instruction now says how inputs are scattered, but the bias is still always zero.
+  The sparql-university reference is unchanged. (Read from the code; not yet re-run under Harbor on 2.1.)
+- **Earlier reports we missed** (our first duplicate check covered only the 2.0 tracker):
+  configure-git-webserver = terminal-bench-2-1 PR #37 (July 2026, same fix: a per-run unique pushed string) and
+  Terminal Wrench; modernize-scientific-stack's version constraints = terminal-bench #2173 / PR #2464 (Oct 2026).
+  The "DO NOT MODIFY" half of #97 and the other ten tasks have no earlier report in any of the three trackers.

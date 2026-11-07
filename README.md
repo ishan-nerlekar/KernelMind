@@ -15,6 +15,8 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
   Examples: a Coq "proof" that assumes the theorem as an axiom, a "cleaned" repository that still returns
   the leaked secret to `git show`, a pipeline-parallel training step that never runs the backward pass, and
   a terminal that ignores Ctrl-C. One task's own reference solution is wrong.
+  Two had earlier reports elsewhere (see [audit/disclosures/README.md](audit/disclosures/README.md)); all 12 gaps are
+  still present in Terminal-Bench 2.1.
 - Two methods: a cheap blind auditor (near misses that each break one requirement, plus mutants; under $0.25)
   found the first 8; a strong model that **reads the tests and writes the exploit**, with every exploit run
   against the real tests, found 12 of the auditor's 14 gaps by reading, plus the other 4 tasks (about $2 for
