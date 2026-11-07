@@ -6,3 +6,6 @@ db-wal-recovery https://github.com/harbor-framework/terminal-bench-2/issues/96
 modernize-scientific-stack https://github.com/harbor-framework/terminal-bench-2/issues/97
 cobol-modernization https://github.com/harbor-framework/terminal-bench-2/issues/98
 sparql-university https://github.com/harbor-framework/terminal-bench-2/issues/99
+headless-terminal https://github.com/harbor-framework/terminal-bench-2/issues/100
+openssl-selfsigned-cert https://github.com/harbor-framework/terminal-bench-2/issues/101
+sparql-university-comment https://github.com/harbor-framework/terminal-bench-2/issues/99#issuecomment-6702427766

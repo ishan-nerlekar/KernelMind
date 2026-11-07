@@ -464,3 +464,16 @@ idea (not run): build near misses as one-hunk edits of the reference patch inste
 
 Combined with E1: the cheapest way to raise recall is not a smarter blind generator but letting a strong model
 read the tests and write the exploit, then running it.
+
+## Batch 2 filed (Nov 7)
+
+| Task | Finding | Link |
+|---|---|---|
+| headless-terminal | `test_cancel_command` passes without Ctrl-C working | [#100](https://github.com/harbor-framework/terminal-bench-2/issues/100) |
+| openssl-selfsigned-cert | CA-signed cert, key mode 077, unrelated PEM key pair, CN/O outside the subject all pass | [#101](https://github.com/harbor-framework/terminal-bench-2/issues/101) |
+| sparql-university | reference counts students across departments; correction to #99's suggested test (expected values were from the agent-visible graph) | [comment on #99](https://github.com/harbor-framework/terminal-bench-2/issues/99#issuecomment-6702427766) |
+
+Both issues were confirmed under Harbor (wrong solutions 1.0) and their fixes validated under Harbor
+(`repro.sh --fixed`: reference 1.0, wrong solutions 0.0). The torch-pipeline and torch-tensor findings are
+drafted but unconfirmed: every Harbor trial failed while downloading PyTorch at verify time; rerun with
+`UV_HTTP_TIMEOUT=600`.
