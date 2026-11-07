@@ -62,5 +62,8 @@ docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty stu
 learning/            notes written while building this
 ```
 
-Terminal-Bench 2.0 is Apache-2.0 (harbor-framework/terminal-bench-2); its tasks are not vendored here,
-except short derived solution scripts in `audit/disclosures/`.
+## License
+
+Apache-2.0 (see [LICENSE](LICENSE)); third-party notices in [NOTICE](NOTICE). GoBGP and Terminal-Bench 2.0 are
+also Apache-2.0. Terminal-Bench tasks are not vendored here, except short derived solution scripts in
+`audit/disclosures/`.

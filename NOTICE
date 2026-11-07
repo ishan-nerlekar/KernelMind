@@ -1,3 +1,8 @@
+KernelMind
+Copyright 2026 Ishan Nerlekar
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 KernelMind includes or derives from third-party work:
 
 - GoBGP v3.37.0 (https://github.com/osrg/gobgp), Apache License 2.0, in substrate/gobgp/ and in the
