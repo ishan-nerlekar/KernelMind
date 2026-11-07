@@ -502,3 +502,12 @@ task maintenance happens there and in `harbor-framework/terminal-bench` (TB3 wor
   configure-git-webserver = terminal-bench-2-1 PR #37 (July 2026, same fix: a per-run unique pushed string) and
   Terminal Wrench; modernize-scientific-stack's version constraints = terminal-bench #2173 / PR #2464 (Oct 2026).
   The "DO NOT MODIFY" half of #97 and the other ten tasks have no earlier report in any of the three trackers.
+
+## Fixes validated on the main repo (Nov 7)
+
+`tools/upstream_prs.py prepare` applied each test fix to `harbor-framework/terminal-bench` `legacy/<task>/` (identical
+to Terminal-Bench 2.1 for these tasks), then `repro.sh` ran under Harbor 0.25 on the patched copies: all 10
+references scored 1.0 and all 18 wrong solutions 0.0 (prove-plus-comm, git-leak-recovery, regex-log,
+db-wal-recovery, cobol-modernization, sparql-university, headless-terminal, openssl-selfsigned-cert,
+torch-pipeline-parallelism, torch-tensor-parallelism). configure-git-webserver and modernize-scientific-stack are
+left to the existing fix PRs (terminal-bench-2-1 #37, terminal-bench #2464).
