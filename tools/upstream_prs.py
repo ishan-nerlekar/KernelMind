@@ -106,8 +106,8 @@ def finish(clone: Path, task: str, number: str) -> None:
     git(clone, "checkout", "-q", f"fix/{task}-verifier")
     readme = clone / "legacy" / task / "README.md"
     readme.write_text(readme.read_text().replace("[#TBD](" + PR_URL + "TBD)", f"[#{number}]({PR_URL}{number})"))
-    git(clone, "commit", "-q", "-a", "--amend", "--no-edit")
-    print(f"updated; now: git -C {clone} push --force-with-lease origin fix/{task}-verifier")
+    git(clone, "commit", "-q", "-am", "Add PR number to changelog")  # a new commit: no force-push needed
+    print(f"updated; now: git -C {clone} push origin fix/{task}-verifier")
 
 
 if __name__ == "__main__":
