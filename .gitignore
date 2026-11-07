@@ -8,3 +8,7 @@ results/*
 .DS_Store
 external/
 build/
+# personal notes, kept local only
+learning/
+tasks/plan.md
+tasks/todo.md

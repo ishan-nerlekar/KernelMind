@@ -1,6 +1,6 @@
 # Verifier audit
 
-Plan: `tasks/plan.md`. This file records how the audit is run and what it finds.
+This file records how the audit is run and what it finds.
 
 ## Terminal-Bench 2.0 setup
 

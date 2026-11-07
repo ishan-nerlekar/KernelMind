@@ -63,7 +63,6 @@ taskgen/, tools/     task generator (incident transplants, git history, planted-
 substrate/           apnet (own code) and GoBGP v3.37.0 (Apache-2.0), where bugs are planted
 audit/disclosures/   the 8 Terminal-Bench findings: wrong solutions, issue texts, test fixes, repro.sh
 docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty study), SPEC, TASK_FORMAT
-learning/            notes written while building this
 ```
 
 ## License
