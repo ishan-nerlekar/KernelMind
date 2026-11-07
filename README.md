@@ -17,7 +17,8 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
   a terminal that ignores Ctrl-C. One task's own reference solution is wrong.
 - Two methods: a cheap blind auditor (near misses that each break one requirement, plus mutants; under $0.25)
   found the first 8; a strong model that **reads the tests and writes the exploit**, with every exploit run
-  against the real tests, found 12 of those 14 gaps by reading and the rest (about $2 for 26 tasks).
+  against the real tests, found 12 of the auditor's 14 gaps by reading, plus the other 4 tasks (about $2 for
+  26 tasks).
 - By manual verdict, every audited task accepts *some* wrong solution and 18 of 26 accept one an agent could
   plausibly produce (single judge; not all filed).
 - The auditor's own error rates are measured on planted flaws: gross flaws 4/4, subtle flaws 2/7.
