@@ -223,21 +223,44 @@ is about.
 
 ## 5. Related work
 
-The closest work is Terminal Wrench ([Zhong et al., 2026](https://arxiv.org/abs/2606.08960), arXiv 2606.08960, June 2026). It prompted frontier models to
-reward-hack 1,968 tasks from five terminal benchmarks, without seeing the verifiers, ran the attempts, and
-found 13 of Terminal-Bench 2.0's 89 environments hackable; it also proposes a hacker–fixer loop that patches
-verifiers. Two of their 13 are among our 12: `configure-git-webserver`, where their hack is the same gap as our
-#95 (they found it first), and `cobol-modernization`, where their hack (a Python wrapper that runs the COBOL
-binary) is a different gap from our #98. The other 10 of our 12 are not in their set; of their remaining 11, one (`git-multibranch`) was in our
-sample but excluded (§1.3) and 10 are outside it. The approaches differ in what they elicit: they ask for deliberate hacks,
-which find tampering and spoofing (fake binaries, wrapped system tools); our near misses ask for an honest
-mistake that breaks one stated requirement, and the test-reading reviewer targets the tests' blind spots.
-Within the 26 tasks both studies cover, the overlap is 2 tasks and 1 shared gap, which suggests the
-approaches are complementary. They did not report issues
-upstream; every finding here was reported with a test fix validated under Harbor.
+Verifier quality became an active research topic in 2026. As of Nov 11, 2026 (searched with Firecrawl's web
+and paper indexes; abstracts read for each work cited):
 
-For SWE-style benchmarks, PatchDiff-style differential testing addresses the same leniency question by
-comparing a candidate patch's behavior with the reference on generated inputs.
+**Terminal-Bench itself.** The Terminal-Bench team's own audit of 2.0
+([Buchanan et al., 2026](https://arxiv.org/abs/2611.08417)) combined community reports, agent traces, oracle
+checks and LM auditors with human review, found defects in 28 of 89 tasks, and shipped the repairs as 2.1. Most
+were instruction–verification mismatches that rejected valid solutions, environment drift, and resource issues;
+their accuracy rose over 10 points on 2.1. Z.ai's Terminal-Bench 2.0 Verified fixed environments and 11
+instructions. **All 12 lenient gaps reported here survived those audits**: in 11 of the tasks the tests are
+byte-identical in 2.1, and the two changes do not close the gaps (§2, docs/AUDIT.md). The approaches are
+complementary: theirs is strong on drift and strictness, ours on solutions that are wrong but accepted.
+
+**Adversarial hacking of agent benchmarks.** Terminal Wrench ([Zhong et al., 2026](https://arxiv.org/abs/2606.08960))
+prompted frontier models to reward-hack 1,968 tasks from five terminal benchmarks without seeing the verifiers
+and found 13 of Terminal-Bench 2.0's 89 hackable; a follow-up hardens verifiers with hacker–fixer loops
+([Zeng et al., 2026](https://arxiv.org/abs/2610.15924)). BenchJack ([Wang et al., 2026](https://arxiv.org/abs/2605.12673))
+drives coding agents to red-team ten agent benchmarks and distills eight recurring flaw patterns into a checklist.
+Two of Terminal Wrench's 13 are among our 12; one is the same gap (configure-git-webserver, found by them first).
+Deliberate-hack prompts surface spoofing and tampering; our near misses (one stated requirement broken, test-blind)
+and executed test-reading exploits surface different gaps.
+
+**Test adequacy in SWE-style benchmarks.** PatchDiff ([Wang et al., 2025](https://arxiv.org/abs/2503.15223)) and
+UTBoost ([Yu et al., 2025](https://arxiv.org/abs/2506.09289)) showed that SWE-bench patches can pass while not matching the
+intended behavior and augmented the tests. SWE-ABS ([Yu et al., 2026](https://arxiv.org/abs/2603.00520)) found one in
+five "solved" patches from top agents semantically incorrect and cut the top SWE-bench Verified score from 78.8% to
+62.2%; [Rajan (2026)](https://arxiv.org/abs/2606.16062) found 28.5% of sampled SWE-bench Verified tasks accept an
+incorrect patch, with model pass rates 14 points higher on those tasks. TestJack
+([Yao, Wang and Sen, 2026](https://arxiv.org/abs/2610.10619)) generates per-trial tests targeting prompt requirements.
+Coding agents have also been used as test-suite auditors for online-judge problems
+([Xie et al., 2026](https://arxiv.org/abs/2608.01715)), and verifier fuzzing has been proposed for RLVR rewards
+([Ray, 2026](https://arxiv.org/abs/2606.01066)). The strict direction, tests requiring details the specification never
+states, is formalized as specification–oracle gaps ([Ding, 2026](https://arxiv.org/abs/2610.30635)).
+
+**What this work adds.** (1) Near misses that each break exactly one stated requirement, with the auditor's recall
+measured on planted flaws (§3.1) and a controlled test of requirement targeting (§3.1, E2). (2) A head-to-head
+comparison of a blind near-miss auditor with a test-reading reviewer whose every claim is executed (§3.4).
+(3) Findings on a terminal benchmark that its own maintainers had just audited, each reproduced under the
+benchmark's harness and contributed upstream as a test fix validated under that harness.
 
 ## 6. Limitations
 

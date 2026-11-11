@@ -24,9 +24,9 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
 - By manual verdict, every audited task accepts *some* wrong solution and 18 of 26 accept one an agent could
   plausibly produce (single judge; not all filed).
 - The auditor's own error rates are measured on planted flaws: gross flaws 4/4, subtle flaws 2/7.
-- Related work: [Terminal Wrench](https://arxiv.org/abs/2606.08960) (Zhong et al., 2026) prompted models to
-  reward-hack Terminal-Bench 2.0 and found 13 of 89 tasks hackable. Only 2 of those are among the 12 here (one the same gap), so the
-  approaches find largely different gaps (REPORT §5).
+- Related work: these gaps survived Terminal-Bench's own audit of 2.0 ([Buchanan et al., 2026](https://arxiv.org/abs/2611.08417),
+  28 tasks repaired, mostly strictness and drift). Prompting models to hack TB2 ([Terminal Wrench](https://arxiv.org/abs/2606.08960))
+  found 13 tasks, only 2 of them among these 12. Full positioning, including SWE-bench test-adequacy work, in REPORT §5.
 
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
 Blog post: [The grader said yes](https://thegradersaidyes.hashnode.dev/the-grader-said-yes-auditing-terminal-bench-2-0-with-near-miss-solutions).
