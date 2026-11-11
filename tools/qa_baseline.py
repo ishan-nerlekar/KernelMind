@@ -121,7 +121,7 @@ def cmd_review(a) -> None:
         except Exception as e:
             print(f"  failed: {str(e)[:300]}")
             failures += 1
-            if failures == 3:  # out of credits, bad key, outage: don't burn through every task
+            if failures == 3:  # bad key, quota or outage: don't burn through every task
                 print("stopping after 3 failures in a row; rerun to resume")
                 break
             continue

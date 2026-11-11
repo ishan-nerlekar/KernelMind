@@ -394,7 +394,7 @@ requirement's violation (gateway updated but not DNS, and so on). If repeat does
 | claude-haiku-5-5 | 9/14 | 61 | 0 | $0.07 |
 | claude-opus-5-5 | 12/14 | 82 | 0 | $2.16 |
 
-`gpt-6.1-sol` was not run (the OpenAI account had no credits). Judgments: `audit/qa/judged-<model>.json`.
+`gpt-6.1-sol` was not run. Judgments: `audit/qa/judged-<model>.json`.
 
 - **A frontier reviewer that is asked the right question sees most of these gaps by reading.** Opus missed
   only `git-leak-recovery` "recoverable" (it flagged a different hiding place, a plaintext copy in
@@ -516,8 +516,8 @@ left to the existing fix PRs (terminal-bench-2-1 #37, terminal-bench #2464).
 
 Same test-reading review as E1 (`tools/qa_baseline.py`), on the main repo's `tasks/` at `c6bd095` (TB 4.x). 54 of
 66 tasks are runnable here (no GPU, at most 8 GB, verifier at most 30 min). Two were reviewed through the API
-(Opus, no flags) before credits ran out; the other 52 were reviewed in-session by Claude Opus 5.5 subagents with
-the same instructions and output format (`results/qa-claude-session-tb4/`, cost 0). Separate-verifier tasks only
+(Opus, no flags); the other 52 were reviewed in-session by Claude Opus 5.5 subagents with the same instructions
+and output format (`results/qa-claude-session-tb4/`). Separate-verifier tasks only
 ship their declared artifacts to the verifier, which the reviewers were told.
 
 - 59 flags on 37 of 52 tasks; 15 tasks looked sound.
