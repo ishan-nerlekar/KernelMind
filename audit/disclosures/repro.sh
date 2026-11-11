@@ -48,6 +48,7 @@ run() {  # task, case name, solve.sh to use ("" = the task's own reference)
     name="$name-fixed"
   fi
   [ -n "$solve" ] && cp "$solve" "$dir/solution/solve.sh"
+  echo "  $(date +%H:%M) started $task $case (Docker builds can take a while)" >&2
   harbor trial start -p "$dir" -a oracle --trials-dir "$OUT" --trial-name "$name" >/dev/null 2>&1
   printf '%-28s %-28s %s\n' "$task" "$case" "$(reward "$OUT/$name")"
 }
