@@ -10,6 +10,10 @@ Unlike the auditor, it reads the tests and executes nothing.
     python3 tools/qa_baseline.py score  --model claude-opus-5-5
     python3 tools/qa_baseline.py grade  --model claude-opus-5-5                  # optional: run its scripts
 
+Other task sets (e.g. Terminal-Bench 4.0, whose verifiers run in a separate container: grade with Harbor):
+    python3 tools/qa_baseline.py review --model M --label tb4 --tasks-dir <repo>/tasks --tasks a b c
+    python3 tools/qa_baseline.py export --model M --label tb4 --tasks a b c    # cases for repro.sh (CASES=...)
+
 Ground truth: audit/qa/known_gaps.json (14 gaps behind issues #92-#99). The reviewer models' training data
 predates those issues (filed Nov 7, 2026).
 """
@@ -37,8 +41,10 @@ KNOWN = REPO / "audit" / "qa" / "known_gaps.json"
 MAX_GAPS = 6
 
 PROMPT = """You are a QA reviewer for an AI agent benchmark. An agent receives the INSTRUCTION below and works in a \
-Linux container. When it finishes, the TESTS below are copied in and run against the final container state; \
-the task passes if they pass. The environment files and the reference solution are included for context.
+Linux container. When it finishes, the TESTS below are run against the final state; the task passes if they \
+pass. If the TASK CONFIG sets a separate verifier environment, only the files listed under `artifacts` are copied \
+to the verifier, so that is all the tests can see. The environment files and the reference solution are included \
+for context.
 
 Find ways a solution could PASS these tests while NOT satisfying the instruction: requirements the tests never \
 check, cases the test inputs don't cover, checks that can be satisfied without doing the task. Only report a gap \
@@ -52,6 +58,9 @@ Reply with JSON only:
 
 === INSTRUCTION ===
 {instruction}
+
+=== TASK CONFIG (task.toml) ===
+{config}
 
 === TESTS ===
 {tests}
@@ -86,8 +95,12 @@ def slug(model: str) -> str:
     return re.sub(r"[^a-z0-9.-]+", "-", model.lower())
 
 
+def outdir(a) -> Path:
+    return REPO / "results" / (f"qa-{slug(a.model)}" + (f"-{a.label}" if a.label else ""))
+
+
 def cmd_review(a) -> None:
-    out = REPO / "results" / f"qa-{slug(a.model)}"
+    out = outdir(a)
     out.mkdir(parents=True, exist_ok=True)
     spent, failures = 0.0, 0
     for task in load_tasks(TASKS, None, Path(a.tasks_dir).expanduser().resolve()):
@@ -98,6 +111,7 @@ def cmd_review(a) -> None:
             print("stopping at --max-cost; rerun to resume")
             break
         prompt = PROMPT.format(k=MAX_GAPS, instruction=task.instruction[:8000],
+                               config=(task.root / "task.toml").read_text()[:4000],
                                tests=_files(task.root / "tests", 20000, 40000),
                                env=_files(task.root / "environment", 6000, 20000),
                                reference=(task.root / "solution" / "solve.sh").read_text()[:15000])
@@ -118,13 +132,13 @@ def cmd_review(a) -> None:
     print(f"spent ${spent:.2f}")
 
 
-def _load(model: str) -> dict[str, dict]:
-    out = REPO / "results" / f"qa-{slug(model)}"
+def _load(a) -> dict[str, dict]:
+    out = outdir(a)
     return {f.stem: json.loads(f.read_text()) for f in sorted(out.glob("*.json")) if f.stem in TASKS}
 
 
 def cmd_sheet(a) -> None:
-    known, res = json.loads(KNOWN.read_text()), _load(a.model)
+    known, res = json.loads(KNOWN.read_text()), _load(a)
     lines = [f"# QA reviewer flags: {a.model}", "",
              f"Tasks reviewed: {len(res)}/{len(TASKS)}; flags: {sum(len(r['gaps']) for r in res.values())}; "
              f"cost ${sum(r['cost'] for r in res.values()):.2f}", ""]
@@ -138,14 +152,14 @@ def cmd_sheet(a) -> None:
             lines += [f"{i}. [{g.get('severity', '?')}] **{g.get('requirement', '')}**",
                       f"   - wrong: {g.get('wrong_solution', '')}", f"   - why: {g.get('why_tests_pass', '')}"]
         lines.append("")
-    p = REPO / "results" / f"qa-{slug(a.model)}" / "review.md"
+    p = outdir(a) / "review.md"
     p.write_text("\n".join(lines))
     print(p)
 
 
 def cmd_score(a) -> None:
     """judged-<model>.json: {"<task>": {"<known gap id>": <matching flag number or null>, ...}, ...}"""
-    known, res = json.loads(KNOWN.read_text()), _load(a.model)
+    known, res = json.loads(KNOWN.read_text()), _load(a)
     judged = json.loads((REPO / "audit" / "qa" / f"judged-{slug(a.model)}.json").read_text())
     total = found = 0
     for t, gaps in known.items():
@@ -162,7 +176,7 @@ def cmd_score(a) -> None:
 
 def cmd_grade(a) -> None:
     """Run each flag's script against the task's own tests: a flag whose script passes is a lenient suspect."""
-    res, out = _load(a.model), REPO / "results" / f"qa-{slug(a.model)}" / "graded"
+    res, out = _load(a), outdir(a) / "graded"
     out.mkdir(parents=True, exist_ok=True)
     root = Path(a.tasks_dir).expanduser().resolve()
     for task in load_tasks([t for t in TASKS if res.get(t, {}).get("gaps")], None, root):
@@ -175,15 +189,34 @@ def cmd_grade(a) -> None:
         print(f"  passed tests: {[c['candidate'] for c in r['candidates'] if c['outcome'] == 'lenient-suspect']}")
 
 
+def cmd_export(a) -> None:
+    """Write each flag's script as <outdir>/cases/<task>/qa-N/solve.sh, the layout repro.sh reads via CASES=."""
+    n, picks = 0, json.loads(Path(a.picks).read_text()) if a.picks else None  # {"task": [flag numbers]}
+    for t, r in _load(a).items():
+        for i, g in enumerate(r["gaps"], 1):
+            if picks is not None and i not in picks.get(t, []):
+                continue
+            d = outdir(a) / "cases" / t / f"qa-{i}"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "solve.sh").write_text(g.get("solve_sh", "").rstrip("\n") + "\n")
+            n += 1
+    print(f"{n} cases in {outdir(a) / 'cases'}")
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("cmd", choices=["review", "sheet", "score", "grade"])
+    p.add_argument("cmd", choices=["review", "sheet", "score", "grade", "export"])
     p.add_argument("--model", required=True)
     p.add_argument("--max-cost", type=float, default=5.0)
     p.add_argument("--tasks-dir", default=str(REPO / "external" / "tb2"))
     p.add_argument("--backend", default="docker")
+    p.add_argument("--tasks", nargs="*", help="task ids (default: the 26 audited Terminal-Bench 2.0 tasks)")
+    p.add_argument("--label", default="", help="suffix for the results folder, e.g. tb4")
+    p.add_argument("--picks", help="export only these flags: JSON {task: [flag numbers]} (manual triage)")
     a = p.parse_args()
-    {"review": cmd_review, "sheet": cmd_sheet, "score": cmd_score, "grade": cmd_grade}[a.cmd](a)
+    if a.tasks:
+        TASKS[:] = a.tasks
+    {"review": cmd_review, "sheet": cmd_sheet, "score": cmd_score, "grade": cmd_grade, "export": cmd_export}[a.cmd](a)
     return 0
 
 

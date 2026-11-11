@@ -18,6 +18,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 TB2="${TB2:-$REPO/external/tb2}"  # or TB2=results/upstream-tasks: fixes already applied, so expect reference 1, wrong 0
 OUT="${OUT:-$REPO/results/harbor-repro}"
+CASES="${CASES:-$HERE}"  # folder of <task>/<case>/solve.sh; e.g. results/qa-<model>-tb4/cases
+SKIP_REFERENCE="${SKIP_REFERENCE:-0}"  # 1: skip the (possibly hours-long) reference run
 WORK="$(mktemp -d)"
 mkdir -p "$OUT"
 command -v harbor >/dev/null || { echo "harbor not found: uv tool install harbor"; exit 1; }
@@ -51,12 +53,12 @@ run() {  # task, case name, solve.sh to use ("" = the task's own reference)
 }
 
 tasks=("$@")
-[ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$HERE" && ls -d [a-z]*/ | tr -d /))
+[ ${#tasks[@]} -eq 0 ] && tasks=($(cd "$CASES" && ls -d [a-z]*/ | tr -d /))
 [ $FIXED = 1 ] && tasks=($(for t in "${tasks[@]}"; do [ -f "$HERE/$t/test_fix.patch" ] && echo "$t"; done))
 printf '%-28s %-28s %s\n' TASK CASE REWARD
 for t in "${tasks[@]}"; do
-  run "$t" reference ""
-  for s in "$HERE/$t"/*/solve.sh; do
+  [ "$SKIP_REFERENCE" = 1 ] || run "$t" reference ""
+  for s in "$CASES/$t"/*/solve.sh; do
     run "$t" "$(basename "$(dirname "$s")")" "$s"
   done
 done
