@@ -60,6 +60,7 @@ printf '%-28s %-28s %s\n' TASK CASE REWARD
 for t in "${tasks[@]}"; do
   [ "$SKIP_REFERENCE" = 1 ] || run "$t" reference ""
   for s in "$CASES/$t"/*/solve.sh; do
+    [ -f "$s" ] || continue  # no cases for this task: reference only
     run "$t" "$(basename "$(dirname "$s")")" "$s"
   done
 done
