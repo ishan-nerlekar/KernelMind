@@ -32,7 +32,7 @@ This report describes a cheap, mostly automated way to probe verifiers, and what
   reproduced under Harbor and filed as #100–#103 (§3.4).
 - **Terminal-Bench 4.0 (§3.5).** The same test-reading review on 54 runnable TB4 tasks flagged 37 of 52; all 24
   hand-picked wrong solutions scored 1.0 under Harbor. 10 of those gaps were already in the tracker, mostly from
-  a larger audit filed two weeks earlier; 9 look new.
+  a larger audit filed two weeks earlier; 9 look new, 8 filed (#2730–#2737).
 
 The audit grew out of KernelMind, a systems-debugging benchmark built from patterns in real production
 incidents. Its main result was negative (the cheapest current models solve all 20 of its tasks), and
@@ -216,7 +216,8 @@ missing one of its two forms, a scorer that ignores the stated replay order.
 
 TB4 had already been audited heavily (§5): 10 of the 23 gaps were already in the tracker, most from the
 Preference Model audit, and 4 more were close variants. That overlap is a useful check on precision; it also means the
-new contribution here is 9 tasks, not 23. Details and the per-task tracker check are in docs/AUDIT.md.
+new contribution here is 9 tasks, not 23; 8 were filed as
+[#2730–#2737](https://github.com/harbor-framework/terminal-bench/issues/2730). Details and the per-task tracker check are in docs/AUDIT.md.
 
 ## 4. Background: KernelMind and the difficulty study
 
