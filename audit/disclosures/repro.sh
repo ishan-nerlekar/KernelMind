@@ -51,7 +51,10 @@ run() {  # task, case name, solve.sh to use ("" = the task's own reference)
   [ -n "$solve" ] && cp "$solve" "$dir/solution/solve.sh"
   echo "  $(date +%H:%M) started $task $case (Docker builds can take a while)" >&2
   harbor trial start -p "$dir" -a oracle --trials-dir "$OUT" --trial-name "$name" >/dev/null 2>&1
-  printf '%-28s %-28s %s\n' "$task" "$case" "$(reward "$OUT/$name")"
+  local ec; ec=$(cat "$OUT/$name/agent/exit-code.txt" 2>/dev/null || echo 0)
+  # A script that stops early grades whatever it left behind, often the reference: check before trusting a 1.
+  printf '%-28s %-28s %s%s\n' "$task" "$case" "$(reward "$OUT/$name")" \
+    "$([ "$ec" = 0 ] || echo "  (solve.sh exited $ec; see $OUT/$name/agent/oracle.txt)")"
 }
 
 tasks=("$@")

@@ -523,9 +523,14 @@ ship their declared artifacts to the verifier, which the reviewers were told.
 - 59 flags on 37 of 52 tasks; 15 tasks looked sound.
 - 24 flags on 23 tasks picked by hand (low-severity rounding-tolerance flags and 3 the reviewers could not check
   offline left out), exported as cases and run with `repro.sh` under Harbor (oracle agent, Mac, Docker).
-- **All 24 scored reward 1.0.** Three needed a second run: payments-pipeline-fix and vf2-speedup-networkx first
-  missed a timing threshold (their references also pass narrowly on this machine: vf2 5,328x against 5,000x), and
-  the nextjs-performance script called `solution/solve.sh`, which `repro.sh` replaces with the case itself.
+- **All 24 scored reward 1.0**, after reruns for four. payments-pipeline-fix and vf2-speedup-networkx first missed a
+  timing threshold (their references also pass narrowly on this machine: vf2 5,328x against 5,000x). The
+  nextjs-performance script first called `solution/solve.sh`, which `repro.sh` replaces with the case itself.
+- **Correction (Nov 12).** Two "confirmations" were invalid: the react-lead-form and (second) nextjs-performance
+  scripts used `python3`, which those agent images lack, so they stopped after copying the reference and the
+  reference was graded. #2734 was filed on that run. Rewritten with `sed`, both still score 1.0 (and the
+  react-lead-form wrong solution now visibly returns 2025-01-20 for a holiday under the fixed tests), so the count
+  stands. Every other trial's solve.sh exited 0. `repro.sh` now prints a script's non-zero exit next to its reward.
 
 **Already reported?** The main tracker has hundreds of TB4 issues, most filed Oct 27 to Nov 4 from the
 [Preference Model audit](https://preferencemodel.com/blog/terminal-bench-4-is-saturated/) (65 of 66 tasks reviewed,
@@ -559,3 +564,8 @@ ship their declared artifacts to the verifier, which the reviewers were told.
 So 10 of the 23 confirmed gaps were already reported, mostly by an earlier and much larger audit, 4 are variants of
 reported ones, and 9 look new. Filed Nov 11 as #2730–#2737 (`audit/disclosures-tb4/FILED.txt`, with issue texts and the wrong
 solutions).
+
+**Fixes (Nov 12).** Test fixes for #2731, #2732 and #2734 (`audit/disclosures-tb4/<task>/test_fix.patch`) checked
+with `repro.sh --fixed`: each reference 1.0, each wrong solution 0.0 (intrastat fails exactly C34 and C36; vba fails
+exactly the new trace 030; react fails exactly the two holiday checks). `tools/upstream_prs.py tb4-prepare` /
+`tb4-branches` builds the PR branches with a minor version bump and a changelog line.
