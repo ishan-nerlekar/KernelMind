@@ -56,7 +56,7 @@ kernelmind run --agent mini --model claude-haiku-5-5 --attempts 3 --max-cost 2
 # audit someone else's benchmark (Harbor / Terminal-Bench format)
 git clone https://github.com/harbor-framework/terminal-bench-2 external/tb2
 kernelmind audit --tasks-dir external/tb2 --out results/audit --model claude-haiku-5-5 --max-cost 1 regex-log
-audit/disclosures/repro.sh                  # re-check the 8 findings under Harbor (uv tool install harbor)
+audit/disclosures/repro.sh                  # re-check the TB2 findings under Harbor (uv tool install harbor)
 ```
 
 ## Repository
@@ -66,7 +66,8 @@ kernelmind/          harness: tasks, Docker sandbox, validation, agents, scoring
 tasks/               KernelMind tasks (generated from taskgen/; edit there)
 taskgen/, tools/     task generator (incident transplants, git history, planted-flaw tooling)
 substrate/           apnet (own code) and GoBGP v3.37.0 (Apache-2.0), where bugs are planted
-audit/disclosures/   the 8 Terminal-Bench findings: wrong solutions, issue texts, test fixes, repro.sh
+audit/disclosures/   the 12 Terminal-Bench 2.0 findings: wrong solutions, issue texts, test fixes, repro.sh
+audit/disclosures-tb4/ the Terminal-Bench 4.0 findings: issue texts, wrong solutions, test fixes
 docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty study), SPEC, TASK_FORMAT
 ```
 
