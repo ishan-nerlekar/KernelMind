@@ -20,7 +20,7 @@ TB2="${TB2:-$REPO/external/tb2}"  # or TB2=results/upstream-tasks: fixes already
 OUT="${OUT:-$REPO/results/harbor-repro}"
 CASES="${CASES:-$HERE}"  # folder of <task>/<case>/solve.sh; e.g. results/qa-<model>-tb4/cases
 SKIP_REFERENCE="${SKIP_REFERENCE:-0}"  # 1: skip the (possibly hours-long) reference run
-FIXES="${FIXES:-$HERE}"  # folder of <task>/test_fix.patch for --fixed; e.g. audit/disclosures-tb4
+FIXES="$(cd "${FIXES:-$HERE}" && pwd)"  # folder of <task>/test_fix.patch for --fixed; e.g. audit/disclosures-tb4
 WORK="$(mktemp -d)"
 mkdir -p "$OUT"
 command -v harbor >/dev/null || { echo "harbor not found: uv tool install harbor"; exit 1; }
