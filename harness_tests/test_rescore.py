@@ -28,6 +28,8 @@ def test_read_choice_real_log_formats():
     assert read_choice("ANSWER: No answer (incorrect options)", L) is None
     assert read_choice("ANSWER: A, B (for the two reactions)", L) is None  # hedge: two options
     assert read_choice("ANSWER: A and B.", L) is None
+    assert read_choice("ANSWER: C13H12O2", L) is None  # a formula
+    assert read_choice("ANSWER: C) 2.08 x 10^-6 m", L) == "C"
 
 
 def test_read_grader_word():

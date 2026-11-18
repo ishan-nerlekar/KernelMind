@@ -38,7 +38,7 @@ def read_choice(text: str, letters: str) -> str | None:
     if not found:
         return None
     rest = t[found[-1].end():].split("\n", 1)[0].strip().lstrip("'\"([{ ").strip()
-    m = re.match(r"([A-Z])(?![A-Za-z])", rest)
+    m = re.match(r"([A-Z])(?![A-Za-z0-9])", rest)  # "C13H12O2" is a formula, not C
     if not m or m.group(1) not in letters:
         return None
     if _MULTI.match(rest[m.end():]):
