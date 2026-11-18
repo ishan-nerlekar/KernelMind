@@ -8,6 +8,8 @@ def test_read_choice_takes_last_answer_line_and_ignores_formatting():
     assert read_choice("x\nANSWER: (C) Paris", "ABCD") == "C"
     assert read_choice("ANSWER: B\nwait\n**ANSWER: C**", "ABCD") == "C"
     assert read_choice("Final answer: D", "ABCD") == "D"
+    assert read_choice("x\n\n$$ANSWER: C$$", "ABCD") == "C"  # LaTeX display math
+    assert read_choice("ANSWER: D 1900 kJ as misprinted as B", "ABCD") == "D"  # trailing comment
 
 
 def test_read_choice_unreadable():

@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-_FMT = re.compile(r"[*_`~]")
+_FMT = re.compile(r"[*_`~$]")  # Markdown emphasis, code, LaTeX math delimiters
 _ANSWER_LINE = re.compile(r"(?im)^[^\S\n]*(?:final[^\S\n]+)?answer[^\S\n]*:[^\S\n]*(.+)$")
 
 
@@ -45,8 +45,10 @@ class Row:
     model: str
     sample: str
     epoch: int
-    recorded: str  # "C" / "I" / other
+    recorded: str  # "C" / "I" / "N" (no answer) / other
     robust: str  # "C" / "I" / "unparsed"
+    empty: bool = False  # the model produced no text at all
+    stop: str = ""  # stop reason when empty (max_tokens, unknown, ...)
 
 
 def _verdict(v) -> str:
@@ -71,7 +73,9 @@ def rows_from_log(path: Path, reader: str = "choice", scorer: str | None = None)
         else:  # grader_word
             word = read_grader_word(sc.explanation or "")
             robust = {"CORRECT": "C", "INCORRECT": "I"}.get(word, "unparsed")
-        yield Row(str(path.name), model, str(s.id), s.epoch, _verdict(sc.value), robust)
+        empty = not (s.output.completion or "").strip()
+        yield Row(str(path.name), model, str(s.id), s.epoch, _verdict(sc.value), robust,
+                  empty, str(s.output.stop_reason) if empty else "")
 
 
 def summarize(rows: list[Row]) -> dict[str, dict]:
@@ -91,13 +95,18 @@ def summarize(rows: list[Row]) -> dict[str, dict]:
             "right_to_wrong": c[("C", "I")],
             "right_but_unparsed": c[("C", "unparsed")],
             "wrong_and_unparsed": c[("I", "unparsed")],
+            "empty": sum(r.empty for r in rs),  # no model output; counted as wrong in the recorded score
+            "empty_stops": dict(Counter(r.stop for r in rs if r.empty)),
         }
     return out
 
 
 def markdown(summary: dict[str, dict]) -> str:
-    lines = ["| Model | Samples | Recorded | Robust | I→C | C→I | Unparsed (C / I) |", "|---|---|---|---|---|---|---|"]
+    lines = ["| Model | Samples | Recorded | Robust | I→C | C→I | Unparsed (C / I) | Empty output |",
+             "|---|---|---|---|---|---|---|---|"]
     for m, d in summary.items():
+        stops = ", ".join(f"{k} {v}" for k, v in d["empty_stops"].items())
         lines.append(f"| {m} | {d['samples']} | {d['recorded_score']:.4f} | {d['robust_score']:.4f} | "
-                     f"{d['wrong_to_right']} | {d['right_to_wrong']} | {d['right_but_unparsed']} / {d['wrong_and_unparsed']} |")
+                     f"{d['wrong_to_right']} | {d['right_to_wrong']} | {d['right_but_unparsed']} / {d['wrong_and_unparsed']} | "
+                     f"{d['empty']}{f' ({stops})' if stops else ''} |")
     return "\n".join(lines) + "\n"
