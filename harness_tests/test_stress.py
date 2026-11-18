@@ -48,3 +48,18 @@ def test_compare_known():
     res = run([_probe(lambda t: "C" if t == "ANSWER: 18" else "I", [Case("bold", "x", "same"), Case("ok", "ANSWER: 18", "same")])])
     out = compare_known(res, {"fake": {"bold", "period"}})
     assert out["rediscovered"] == 1 and out["missed"] == [("fake", "period")] and out["new"] == []
+
+
+def test_stress_map(tmp_path):
+    from kernelmind.stress_map import exposure, scan
+    ev = tmp_path / "toy"
+    ev.mkdir()
+    (ev / "toy.py").write_text(
+        "import re\nfrom inspect_ai.scorer import match, choice, scorer\n"
+        "def task():\n    return dict(scorer=[match(numeric=True), choice()])\n"
+        "@scorer(metrics=[])\ndef toy_scorer():\n    return re.search('x', 'y')\n")
+    (tmp_path / "utils").mkdir()
+    [e] = scan(tmp_path)
+    assert e.name == "toy" and e.builtins == ["choice()", "match(numeric=True)"]
+    assert e.custom == ["toy_scorer"] and e.parse_calls == 1
+    assert exposure([e])["match(numeric=True)"] == ["toy"]

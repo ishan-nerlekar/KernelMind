@@ -88,6 +88,12 @@ It prints a table, then a recall check against `KNOWN` in `stress_probes.py`: th
    - macbench: a draft `[ANSWER]A[/ANSWER]` followed by a final `[ANSWER]B[/ANSWER]` scores
      CORRECT for target A, and the reverse scores INCORRECT.
 
+### Still live on main? (Nov 18, inspect_ai 0.3.291 + inspect_evals ee9cd5c)
+
+Same probes against current `main` of both repos: 37 findings, **all 18 filed findings still
+reproduce**. The one change is `model_graded_qa`: `GRADE: **C**` and `**GRADE:** C` parse on
+main (its default grade pattern was reworked after 0.3.285), so that candidate is dropped.
+
 ### Triage of findings not in KNOWN (20 cases)
 
 Most are more triggers of a root cause already filed:
@@ -101,19 +107,33 @@ Most are more triggers of a root cause already filed:
 | macbench string compare (#2918) | space-separated, reordered, bold/parens/backticks |
 | writingbench score regex (#2886) | bold score |
 
-Two need a tracker check before filing:
+Two needed a tracker check before filing:
 
-1. **model_graded_qa:** `GRADE: **C**` is unscored, and every eval using the default
-   grade pattern inherits this. It's likely reported upstream already; check first.
+1. **model_graded_qa:** `GRADE: **C**` unscored. **Fixed on main**; dropped.
 2. **macbench.single:** with two `[ANSWER]` tags, the first one wins, so a superseded draft
-   scores CORRECT. This is the same first-match pattern as inspect_ai #6534.
+   scores CORRECT. Still live on main (#2591 is unmerged); it belongs on #2918, which covers
+   the same scorer.
 
 ## Limits and next steps
 
-- Probes are hand-written adapters, 12 so far. Next: map each inspect_evals task to its
-  scorer automatically (many use `match`, `choice`, `model_graded_qa` or `pattern`
-  directly) and run the built-in probes across all of them.
+- Probes are hand-written adapters, 12 so far. `kernelmind stress-map` maps every eval to its scorers
+  from the source (no imports): which evals inherit a built-in finding, and which custom
+  scorers parse free text and still need a probe (see below).
 - Canonical inputs are synthetic. The `make_logs.py` approach (a real dataset sample, then
   the same rewrite) turns a finding into issue evidence.
 - Some `same` rewrites are arguable for strict-format evals; a FLIP on, say, backticks is
   a judgement call, so each finding needs a human look before filing.
+
+## Coverage map (`kernelmind stress-map`, inspect_evals 50b8b19)
+
+125 evals define or call a scorer.
+
+| Built-in call | Inherits | Evals |
+|---|---|---|
+| `match(numeric=True)` | #6536, #6537 | 2: gsm8k, mgsm |
+| `choice()` | #6534, #6535 (with `multiple_choice()`) | 26, including mmlu, mmlu_pro, gpqa, arc, hellaswag, medqa, truthfulqa, winogrande, wmdp |
+| `pattern(<regex>)` | first match wins, string compare (#2918) | 6: boolq, chembench, infinite_bench, macbench, paws, worldsense |
+
+Audit queue, ranked by how much free-text parsing the custom scorer does (top of list):
+cti_realm, theagentcompany, assistant_bench, browse_comp, mind2web, sycophancy, frontier_cs,
+anima, chembench, compute_eval, lingoly. Full list: `kernelmind stress-map <src> --out map.md`.

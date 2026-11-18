@@ -113,6 +113,16 @@ def cmd_stress(args) -> int:
     return 0
 
 
+def cmd_stress_map(args) -> int:
+    from .stress_map import markdown, scan
+
+    md = markdown(scan(Path(args.src)), set(args.covered))
+    if args.out:
+        Path(args.out).write_text(md)
+    print(md)
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="kernelmind")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -165,6 +175,13 @@ def main(argv=None) -> int:
     s.add_argument("probes", nargs="*", help="probe names; default all")
     s.add_argument("--out", help="write results.json and summary.md here")
     s.set_defaults(fn=cmd_stress)
+
+    s = sub.add_parser("stress-map", help="map inspect_evals evals to their scorers: exposure to built-in findings, audit queue")
+    s.add_argument("src", help="inspect_evals checkout's src/inspect_evals directory")
+    s.add_argument("--covered", nargs="*", default=["sosbench", "coconot", "writingbench", "simpleqa", "strong_reject", "vqa_rad", "macbench"],
+                   help="evals that already have a probe (left out of the audit queue)")
+    s.add_argument("--out", help="write the markdown here")
+    s.set_defaults(fn=cmd_stress_map)
 
     args = p.parse_args(argv)
     return args.fn(args)
