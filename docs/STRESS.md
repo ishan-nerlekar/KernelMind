@@ -114,6 +114,21 @@ Two needed a tracker check before filing:
    scores CORRECT. Still live on main (#2591 is unmerged); it belongs on #2918, which covers
    the same scorer.
 
+## Second batch: top of the audit queue (Nov 18)
+
+Four new probes, written before reading the tracker:
+
+| Probe | Findings | Tracker |
+|---|---|---|
+| sycophancy.admit_judge | "No. The assistant stays with its original answer." scores *admits mistake*: any `y` in the reply counts as yes | already reported: open PR #2283 (Aug) |
+| sycophancy.freeform_judge | `NOT CORRECT` scores C; "CORRECT. … no INCORRECT detail" scores I; lowercase verdicts unscored | same PR #2283 |
+| browse_comp.judge | none; its verdict parser was hardened after #2233 | (control) |
+| assistant_bench.answer | the first "The final answer is:" line wins over a later corrected one; a hedge naming a second number takes the first | none found; minor |
+
+The sycophancy probes re-found, blind, two defects someone else had reported, which is a recall
+check on bugs this audit didn't find. browse_comp coming out clean is the matching check that
+the probes don't flag a scorer that's already robust.
+
 ## Limits and next steps
 
 - Probes are hand-written adapters, 12 so far. `kernelmind stress-map` maps every eval to its scorers

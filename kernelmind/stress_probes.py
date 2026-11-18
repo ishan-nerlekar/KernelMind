@@ -27,6 +27,9 @@ KNOWN: dict[str, set[str]] = {
     "vqa_rad.closed": {"trailing_period", "bold_answer"},  # inspect_evals #2917
     "macbench.multi": {"comma_space"},  # inspect_evals #2918
     "macbench.single": {"hedge"},  # inspect_evals #2918
+    # reported by someone else (open PR #2283), re-found blind by these probes
+    "sycophancy.admit_judge": {"verbose_no", "explained_no"},
+    "sycophancy.freeform_judge": {"not_correct", "correct_with_reason"},
 }
 
 
@@ -242,6 +245,65 @@ def macbench_single() -> Probe:
     return _macbench("macbench.single", "A", frame.format(a="A"), answer_cases(frame, "A", "B", letters=True))
 
 
+def sycophancy_admit_judge() -> Probe:
+    from inspect_evals.sycophancy.scorers import admit_mistake
+
+    async def grade(reply):
+        v = await admit_mistake(_state("Paris.", "Capital of France?"), _mock(reply))
+        return {"C": "admits", "I": "does_not_admit"}.get(v, UNSCORED)
+
+    cases = judge_cases("{v}", "n") + [  # the template asks for "a single letter y or n"
+        Case("word_No", "No", "same"),
+        Case("verbose_no", "No. The assistant stays with its original answer.", "same"),
+        Case("explained_no", "n (it never says it was wrong; it repeats its answer)", "same"),
+    ]
+    return Probe("sycophancy.admit_judge", "judge", grade, "n", "does_not_admit", cases,
+                 "admit_mistake(): did the model back down after being challenged?")
+
+
+def sycophancy_freeform_judge() -> Probe:
+    from inspect_ai.scorer import Target
+    from inspect_evals.sycophancy.scorers import grade_freeform_question
+
+    async def grade(reply):
+        v = await grade_freeform_question(_state("Paris.", "Capital of France?"), Target("Paris"), _mock(reply))
+        return {"C": "C", "I": "I"}.get(v, UNSCORED)
+
+    cases = judge_cases("{v}", "CORRECT") + [
+        Case("not_correct", "NOT CORRECT", "wrong"),
+        Case("correct_with_reason", "CORRECT. The student gives no INCORRECT or conflicting detail.", "same"),
+    ]
+    return Probe("sycophancy.freeform_judge", "judge", grade, "CORRECT", "C", cases,
+                 "grade_freeform_question(): the first answer, before the challenge")
+
+
+def browse_comp_judge() -> Probe:
+    from inspect_ai.scorer import Target
+    from inspect_evals.browse_comp.browse_comp import browse_comp_scorer
+
+    async def grade(reply):
+        v = (await browse_comp_scorer(_mock(reply))(_state("Explanation ... Exact Answer: 1988", "q"), Target("1988"))).value
+        return UNSCORED if not isinstance(v, dict) else str(v["score"])
+
+    tmpl = ("extracted_final_answer: 1988\n\nreasoning: The answer matches the correct answer.\n\n"
+            "correct: {v}\n\nconfidence: 90")
+    return Probe("browse_comp.judge", "judge", grade, tmpl.replace("{v}", "yes"), "C",
+                 judge_cases(tmpl, "yes"), "correct: yes|no verdict (hardened after #2233)")
+
+
+def assistant_bench_answer() -> Probe:
+    from inspect_ai.scorer import Target
+    from inspect_evals.assistant_bench.scoring import assistant_bench_scorer
+
+    async def grade(text):
+        v = (await assistant_bench_scorer()(_state(text), Target("4250"))).value
+        return f"{v['score']:g}"
+
+    frame = "I searched the listings and added the fees.\nThe final answer is: {a}"
+    return Probe("assistant_bench.answer", "answer", grade, frame.format(a="4250"), "1",
+                 answer_cases(frame, "4250", "9100", numeric=True), "numeric answer with partial credit")
+
+
 PROBES: dict[str, Callable[[], Probe]] = {
     "inspect.match_numeric": match_numeric,
     "inspect.match_numeric_large": match_numeric_large,
@@ -255,4 +317,8 @@ PROBES: dict[str, Callable[[], Probe]] = {
     "vqa_rad.closed": vqa_rad_closed,
     "macbench.multi": macbench_multi,
     "macbench.single": macbench_single,
+    "sycophancy.admit_judge": sycophancy_admit_judge,
+    "sycophancy.freeform_judge": sycophancy_freeform_judge,
+    "browse_comp.judge": browse_comp_judge,
+    "assistant_bench.answer": assistant_bench_answer,
 }
