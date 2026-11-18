@@ -22,16 +22,28 @@ from pathlib import Path
 from typing import Iterable
 
 _FMT = re.compile(r"[*_`~$]")  # Markdown emphasis, code, LaTeX math delimiters
-_ANSWER_LINE = re.compile(r"(?im)^[^\S\n]*(?:final[^\S\n]+)?answer[^\S\n]*:[^\S\n]*(.+)$")
+_ANSWER = re.compile(r"answer\s*:", re.IGNORECASE)
+_MULTI = re.compile(r"\s*(?:[,/&;]|\band\b|\bor\b)\s*[(\[]?\s*[A-Z]\b")
 
 
 def read_choice(text: str, letters: str) -> str | None:
-    """Letter from the last ANSWER line, or None if there isn't a readable one."""
-    lines = _ANSWER_LINE.findall(_FMT.sub("", text))
-    if not lines:
+    """The single letter after the last `ANSWER:`, or None if there isn't exactly one.
+
+    Formatting (Markdown, backticks, LaTeX `$`, quotes, brackets) is ignored and the
+    `ANSWER:` can sit mid-sentence. A word ("None of the choices") or a hedge naming two
+    options ("A, B", "A and B") is not an answer.
+    """
+    t = _FMT.sub("", text)
+    found = list(_ANSWER.finditer(t))
+    if not found:
         return None
-    m = re.match(r"\s*[(\[]?\s*([A-Z])\b", lines[-1])
-    return m.group(1) if m and m.group(1) in letters else None
+    rest = t[found[-1].end():].split("\n", 1)[0].strip().lstrip("'\"([{ ").strip()
+    m = re.match(r"([A-Z])(?![A-Za-z])", rest)
+    if not m or m.group(1) not in letters:
+        return None
+    if _MULTI.match(rest[m.end():]):
+        return None
+    return m.group(1)
 
 
 def read_grader_word(text: str) -> str | None:

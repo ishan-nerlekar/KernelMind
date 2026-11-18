@@ -18,6 +18,18 @@ def test_read_choice_unreadable():
     assert read_choice("ANSWER: I think it's B", "ABCD") is None  # "I" is a word, not choice I
 
 
+def test_read_choice_real_log_formats():
+    L = "ABCD"
+    assert read_choice("x\nANSWER: $D", L) == "D"  # template "$LETTER" copied literally
+    assert read_choice("Therefore, ANSWER: C", L) == "C"  # mid-sentence
+    assert read_choice("the answer is: 'ANSWER: C'", L) == "C"  # quoted
+    assert read_choice("ANSWER: D chromatin methylation", L) == "D"  # letter, then words
+    assert read_choice("ANSWER: None of the given choices (E)", L) is None  # a word, not a letter
+    assert read_choice("ANSWER: No answer (incorrect options)", L) is None
+    assert read_choice("ANSWER: A, B (for the two reactions)", L) is None  # hedge: two options
+    assert read_choice("ANSWER: A and B.", L) is None
+
+
 def test_read_grader_word():
     assert read_grader_word("CORRECT") == "CORRECT"
     assert read_grader_word("**CORRECT**") == "CORRECT"
