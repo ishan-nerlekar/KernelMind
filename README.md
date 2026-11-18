@@ -31,6 +31,9 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
   28 tasks repaired, mostly strictness and drift). Prompting models to hack TB2 ([Terminal Wrench](https://arxiv.org/abs/2606.08960))
   found 13 tasks, only 2 of them among these 12. Full positioning, including SWE-bench test-adequacy work, in REPORT §5.
 
+- Inspect scorers: 4 issues in inspect_ai and 11 in inspect_evals, each confirmed by running the scorer. `kernelmind stress`
+  now checks for these patterns automatically: 12 probes re-find all 18 hand-confirmed findings ([docs/STRESS.md](docs/STRESS.md)).
+
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
 Blog post: [The grader said yes](https://thegradersaidyes.hashnode.dev/the-grader-said-yes-auditing-terminal-bench-2-0-with-near-miss-solutions).
 
@@ -62,13 +65,13 @@ audit/disclosures/repro.sh                  # re-check the TB2 findings under Ha
 ## Repository
 
 ```
-kernelmind/          harness: tasks, Docker sandbox, validation, agents, scoring, audit
+kernelmind/          harness: tasks, Docker sandbox, validation, agents, scoring, audit, scorer stress test
 tasks/               KernelMind tasks (generated from taskgen/; edit there)
 taskgen/, tools/     task generator (incident transplants, git history, planted-flaw tooling)
 substrate/           apnet (own code) and GoBGP v3.37.0 (Apache-2.0), where bugs are planted
 audit/disclosures/   the 12 Terminal-Bench 2.0 findings: wrong solutions, issue texts, test fixes, repro.sh
 audit/disclosures-tb4/ the Terminal-Bench 4.0 findings: issue texts, wrong solutions, test fixes
-docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty study), SPEC, TASK_FORMAT
+docs/                REPORT (write-up), AUDIT (log), CALIBRATION (difficulty study), STRESS (scorer stress test), SPEC, TASK_FORMAT
 ```
 
 ## License

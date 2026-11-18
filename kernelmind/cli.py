@@ -98,6 +98,21 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_stress(args) -> int:
+    from .stress import compare_known, report, run
+    from .stress_probes import KNOWN, PROBES
+
+    names = args.probes or list(PROBES)
+    unknown = [n for n in names if n not in PROBES]
+    if unknown:
+        print(f"unknown probes: {unknown}; available: {list(PROBES)}", file=sys.stderr)
+        return 2
+    results = run([PROBES[n]() for n in names])
+    print(report(results, Path(args.out) if args.out else None))
+    print(json.dumps(compare_known(results, {k: v for k, v in KNOWN.items() if k in names}), indent=1))
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="kernelmind")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -145,6 +160,11 @@ def main(argv=None) -> int:
     s.add_argument("runs", nargs="+")
     s.add_argument("-k", type=int, default=2)
     s.set_defaults(fn=cmd_report)
+
+    s = sub.add_parser("stress", help="stress-test Inspect scorers with meaning-preserving rewrites (needs inspect_ai/inspect_evals)")
+    s.add_argument("probes", nargs="*", help="probe names; default all")
+    s.add_argument("--out", help="write results.json and summary.md here")
+    s.set_defaults(fn=cmd_stress)
 
     args = p.parse_args(argv)
     return args.fn(args)
