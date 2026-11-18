@@ -74,8 +74,8 @@ def rows_from_log(path: Path, reader: str = "choice", scorer: str | None = None)
             word = read_grader_word(sc.explanation or "")
             robust = {"CORRECT": "C", "INCORRECT": "I"}.get(word, "unparsed")
         empty = not (s.output.completion or "").strip()
-        yield Row(str(path.name), model, str(s.id), s.epoch, _verdict(sc.value), robust,
-                  empty, str(s.output.stop_reason) if empty else "")
+        stop = str(s.output.choices[0].stop_reason) if s.output.choices else "no_output"  # older logs: no choices at all
+        yield Row(str(path.name), model, str(s.id), s.epoch, _verdict(sc.value), robust, empty, stop if empty else "")
 
 
 def summarize(rows: list[Row]) -> dict[str, dict]:
