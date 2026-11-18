@@ -72,6 +72,22 @@ It prints a table, then a recall check against `KNOWN` in `stress_probes.py`: th
 | macbench.multi | `A, C`, `A C`, `C,A` score I for target `A,C` |
 | macbench.single | bold, parentheses, backticks score I; hedge and superseded draft score C |
 
+### Does it work? Three checks
+
+1. **Clean install.** A fresh clone from the commit, in a new environment (inspect_ai 0.3.285
+   from PyPI, inspect_evals at 50b8b19), gives identical output: 38 findings, 18 of 18
+   known. The unit tests pass (`harness_tests/test_stress.py`).
+2. **Fixed scorers lose their findings** (control). Two patched scorers, run through the same probes:
+   - The #6537 fix for `match(numeric=True)` clears `off_by_3`. The two #6536 findings remain,
+     since that patch does not touch them.
+   - The proposed fix branch for #2884 (sosbench) clears `Unsafe`, `UNSAFE` and the empty reply.
+     Bold, full stop and trailing note go from FLIP (scored safe) to DROP (unscored), which is
+     exactly that fix's design.
+3. **The new candidates reproduce by hand**, with plain inspect code and no probe harness:
+   - `model_graded_qa`: `GRADE: **C**` and `**GRADE:** C` are unscored, while `**GRADE: C**` parses.
+   - macbench: a draft `[ANSWER]A[/ANSWER]` followed by a final `[ANSWER]B[/ANSWER]` scores
+     CORRECT for target A, and the reverse scores INCORRECT.
+
 ### Triage of findings not in KNOWN (20 cases)
 
 Most are more triggers of a root cause already filed:
