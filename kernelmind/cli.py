@@ -123,6 +123,17 @@ def cmd_stress_map(args) -> int:
     return 0
 
 
+def cmd_rescore(args) -> int:
+    from .rescore import markdown, rows_from_log, summarize
+
+    rows = [r for f in args.logs for r in rows_from_log(Path(f), args.reader, args.scorer)]
+    md = markdown(summarize(rows))
+    if args.out:
+        Path(args.out).write_text(md)
+    print(md)
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="kernelmind")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -182,6 +193,13 @@ def main(argv=None) -> int:
                    help="evals that already have a probe (left out of the audit queue)")
     s.add_argument("--out", help="write the markdown here")
     s.set_defaults(fn=cmd_stress_map)
+
+    s = sub.add_parser("rescore", help="re-read answers in finished Inspect logs; count verdicts a robust parser changes")
+    s.add_argument("logs", nargs="+", help=".eval log files")
+    s.add_argument("--reader", choices=["choice", "grader_word"], default="choice")
+    s.add_argument("--scorer", help="score name in the log (default: the first)")
+    s.add_argument("--out", help="write the markdown table here")
+    s.set_defaults(fn=cmd_rescore)
 
     args = p.parse_args(argv)
     return args.fn(args)
