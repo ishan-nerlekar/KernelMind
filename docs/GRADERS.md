@@ -73,6 +73,33 @@ first of: a letter with options, a number, a word, that it reads).
 Rankings: `results/graders/` (local). Every flagged grader needs a human look before filing:
 some "same" rewrites are judgement calls for strict-format tasks.
 
+## A grader outside both frameworks: Math-Verify (Nov 20)
+
+[Math-Verify](https://github.com/huggingface/Math-Verify) (Hugging Face, 0.9.0) checks math
+answers for lighteval, the Open LLM Leaderboard and many RL training rewards. It is a plain
+library, so it is audited through the `python:` adapter with a three-line wrapper per way it is
+used (`examples/graders/math_verify_graders.py`): its default `parse()`, and the accuracy reward
+in open-r1's GRPO recipe.
+
+```bash
+kernelmind grader-audit --grader python:examples/graders/math_verify_graders.py:default --target 18
+kernelmind grader-audit --grader python:examples/graders/math_verify_graders.py:openr1_reward --target '\frac{3}{4}'
+```
+
+| Use | Target | Flagged |
+|---|---|---|
+| default `parse()` | 18 | `ANSWER: (18)` and `` ANSWER: `18` `` parse to nothing (scored wrong); a hedge (`18, though 129 is also plausible`) and a superseded draft are scored right |
+| default `parse()` | `\frac{3}{4}` | the hedge |
+| open-r1 reward | 18 | nothing (only `\boxed{}` is read, and decoration around the box is handled) |
+| open-r1 reward | `\frac{3}{4}` | the hedge |
+
+Found by hand while checking these: two boxed answers, `\boxed{18} or \boxed{129}`, parse as
+the number 18129 (the reverse order gives the set {18, 129}). None of these is in Math-Verify's
+tracker as of Nov 20; none is confirmed as a bug yet (a hedge taking the first value may be by design).
+
+Running Math-Verify also exposed two weaknesses in the audit itself, now fixed: case changes
+were applied to LaTeX (`\Frac`), and decorations were put inside `\boxed{}` instead of around it.
+
 ## Limits
 
 - Text graders only. Verifiers that check a container's final state (Terminal-Bench) need

@@ -141,6 +141,8 @@ def wrong_answer(s: Sample, kind: str) -> str:
         v = float(t.replace(",", ""))
         w = v * 7 + 3
         return f"{w:g}" if not w.is_integer() else str(int(w))
+    if "\\" in t:  # a LaTeX expression: a different, equally parseable one
+        return "\\frac{2}{7}" if t != "\\frac{2}{7}" else "\\frac{3}{7}"
     if t.lower() in ("yes", "no"):
         return "no" if t.lower() == "yes" else "yes"
     if t.lower() in ("true", "false"):
@@ -182,6 +184,17 @@ async def audit_answers(g: Grader, s: Sample, limit: int = 3) -> list[Result]:
     out = []
     for frame, verdict in frames:
         cases = answer_cases(frame, s.target, wrong, numeric=kind == "number", letters=kind.startswith("letter"))
+        if "\\" in s.target:  # LaTeX answer: \Frac is not a case variant of \frac
+            cases = [c for c in cases if c.rewrite not in ("upper_case", "title_case")]
+        if "\\boxed{" in frame:
+            # decoration belongs around the box, not inside it ("\boxed{18.}" is not how models write)
+            inner = {"bold_answer", "trailing_period", "parentheses", "backticks", "leading_space"}
+            boxed = frame.format(a=s.target).rsplit("\n", 1)[-1]
+            head = frame.format(a=s.target)[: -len(boxed)]
+            cases = [c for c in cases if c.rewrite not in inner] + [
+                Case("boxed_bold", f"{head}**{boxed}**", "same"),
+                Case("boxed_trailing_period", f"{head}{boxed}.", "same"),
+                Case("boxed_in_math", f"{head}${boxed}$", "same")]
         if kind == "letter":
             # a lead-in sentence whose first word starts with another option's letter
             lead = LEAD_INS.get(wrong, "Based on the options,")
