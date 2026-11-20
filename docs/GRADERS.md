@@ -1,0 +1,82 @@
+# Grader audit: point it at any grader
+
+`kernelmind grader-audit` checks whether a grader's verdict survives rewrites that keep the
+meaning of a model's answer, and whether it rejects near misses. It treats the grader as a
+black box: the same audit runs on an Inspect scorer, an lm-evaluation-harness filter and
+metric, a Python function or a command-line script. No datasets, API keys or network are
+needed; LLM-judge calls are replayed offline.
+
+```bash
+kernelmind grader-audit --grader inspect:inspect_evals/gsm8k --target 18
+kernelmind grader-audit --grader lmeval:mmlu_pro_biology --target C --choices "A|B|C|D|E|F|G|H|I|J"
+kernelmind grader-audit --grader python:my_scorer.py:grade --target 18
+kernelmind grader-audit --grader "cmd:./grade.sh {target}" --target 18      # output on stdin
+kernelmind grader-audit --log run.eval                                      # a log's own scorer and samples
+kernelmind grader-sweep lmeval --out results/graders/lmeval                 # every grader, ranked
+```
+
+Inspect and lm-eval graders need those packages installed in the environment you run from.
+
+## How it works
+
+**Answer graders** (the grader reads the model's output):
+
+1. *Which formats does it read?* The correct answer and a wrong one are written in a dozen
+   common formats (`ANSWER: X`, `The answer is (X).`, `#### X`, `\boxed{X}`, a bare answer...),
+   each bare and after a line of reasoning. A format is *read* when the two get different
+   verdicts. This replaces the hand-written adapters of `kernelmind stress`.
+2. *Rewrites in each read format.* Meaning kept (bold, a full stop, parentheses, backticks, a
+   trailing note, a bold label, `\boxed{}`, `18.0`, a lead-in sentence whose first word starts
+   with another option's letter): the verdict must not change. Near misses (a superseded draft,
+   a hedge naming another option, the right number only in the working, off by 3): the verdict
+   must not be the correct one.
+
+**Judge graders** (the grader asks an LLM and parses its reply): every model call is
+intercepted and answered with a scripted reply. Candidate replies come from the judge prompt
+itself: its verdict words, JSON keys, XML tags, `GRADE:` lines and any output format it spells
+out with `<placeholders>`. Replies that get different verdicts are canonical; their rewrites
+(bold or quoted token, a full stop, a capital letter, a code fence, a trailing note, a Markdown
+header, `NOT_ATTEMPTED` written `NOT ATTEMPTED`, an empty content-filter reply) must keep the
+verdict. Two checks need no canonical reply: verdict words that contain one another must not
+collapse into one verdict, and a verdict word the prompt asks for must not read as "unknown".
+
+Outcomes: FLIP (a definite wrong verdict), DROP (unscored where a verdict was due), ERROR.
+Graders that read none of the formats are reported as `NOFORMAT`, not guessed at.
+
+## Does it work? (Nov 20, 2026)
+
+**Recall without per-grader code.** Each known bug is audited by pointing the tool at the grader
+it lives in, nothing else (`kernelmind grader-audit --recall all`):
+
+| Set | Re-found |
+|---|---|
+| Our hand-confirmed Inspect findings (inspect_ai #6534–#6537, inspect_evals #2883–#2887, #2916–#2918) | 17 / 17 |
+| lm-eval bugs reported by others (MMLU-Pro first match #3110/#4417, Spanish MMLU-Redux #4338, TurkishMMLU CoT #4339) | 3 / 3 |
+| A scorer known to be robust (browse_comp, hardened after #2233) | clean |
+
+Caveat: the rewrite families were extended while building the tool (off by 3, the lead-in
+sentence, separator spellings, unread verdict words, multi-slot formats), after seeing which
+known bugs the first version missed. So this is recall on bugs the tool was tuned against;
+the sweep below is the test on graders it was not tuned for.
+
+**Sweeps.** No datasets are downloaded, so each grader is audited on synthetic samples (the
+first of: a letter with options, a number, a word, that it reads).
+
+- *lm-eval* (d6de816): 4,790 generative task pipelines; the 2,739 that extract an answer
+  (rather than compare the whole output, as QA and translation tasks do) fall into 127
+  distinct configurations. 48 audited, 70 read none of the synthetic formats, 9 skipped.
+- *inspect_evals* (50b8b19, inspect_ai 0.3.285): 250 tasks. 73 audited, 163 read none of the
+  synthetic formats (agent tasks, judges that need real sample metadata), 14 timed out.
+  39 tasks show the #6534/#6535 pattern (backticks, bold label, superseded draft), in line with
+  the static map's 26 `choice()` evals, several of which define more than one task.
+
+Rankings: `results/graders/` (local). Every flagged grader needs a human look before filing:
+some "same" rewrites are judgement calls for strict-format tasks.
+
+## Limits
+
+- Text graders only. Verifiers that check a container's final state (Terminal-Bench) need
+  state rewrites, which `kernelmind audit` covers by hand-built near-miss solutions instead.
+- It shows a grader *can* break, not how often; `kernelmind rescore` on real logs measures that.
+- For LLM judges it tests how the reply is read, not whether the judgement is right.
+- Synthetic samples miss scorers that read sample metadata; point `--log` at a real log for those.

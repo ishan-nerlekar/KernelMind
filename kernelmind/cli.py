@@ -134,6 +134,66 @@ def cmd_rescore(args) -> int:
     return 0
 
 
+def cmd_grader_audit(args) -> int:
+    import asyncio
+
+    from .graders.adapters import load_grader
+    from .graders.core import Sample, audit, recall, report
+    from .graders.known import KNOWN_INSPECT, KNOWN_LMEVAL, inspect_targets, lmeval_targets
+
+    targets = []
+    if args.recall:
+        targets += inspect_targets(args.logs) if args.recall in ("inspect", "all") else []
+        targets += lmeval_targets() if args.recall in ("lmeval", "all") else []
+    if args.log:
+        from .graders.inspect_adapter import grader_from_log
+        for f in args.log:
+            g, samples = grader_from_log(f, args.samples)
+            targets += [(g, s) for s in samples]
+    for spec in args.grader:
+        meta = json.loads(args.metadata) if args.metadata else {}
+        choices = args.choices.split("|") if args.choices else None
+        targets.append((load_grader(spec), Sample(args.target, choices=choices, metadata=meta, output=args.output)))
+    if not targets:
+        print("nothing to audit: give --grader, --log or --recall", file=sys.stderr)
+        return 2
+
+    async def go():
+        out = []
+        for g, s in targets:
+            out += await audit(g, s)
+        return out
+
+    results = asyncio.run(go())
+    print(report(results, Path(args.out) if args.out else None))
+    if args.recall:
+        known = {**(KNOWN_INSPECT if args.recall in ("inspect", "all") else {}),
+                 **(KNOWN_LMEVAL if args.recall in ("lmeval", "all") else {})}
+        print(json.dumps(recall(results, known), indent=1))
+    return 0
+
+
+def cmd_grader_sweep(args) -> int:
+    import asyncio
+    from dataclasses import asdict
+
+    from .graders import sweep
+
+    if args.framework == "lmeval":
+        results, members = asyncio.run(sweep.sweep_lmeval(args.limit))
+    else:
+        tasks = sweep.inspect_tasks()[: args.limit] if args.limit else sweep.inspect_tasks()
+        results, members = sweep.sweep_inspect(tasks, args.timeout), None
+    md = sweep.ranking(results, members)
+    if args.out:
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "results.json").write_text(json.dumps([asdict(r) for r in results], indent=1))
+        (out / "ranking.md").write_text(md)
+    print(md)
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="kernelmind")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -200,6 +260,26 @@ def main(argv=None) -> int:
     s.add_argument("--scorer", help="score name in the log (default: the first)")
     s.add_argument("--out", help="write the markdown table here")
     s.set_defaults(fn=cmd_rescore)
+
+    s = sub.add_parser("grader-audit", help="audit any grader (python:, cmd:, inspect:, lmeval:) with meaning-preserving rewrites")
+    s.add_argument("--grader", action="append", default=[], help="grader spec; repeatable")
+    s.add_argument("--target", default="", help="the correct answer for --grader")
+    s.add_argument("--choices", help="options, separated by |")
+    s.add_argument("--metadata", help="sample metadata as JSON (some scorers read it)")
+    s.add_argument("--output", help="a realistic model output (judge graders)")
+    s.add_argument("--log", action="append", help="Inspect .eval log: audit its task's scorer on its samples")
+    s.add_argument("--samples", type=int, default=1, help="samples per log")
+    s.add_argument("--recall", choices=["inspect", "lmeval", "all"], help="run the known-bug recall set")
+    s.add_argument("--logs", help="directory of make_logs.py logs for the Inspect recall set")
+    s.add_argument("--out", help="write results.json and summary.md here")
+    s.set_defaults(fn=cmd_grader_audit)
+
+    s = sub.add_parser("grader-sweep", help="audit every grader a framework defines, ranked by findings")
+    s.add_argument("framework", choices=["inspect", "lmeval"])
+    s.add_argument("--limit", type=int)
+    s.add_argument("--timeout", type=int, default=60, help="seconds per Inspect task")
+    s.add_argument("--out", help="write results.json and ranking.md here")
+    s.set_defaults(fn=cmd_grader_sweep)
 
     args = p.parse_args(argv)
     return args.fn(args)

@@ -33,6 +33,10 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
 
 - Inspect scorers: 4 issues in inspect_ai and 11 in inspect_evals, each confirmed by running the scorer. `kernelmind stress`
   now checks for these patterns automatically: 12 probes re-find all 18 hand-confirmed findings ([docs/STRESS.md](docs/STRESS.md)).
+- **Any grader:** `kernelmind grader-audit` points the same checks at an Inspect scorer, an lm-eval task, a Python function or a
+  command-line grader with no per-grader code, discovering which output formats the grader reads (and, for LLM judges, which
+  reply formats) by itself. It re-finds 17/17 of our Inspect findings and 3/3 lm-eval bugs reported by others, and sweeps both
+  frameworks ([docs/GRADERS.md](docs/GRADERS.md)).
 
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
 Blog post: [The grader said yes](https://thegradersaidyes.hashnode.dev/the-grader-said-yes-auditing-terminal-bench-2-0-with-near-miss-solutions).
