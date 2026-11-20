@@ -184,6 +184,9 @@ async def audit_answers(g: Grader, s: Sample, limit: int = 3) -> list[Result]:
     out = []
     for frame, verdict in frames:
         cases = answer_cases(frame, s.target, wrong, numeric=kind == "number", letters=kind.startswith("letter"))
+        if kind == "number" and "." in s.target:  # 0.25 -> 0.250, not 0.25.0
+            cases = [Case(c.rewrite, frame.format(a=s.target + "0"), c.expect) if c.rewrite == "trailing_zero" else c
+                     for c in cases]
         if "\\" in s.target:  # LaTeX answer: \Frac is not a case variant of \frac
             cases = [c for c in cases if c.rewrite not in ("upper_case", "title_case")]
         if "\\boxed{" in frame:

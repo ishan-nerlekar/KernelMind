@@ -93,12 +93,21 @@ kernelmind grader-audit --grader python:examples/graders/math_verify_graders.py:
 | open-r1 reward | 18 | nothing (only `\boxed{}` is read, and decoration around the box is handled) |
 | open-r1 reward | `\frac{3}{4}` | the hedge |
 
+Re-run on Math-Verify's latest `main` (ba3d3aa) across six answer types (18, -7, 0.25,
+`\frac{3}{4}`, `\sqrt{2}`, `2\pi`): the same pattern for every plain number. The superseded-draft
+finding has a clear cause: a bold final answer (`ANSWER: **129**`) is extracted as the string
+`129**`, which does not parse, so an *earlier* number in the response (a draft answer the model
+withdrew) becomes the value. A response that writes 18, says it was wrong, then gives a bold
+129 is scored correct for 18. Without an earlier number, `**129**` parses fine. The open-r1
+reward (boxed answers only) is not affected.
+
 Found by hand while checking these: two boxed answers, `\boxed{18} or \boxed{129}`, parse as
 the number 18129 (the reverse order gives the set {18, 129}). None of these is in Math-Verify's
 tracker as of Nov 20; none is confirmed as a bug yet (a hedge taking the first value may be by design).
 
-Running Math-Verify also exposed two weaknesses in the audit itself, now fixed: case changes
-were applied to LaTeX (`\Frac`), and decorations were put inside `\boxed{}` instead of around it.
+Running Math-Verify also exposed three weaknesses in the audit itself, now fixed: case changes
+were applied to LaTeX (`\Frac`), decorations were put inside `\boxed{}` instead of around it, and a
+decimal's trailing zero was written `0.25.0`.
 
 ## Limits
 
