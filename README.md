@@ -36,7 +36,10 @@ every requirement differently. Run on 26 Terminal-Bench 2.0 tasks:
 - **Any grader:** `kernelmind grader-audit` points the same checks at an Inspect scorer, an lm-eval task, a Python function or a
   command-line grader with no per-grader code, discovering which output formats the grader reads (and, for LLM judges, which
   reply formats) by itself. It re-finds 17/17 of our Inspect findings and 3/3 lm-eval bugs reported by others, and sweeps both
-  frameworks ([docs/GRADERS.md](docs/GRADERS.md)).
+  frameworks. Pointed at Hugging Face's Math-Verify, a grader it was never tuned on, it found a bold final answer
+  losing to an earlier, withdrawn number; the same code is in lighteval. Fixes:
+  [Math-Verify#103](https://github.com/huggingface/Math-Verify/pull/103),
+  [lighteval#1522](https://github.com/huggingface/lighteval/pull/1522) ([docs/GRADERS.md](docs/GRADERS.md)).
 
 Full write-up: **[docs/REPORT.md](docs/REPORT.md)**. Every step and decision: [docs/AUDIT.md](docs/AUDIT.md).
 Blog post: [The grader said yes](https://thegradersaidyes.hashnode.dev/the-grader-said-yes-auditing-terminal-bench-2-0-with-near-miss-solutions).

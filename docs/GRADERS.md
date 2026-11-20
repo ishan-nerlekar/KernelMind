@@ -103,7 +103,20 @@ reward (boxed answers only) is not affected.
 
 Found by hand while checking these: two boxed answers, `\boxed{18} or \boxed{129}`, parse as
 the number 18129 (the reverse order gives the set {18, 129}). None of these is in Math-Verify's
-tracker as of Nov 20; none is confirmed as a bug yet (a hedge taking the first value may be by design).
+tracker as of Nov 20. The others are not confirmed as bugs (a hedge taking the first value may be by design).
+
+**Confirmed and fixed upstream (Nov 20).** The bold-answer bug comes from the plain-expression regex
+treating `*` as an operator, so `129**` matches as an expression and fails to parse. lighteval carries
+its own copy of the same regex: with `any_match` it gives the same false credit, and with `first_match`
+(its Inspect `math_scorer`) even a lone `ANSWER: **129**` comes back as the string `129**` and is scored
+wrong. The fix in both: a plain expression must end with a digit or a closing parenthesis.
+
+| PR | New tests | Suite |
+|---|---|---|
+| [huggingface/Math-Verify#103](https://github.com/huggingface/Math-Verify/pull/103) | 15 (10 fail before) | 306 pass |
+| [huggingface/lighteval#1522](https://github.com/huggingface/lighteval/pull/1522) | 10 (8 fail before) | 243 pass in `test_extractive_match.py` (PyTorch stubbed) |
+
+Re-auditing the patched Math-Verify: the superseded-draft findings disappear; the others remain.
 
 Running Math-Verify also exposed three weaknesses in the audit itself, now fixed: case changes
 were applied to LaTeX (`\Frac`), decorations were put inside `\boxed{}` instead of around it, and a
