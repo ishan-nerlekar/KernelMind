@@ -134,8 +134,21 @@ def cmd_rescore(args) -> int:
     return 0
 
 
+def _quiet_graders(verbose: bool) -> None:
+    """The audit feeds graders malformed replies on purpose; their own parse-failure warnings
+    (one per case, often with retries) would bury the report. --verbose shows them."""
+    if not verbose:
+        import logging
+        import warnings
+
+        logging.disable(logging.WARNING)
+        warnings.filterwarnings("ignore")
+
+
 def cmd_grader_audit(args) -> int:
     import asyncio
+
+    _quiet_graders(args.verbose)
 
     from .graders.adapters import load_grader
     from .graders.core import Sample, audit, recall, report
@@ -179,6 +192,7 @@ def cmd_grader_sweep(args) -> int:
 
     from .graders import sweep
 
+    _quiet_graders(args.verbose)
     if args.framework == "lmeval":
         results, members = asyncio.run(sweep.sweep_lmeval(args.limit))
     else:
@@ -272,6 +286,7 @@ def main(argv=None) -> int:
     s.add_argument("--recall", choices=["inspect", "lmeval", "all"], help="run the known-bug recall set")
     s.add_argument("--logs", help="directory of make_logs.py logs for the Inspect recall set")
     s.add_argument("--out", help="write results.json and summary.md here")
+    s.add_argument("--verbose", action="store_true", help="show the graders' own warnings (one per malformed reply)")
     s.set_defaults(fn=cmd_grader_audit)
 
     s = sub.add_parser("grader-sweep", help="audit every grader a framework defines, ranked by findings")
@@ -279,6 +294,7 @@ def main(argv=None) -> int:
     s.add_argument("--limit", type=int)
     s.add_argument("--timeout", type=int, default=60, help="seconds per Inspect task")
     s.add_argument("--out", help="write results.json and ranking.md here")
+    s.add_argument("--verbose", action="store_true", help="show the graders' own warnings")
     s.set_defaults(fn=cmd_grader_sweep)
 
     args = p.parse_args(argv)
