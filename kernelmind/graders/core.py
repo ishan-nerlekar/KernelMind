@@ -365,10 +365,19 @@ async def audit_judge(g, s: Sample, output: str | None = None) -> list[Result]:
 
 
 async def audit(g, s: Sample) -> list[Result]:
+    from .semantic import audit_dates, audit_negation, is_date, is_predicate
+
     uses_judge = getattr(g, "uses_judge", None)
     if uses_judge is not None and await call(uses_judge, s):
         return await audit_judge(g, s)
-    return await audit_answers(g, s)
+    if is_date(s.target):
+        return await audit_dates(g, s)
+    out = await audit_answers(g, s)
+    if is_predicate(s.target):
+        negation = await audit_negation(g, s)
+        if negation:  # the grader reads negation: that, not answer formats, is what it checks
+            out = negation
+    return out
 
 
 # ------------------------------------------------------------------ reporting

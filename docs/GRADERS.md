@@ -73,6 +73,31 @@ first of: a letter with options, a number, a word, that it reads).
 Rankings: `results/graders/` (local). Every flagged grader needs a human look before filing:
 some "same" rewrites are judgement calls for strict-format tasks.
 
+## Graders that read meaning: negation and dates (Nov 23)
+
+Some checks don't extract an answer; they decide what text *means*: does a sentence claim an
+action happened, does a quote support a month. Two rewrite families cover the common ones,
+chosen by the target and discovered the same way as formats:
+
+- **Negation** (target is a predicate, e.g. `--target processed`): runs only if the grader gives
+  "The request was processed." and "...was not processed." different verdicts. Rewrites that must
+  read as the negative: `wasn't`, `hasn't been`, a negation four words back ("has not yet been fully
+  processed"), "never", "not yet". Rewrites that must read as the positive: a "no-" compound
+  ("No-fee request processed."), a negation in another clause, a negation after the verb.
+- **Dates** (target is a month, e.g. `--target 2026-09`): runs only if the grader gives the target
+  month and the next month different verdicts. The same month in nine formats (`Sep 2026`,
+  `2026-09-15`, `09/2026`, `15/09/2026`, `15.09.2026`, `09/15/2026`, `15 September 2026`,
+  `September 15, 2026`, a day-first range) must keep the verdict; the next month must not; and
+  words that look like month names ("rates *may* change", "staff will *march*") must not count as
+  May or March.
+
+Validated on an open-source agent company's eval harness (findings not yet reported, so not
+named here): pointed at two of its deterministic checks with no extra code, the families re-found
+both bugs (contractions and distant negation read as claims; `09/2026`, day-first and dotted dates
+missed) and both lenient cases ("no-" compounds negate; "may" and "march" count as months). Unit
+tests use generic bug-pattern graders and robust twins: the buggy ones are caught, the robust ones
+come back clean, and all earlier recall sets still pass (17/17, 3/3).
+
 ## A grader outside both frameworks: Math-Verify (Nov 20)
 
 [Math-Verify](https://github.com/huggingface/Math-Verify) (Hugging Face, 0.9.0) checks math

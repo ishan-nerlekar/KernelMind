@@ -89,3 +89,69 @@ def test_python_and_command_adapters(tmp_path):
     c = CommandGrader("grep -q {target} && echo pass || echo fail")
     assert run(c.grade("the answer is 42", Sample("42"))) == "pass"
     assert run(c.grade("no", Sample("42"))) == "fail"
+
+
+# ---------------------------------------------------------------- negation and date families
+
+NEG = {"not", "never", "no"}
+
+
+def window_negation(output, target):  # bug pattern: plain negators only, within 3 words
+    for m in re.finditer(rf"\b{re.escape(target)}\b", output):
+        words = re.findall(r"[a-z]+", re.split(r"[,.;:!?]", output[: m.start()])[-1].lower())[-3:]
+        if not NEG & set(words):
+            return "claims"
+    return "no_claim"
+
+
+def robust_negation(output, target):  # contractions, any distance in the clause, compounds not negators
+    for m in re.finditer(rf"\b{re.escape(target)}\b", output):
+        clause = re.split(r"[,.;:!?]", output[: m.start()])[-1].lower()
+        clause = re.sub(r"\bno-\w+", " ", clause)
+        if not re.search(r"\b(not|never|no)\b|n't\b", clause):
+            return "claims"
+    return "no_claim"
+
+
+MONTHS = {m.lower(): i for i, m in enumerate(__import__("calendar").month_name) if m}
+MONTHS.update({m.lower(): i for i, m in enumerate(__import__("calendar").month_abbr) if m})
+
+
+def us_dates_only(output, target):  # bug pattern: month-first numeric dates, any month word counts
+    y, mo = int(target[:4]), int(target[5:7])
+    found = {(int(a), int(b)) for b, a in re.findall(r"\b(\d{1,2})/\d{1,2}/(\d{4})\b", output)}
+    found |= {(int(a), int(b)) for a, b in re.findall(r"\b(\d{4})-(\d{2})", output)}
+    words = {MONTHS[w] for w in re.findall(r"[a-z]+", output.lower()) if w in MONTHS}
+    return "supported" if (y, mo) in found or mo in words else "trap"
+
+
+def robust_dates(output, target):
+    y, mo = int(target[:4]), int(target[5:7])
+    t = output.lower()
+    hits = set()
+    for a, b, c in re.findall(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b", t):
+        a, b, c = int(a), int(b), int(c)
+        hits |= {(c, b)} if a > 12 else ({(c, a)} if b > 12 else {(c, a), (c, b)})
+    hits |= {(int(c), int(b)) for b, c in re.findall(r"\b(\d{1,2})/(\d{4})\b", t)}
+    hits |= {(int(a), int(b)) for a, b in re.findall(r"\b(\d{4})-(\d{2})", t)}
+    for w, yy in re.findall(r"\b([a-z]+)\.?\s+(?:\d{1,2},?\s+)?(\d{4})\b", t):
+        if w in MONTHS:
+            hits.add((int(yy), MONTHS[w]))
+    return "supported" if (y, mo) in hits else "trap"
+
+
+def test_negation_family_finds_window_bugs_and_robust_grader_is_clean():
+    bad = {r.rewrite for r in findings(run(audit(Fn("g", window_negation), Sample("processed"))))}
+    assert {"negation_contraction", "negation_far", "compound_no_prefix"} <= bad
+    assert findings(run(audit(Fn("g", robust_negation), Sample("processed")))) == []
+
+
+def test_date_family_finds_format_and_lure_bugs_and_robust_grader_is_clean():
+    bad = {r.rewrite for r in findings(run(audit(Fn("g", us_dates_only), Sample("2026-09"))))}
+    assert {"date_mm_yyyy", "date_day_first", "date_dotted", "month_word_lure:May"} <= bad
+    assert findings(run(audit(Fn("g", robust_dates), Sample("2026-09")))) == []
+
+
+def test_answer_graders_unaffected_by_semantic_families():
+    # a numeric or letter target never triggers the negation/date families
+    assert all(r.mode in ("answer", "setup") for r in run(audit(Fn("g", first_hash), Sample("18"))))
