@@ -4,7 +4,7 @@ Tools for building and **auditing** agent benchmarks whose grading you can trust
 systems-debugging tasks drawn from real production incidents.
 
 **Start here:** [What breaks in the graders behind AI evals and RL rewards](docs/GRADER-AUDIT-REPORT.md): one tool
-pointed at the graders of 15 eval and RL libraries, five recurring failure patterns, 38 issues and 15 open PRs.
+pointed at the graders of 15 eval and RL libraries, five recurring failure patterns, 36 issues and 13 open PRs.
 
 ## Headline result: verifier gaps in Terminal-Bench 2.0
 

@@ -10,9 +10,10 @@ pointed it at the graders of 15 evaluation and RL libraries.
 
 **As of November 26, 2026:**
 
-- **38 issues and 15 open pull requests** filed in 10 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
-  Hugging Face Math-Verify and lighteval, veRL, SkyRL, Prime Intellect verifiers, HUD). Every finding was reproduced on
-  the project's current code and checked against its tracker before filing. No PR is merged yet; most are a few days old.
+- **36 issues and 13 open pull requests** filed in 8 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
+  Hugging Face Math-Verify and lighteval, veRL, SkyRL), from these audits by hand and with the tool. Every finding was
+  reproduced on the project's current code and checked against its tracker before filing. No PR is merged yet; the
+  oldest are three weeks old.
 - **No per-grader code.** The tool works out which output formats a grader reads, so one command audits an Inspect
   scorer, an lm-evaluation-harness task, a function in an RL library or a command-line script.
 - **It finds known bugs it was not told about:** 17/17 hand-confirmed Inspect findings and 3/3 lm-eval bugs that other
