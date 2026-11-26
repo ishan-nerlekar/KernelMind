@@ -166,7 +166,8 @@ def cmd_grader_audit(args) -> int:
     for spec in args.grader:
         meta = json.loads(args.metadata) if args.metadata else {}
         choices = args.choices.split("|") if args.choices else None
-        targets.append((load_grader(spec), Sample(args.target, choices=choices, metadata=meta, output=args.output)))
+        targets.append((load_grader(spec), Sample(args.target, choices=choices, metadata=meta, output=args.output,
+                                                  frames=args.frame)))
     if not targets:
         print("nothing to audit: give --grader, --log or --recall", file=sys.stderr)
         return 2
@@ -281,6 +282,8 @@ def main(argv=None) -> int:
     s.add_argument("--choices", help="options, separated by |")
     s.add_argument("--metadata", help="sample metadata as JSON (some scorers read it)")
     s.add_argument("--output", help="a realistic model output (judge graders)")
+    s.add_argument("--frame", action="append", default=[],
+                   help="an output format to try first, {a} = the answer (e.g. '#### {a}'); repeatable")
     s.add_argument("--log", action="append", help="Inspect .eval log: audit its task's scorer on its samples")
     s.add_argument("--samples", type=int, default=1, help="samples per log")
     s.add_argument("--recall", choices=["inspect", "lmeval", "all"], help="run the known-bug recall set")

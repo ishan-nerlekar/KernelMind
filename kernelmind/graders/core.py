@@ -44,6 +44,7 @@ class Sample:
     metadata: dict = field(default_factory=dict)
     output: str | None = None  # a real model output, when the sample comes from a log
     id: str = "synthetic"
+    frames: list[str] = field(default_factory=list)  # formats to try first ({a} = answer), e.g. the task's own
 
 
 class Grader(Protocol):
@@ -86,8 +87,8 @@ def label(value: Any) -> str:
     return str(value)
 
 
-async def call(fn, *args):
-    out = fn(*args)
+async def call(fn, *args, **kwargs):
+    out = fn(*args, **kwargs)
     return await out if inspect.isawaitable(out) else out
 
 
@@ -162,7 +163,7 @@ async def discover_frames(g: Grader, s: Sample, limit: int = 3) -> list[tuple[st
     kind = answer_kind(s)
     wrong = wrong_answer(s, kind)
     found = []
-    for base in FRAMES:
+    for base in dict.fromkeys(s.frames + FRAMES):
         for frame in (REASONING + base, base):
             right = await _safe(g, frame.format(a=s.target), s)
             if right.startswith(ERROR) or right == UNSCORED:

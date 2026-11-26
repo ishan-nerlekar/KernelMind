@@ -73,6 +73,59 @@ first of: a letter with options, a number, a word, that it reads).
 Rankings: `results/graders/` (local). Every flagged grader needs a human look before filing:
 some "same" rewrites are judgement calls for strict-format tasks.
 
+## Pointing at a grader's own source file (Nov 26)
+
+The `python:` adapter now takes a grader straight from the repository it lives in, with no wrapper:
+
+```bash
+kernelmind grader-audit --grader python:verl/verl/utils/reward_score/math_dapo.py:compute_score --target 18
+kernelmind grader-audit --grader "python:verl/verl/utils/reward_score/gsm8k.py:compute_score?method=\"flexible\"" --target 18
+kernelmind grader-audit --grader python:open-instruct/open_instruct/ground_truth_utils.py:GSM8KVerifier --target 18
+kernelmind grader-audit --grader python:trl/trl/rewards/accuracy_rewards.py:_grade --target '\frac{3}{4}'
+kernelmind grader-audit --grader "python:opencompass/opencompass/utils/text_postprocessors.py:first_option_postprocess?options=\"ABCD\"" \
+  --target C --choices "A|B|C|D"
+```
+
+- **Loading.** The file is imported on its own: its package `__init__` files are skipped (they usually import a
+  trainer, torch or a registry), sibling modules still import, and a dependency that is not installed, or a sibling
+  module that fails to import, is replaced by a stub and named on stderr. A stub can hide a dependency the grader
+  really uses: if the result is `NOFORMAT` or an error, install that dependency.
+- **Calling.** Arguments are matched by name: the output goes to `solution_str`, `prediction`, `response`,
+  `completion`, `content`... and the target to `ground_truth`, `label`, `answer`, `solution`... TRL-style batch
+  rewards (`completions`, a list of chat messages) are called with one completion. A class is instantiated and
+  called (open-instruct verifiers). `?k=v` fixes other arguments (values are JSON when they parse as JSON).
+- **Verdict.** Taken from a `score`/`reward`/`acc` key, a `.score` attribute, or the first item of a
+  `(correct, prediction)` pair. A function with no target argument is treated as an **extractor** (a postprocessor or
+  answer parser): its result is compared to the target as text or as a number.
+- **Commands** can take the output as an argument too: `cmd:python verify.py {target} "$(cat)"`.
+- **`--frame '#### {a}'`** tries the task's own output format first. Discovery keeps the first three formats a
+  grader reads; a grader that reads the whole text "reads" `ANSWER: 18` and a bare `18` too, so its own `####`
+  format may not make the cut. Without `--frame`, Prime's GSM8K check showed only minor flags; with it, the bold
+  final answer.
+
+**Shot at (Nov 26), no per-grader code** (latest `main` of each; every flag checked by hand and against the
+project's tracker):
+
+| Grader | Result |
+|---|---|
+| veRL `math_dapo` (default for math/AIME data) | bold, full stop, whole-line bold, draft credit: already reported (veRL #8449, open PR #8450) |
+| veRL `gsm8k` strict | bold final answer skipped, so a withdrawn draft is rewarded: fixed in [verl-project/verl#8814](https://github.com/verl-project/verl/pull/8814) |
+| SkyRL `gsm8k` env (a copy of an older veRL scorer) | the **first** `#### N` is scored, so a withdrawn draft is rewarded and the correction gets 0, even without formatting; same formatting gaps as veRL. Fix PR prepared |
+| SkyRL `aime` env (a copy of an older `math_dapo`) | the markdown gaps veRL has since fixed or is fixing |
+| OpenCompass `first_option_postprocess` | `ANSWER: **C**` read as `A` (from "Answer"): already reported (OpenCompass #2725, PR #2726) |
+| Prime Intellect `verifiers` `parse_judge_choice` (ReferenceJudge) | the last yes/no word wins: "Yes ... no discrepancies" reads as no. Already reported (#2737, PR #2774) |
+| Prime Intellect `verifiers` GSM8K `verify.py` (with `--frame '#### {a}'`) | `#### **18**`, `` #### `18` `` and `#### 18.` score 0: open PR #2840 already changes this grader |
+| open-instruct `GSM8KVerifier` | clean (last number, compared as a number) |
+| TRL `accuracy_reward` grading | clean apart from the hedge |
+| verifiers `verify_boxed_math_answer` | clean |
+
+Not run: open-instruct `MathVerifier`/`StrictMathVerifier` (sympy LaTeX parsing needs `antlr4-python3-runtime==4.11`),
+rllm math reward (needs `rllm[rewards]`), Qwen2.5-Math. NeMo-Skills: only its extractor was reachable without a
+wrapper (its grader is extractor + `math_equal`).
+
+Lesson from this batch: graders are copied between RL libraries and the copies drift. The SkyRL bug is one veRL fixed
+in June 2025; the copy never got the fix.
+
 ## Graders that read meaning: negation and dates (Nov 23)
 
 Some checks don't extract an answer; they decide what text *means*: does a sentence claim an

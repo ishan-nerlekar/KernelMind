@@ -47,6 +47,15 @@ def test_strict_grader_findings_and_robust_grader_clean():
     assert not [r for r in good if r.rewrite in ("bold_answer", "bold_label", "backticks", "superseded_draft")]
 
 
+def test_given_frame_is_tried_first():
+    def result_eq(output, target):  # reads only a format no built-in frame uses
+        m = re.findall(r"RESULT=(\S+)", output)
+        return bool(m) and m[-1] == target
+    assert run(discover_frames(Fn("g", result_eq), Sample("18"))) == []
+    frames = run(discover_frames(Fn("g", result_eq), Sample("18", frames=["RESULT={a}"])))
+    assert frames and "RESULT={a}" in frames[0][0]
+
+
 def test_no_format_is_reported_not_crashed():
     res = run(audit_answers(Fn("never", lambda o, t: False), Sample("18")))
     assert res[0].outcome == "NOFORMAT"
@@ -89,6 +98,40 @@ def test_python_and_command_adapters(tmp_path):
     c = CommandGrader("grep -q {target} && echo pass || echo fail")
     assert run(c.grade("the answer is 42", Sample("42"))) == "pass"
     assert run(c.grade("no", Sample("42"))) == "fail"
+
+
+def test_python_adapter_loads_a_grader_file_on_its_own(tmp_path):
+    # a package whose __init__ needs a missing heavy dependency, a sibling helper, and a dependency that is missing
+    pkg = tmp_path / "rl_lib" / "rewards"
+    pkg.mkdir(parents=True)
+    (tmp_path / "rl_lib" / "__init__.py").write_text("import torch_that_is_not_installed\n")
+    (pkg / "__init__.py").write_text("import torch_that_is_not_installed\n")
+    (pkg / "helpers.py").write_text("def last_hash(s):\n    import re\n    m = re.findall(r'#### (\\S+)', s)\n"
+                                    "    return m[-1] if m else None\n")
+    (pkg / "gsm.py").write_text(
+        "from typing import Optional\nimport fancy_tokenizer_missing as tk\nfrom rl_lib.rewards.helpers import last_hash\n\n"
+        "@tk.register('gsm')\n"
+        "def compute_score(solution_str, ground_truth, method='strict', score=1.0):\n"
+        "    return {'score': score if last_hash(solution_str) == ground_truth else 0.0, 'pred': last_hash(solution_str)}\n\n"
+        "class Verifier:\n"
+        "    def __call__(self, tokenized_prediction, prediction, label, query=None):\n"
+        "        return type('R', (), {'score': float(last_hash(prediction) == label)})()\n\n"
+        "def trl_reward(completions, solution, **kwargs):\n"
+        "    return [float(last_hash(c[0]['content']) == s) for c, s in zip(completions, solution)]\n\n"
+        "def extract(text, marker='####'):\n"
+        "    return last_hash(text)\n\n"
+        "def pair(response, answer):\n"
+        "    return last_hash(response) == answer, last_hash(response)\n")
+    f = pkg / "gsm.py"
+    g = PythonGrader(f"{f}:compute_score?score=2")
+    assert g.stubbed == ["fancy_tokenizer_missing"]
+    assert run(g.grade("#### 7", Sample("7"))) == "2" and run(g.grade("#### 8", Sample("7"))) == "0"
+    for name in ("Verifier", "trl_reward", "extract", "pair"):
+        g = PythonGrader(f"{f}:{name}")
+        assert run(g.grade("#### 7", Sample("7"))) == "1", name
+        assert run(g.grade("#### 8", Sample("7"))) == "0", name
+    bad = {r.rewrite for r in findings(run(audit_answers(PythonGrader(f"{f}:compute_score"), Sample("18"))))}
+    assert "bold_answer" in bad  # the audit runs end to end on a file loaded this way
 
 
 # ---------------------------------------------------------------- negation and date families
