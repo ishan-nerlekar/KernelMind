@@ -110,7 +110,7 @@ project's tracker):
 |---|---|
 | veRL `math_dapo` (default for math/AIME data) | bold, full stop, whole-line bold, draft credit: already reported (veRL #8449, open PR #8450) |
 | veRL `gsm8k` strict | bold final answer skipped, so a withdrawn draft is rewarded: fixed in [verl-project/verl#8814](https://github.com/verl-project/verl/pull/8814) |
-| SkyRL `gsm8k` env (a copy of an older veRL scorer) | the **first** `#### N` is scored, so a withdrawn draft is rewarded and the correction gets 0, even without formatting; same formatting gaps as veRL. Fix PR prepared |
+| SkyRL `gsm8k` env (a copy of an older veRL scorer) | the **first** `#### N` is scored, so a withdrawn draft is rewarded and the correction gets 0, even without formatting; same formatting gaps as veRL. Fixed in [skyrl-project/SkyRL#2826](https://github.com/skyrl-project/SkyRL/pull/2826) |
 | SkyRL `aime` env (a copy of an older `math_dapo`) | the markdown gaps veRL has since fixed or is fixing |
 | OpenCompass `first_option_postprocess` | `ANSWER: **C**` read as `A` (from "Answer"): already reported (OpenCompass #2725, PR #2726) |
 | Prime Intellect `verifiers` `parse_judge_choice` (ReferenceJudge) | the last yes/no word wins: "Yes ... no discrepancies" reads as no. Already reported (#2737, PR #2774) |
