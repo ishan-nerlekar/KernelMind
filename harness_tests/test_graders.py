@@ -134,6 +134,27 @@ def test_python_adapter_loads_a_grader_file_on_its_own(tmp_path):
     assert "bold_answer" in bad  # the audit runs end to end on a file loaded this way
 
 
+def _squad_norm(s, unicode_punct):
+    import string
+    import unicodedata
+    s = s.lower()
+    s = "".join(c for c in s if c not in string.punctuation
+                and not (unicode_punct and unicodedata.category(c).startswith("P")))
+    return " ".join(re.sub(r"\b(a|an|the)\b", " ", s).split())
+
+
+def test_text_family_finds_ascii_only_normaliser_and_robust_one_is_clean():
+    def em(unicode_punct):
+        def g(output, target):
+            m = re.findall(r"<answer>(.*?)</answer>", output, re.S)
+            return bool(m) and _squad_norm(m[-1], unicode_punct) == _squad_norm(target, unicode_punct)
+        return g
+    bad = {r.rewrite for r in findings(run(audit(Fn("g", em(False)), Sample("Jean-Paul O'Neill"))))}
+    assert {"curly_apostrophe", "curly_quotes", "en_dash"} <= bad
+    good = {r.rewrite for r in findings(run(audit(Fn("g", em(True)), Sample("Jean-Paul O'Neill"))))}
+    assert not good & {"curly_apostrophe", "curly_quotes", "en_dash", "nbsp", "leading_article"}
+
+
 # ---------------------------------------------------------------- negation and date families
 
 NEG = {"not", "never", "no"}

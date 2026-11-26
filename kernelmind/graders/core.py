@@ -151,6 +151,20 @@ def wrong_answer(s: Sample, kind: str) -> str:
     return "Lorem"
 
 
+def text_cases(frame: str, t: str) -> list[Case]:
+    """Same text, as models type it: typographic punctuation and spacing that ASCII-only normalisers miss
+    (string.punctuation has no ’ or “”), and a leading article that answer normalisers are meant to drop."""
+    f = lambda a: frame.format(a=a)  # noqa: E731
+    same = {
+        "curly_quotes": f(f"“{t}”"),
+        "curly_apostrophe": f(t.replace("'", "’")) if "'" in t else None,
+        "en_dash": f(t.replace("-", "–")) if "-" in t else None,
+        "nbsp": f(t.replace(" ", " ")) if " " in t else None,
+        "leading_article": f(f"The {t}") if not re.match(r"(?i)(the|a|an)\s", t) else None,
+    }
+    return [Case(k, v, "same") for k, v in same.items() if v]
+
+
 async def _safe(g: Grader, text: str, s: Sample) -> str:
     try:
         return await g.grade(text, s)
@@ -205,6 +219,8 @@ async def audit_answers(g: Grader, s: Sample, limit: int = 3) -> list[Result]:
             cases.append(Case("lead_in_capital", f"{lead} {frame.format(a=s.target)}", "same"))
         if kind == "number" and re.fullmatch(r"-?\d+", s.target.strip()) and abs(int(s.target)) > 10:
             cases.append(Case("off_by_3", frame.format(a=str(int(s.target) - 3)), "wrong"))
+        if kind == "text" and "\\" not in s.target:
+            cases += text_cases(frame, s.target)
         if kind == "letters":
             parts = [p.strip() for p in s.target.split(",")]
             cases += [Case("comma_space", frame.format(a=", ".join(parts)), "same"),

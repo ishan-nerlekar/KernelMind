@@ -126,6 +126,33 @@ wrapper (its grader is extractor + `math_equal`).
 Lesson from this batch: graders are copied between RL libraries and the copies drift. The SkyRL bug is one veRL fixed
 in June 2025; the copy never got the fix.
 
+## Text answers: typographic punctuation (Nov 26)
+
+For a text target (a name, a title), the answer is also written the way models and edited text often type it:
+curly quotes around it, a curly apostrophe (`O’Neill`), an en dash (`1914–1918`), non-breaking spaces, and a leading
+article. All must keep the verdict. Normalisers built on `string.punctuation` (the SQuAD recipe) are ASCII only, so
+the typographic forms survive normalisation and the answer no longer matches.
+
+```bash
+kernelmind grader-audit --grader inspect:scorer:f1 --target "Jean-Paul O'Neill"
+kernelmind grader-audit --grader "python:verl/verl/utils/reward_score/search_r1_like_qa_em.py:compute_score?_target={\"target\":[\"{t}\"]}" \
+  --target "O'Neill"
+```
+
+`?_target=<JSON with {t}>` shapes the correct answer the way a grader takes it (Search-R1 scorers take
+`{"target": [...]}`).
+
+| Grader | Flagged |
+|---|---|
+| Inspect `exact()`, `f1()` (used by inspect_evals squad, drop, infinite_bench) | curly apostrophe, curly quotes, en dash; an en dash also does not split tokens |
+| Inspect `match()` | curly quotes at the end (`strip_punctuation` is ASCII), curly apostrophe, en dash, nbsp |
+| veRL Search-R1 exact match (default for the `searchR1_*` data sources), and `subem` | curly apostrophe, curly quotes, en dash |
+| SkyRL `search` env (a copy of the same scorer) | the same |
+| open-instruct `StringMatcherVerifier`, `F1Verifier` | the same |
+
+None of these is in the projects' trackers (Nov 26). Fix branches (drop Unicode punctuation, category `P*`, as well;
+split on Unicode dashes in Inspect's tokenizer) are prepared for Inspect (issue first, per its policy), veRL and SkyRL.
+
 ## Graders that read meaning: negation and dates (Nov 23)
 
 Some checks don't extract an answer; they decide what text *means*: does a sentence claim an

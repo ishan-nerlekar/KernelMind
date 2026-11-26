@@ -11,7 +11,8 @@
                                            from score/reward/acc fields, a .score attribute, or the
                                            first item of a (correct, prediction) pair. A function
                                            with no target argument is an extractor: its result is
-                                           compared to the target
+                                           compared to the target. ?_target=<JSON with {t}> shapes the
+                                           correct answer the way the grader takes it
   cmd:<shell command>                      output on stdin; {target} substituted; verdict =
                                            last stdout line, else the exit code
   inspect:<task or scorer>                 see inspect_adapter.py
@@ -189,6 +190,8 @@ class PythonGrader:
         spec_, _, query = spec.partition("?")
         mod, _, attr = spec_.rpartition(":")
         self.fixed = {k: _value(v) for k, v in parse_qsl(query)}
+        # ?_target=<JSON with {t}>: how the grader wants the correct answer, e.g. {"target": ["{t}"]}
+        self.target_template = self.fixed.pop("_target", None)
         self.stubbed: list[str] = []
         if mod.endswith(".py"):
             m, self.stubbed = load_file(mod)
@@ -212,6 +215,12 @@ class PythonGrader:
         self.by_name = self.out_param is not None
         self._with_sample = not self.by_name and len(params) >= 3
 
+    def _target(self, t: str):
+        if self.target_template is None:
+            return t
+        tpl = json.dumps(self.target_template)
+        return json.loads(tpl.replace("{t}", json.dumps(t)[1:-1]))
+
     async def grade(self, output: str, sample: Sample) -> str:
         if self.by_name:
             kw = dict(self.fixed)
@@ -224,7 +233,7 @@ class PythonGrader:
                 got = await call(self.fn, **kw)
                 return label(_same(got, sample.target))
             else:
-                kw[self.out_param], kw[self.target_param] = output, sample.target
+                kw[self.out_param], kw[self.target_param] = output, self._target(sample.target)
             return label(verdict(await call(self.fn, **kw)))
         args = (output, sample.target, sample) if self._with_sample else (output, sample.target)
         return label(verdict(await call(self.fn, *args, **self.fixed)))
