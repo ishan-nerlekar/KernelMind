@@ -10,10 +10,10 @@ pointed it at the graders of 15 evaluation and RL libraries.
 
 **As of November 26, 2026:**
 
-- **36 issues and 13 open pull requests** filed in 8 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
+- **36 issues and 12 open pull requests** filed in 8 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
   Hugging Face Math-Verify and lighteval, veRL, SkyRL), from these audits by hand and with the tool. Every finding was
   reproduced on the project's current code and checked against its tracker before filing. No PR is merged yet; the
-  oldest are three weeks old.
+  oldest are three weeks old. One more PR (veRL #8859) was closed by a maintainer without comment.
 - **No per-grader code.** The tool works out which output formats a grader reads, so one command audits an Inspect
   scorer, an lm-evaluation-harness task, a function in an RL library or a command-line script.
 - **It finds known bugs it was not told about:** 17/17 hand-confirmed Inspect findings and 3/3 lm-eval bugs that other
@@ -45,7 +45,7 @@ on wmdp_bio, a model that wrote `ANSWER: $B` (copying the prompt's `$LETTER`) in
 set is ASCII only, so curly quotes and dashes survive: `O’Neill` does not match `O'Neill`, `1914–1918` does not match
 `1914-1918` (exact match 0, F1 0.0). Found in Inspect `exact()`/`f1()` (used by inspect_evals squad, drop,
 infinite_bench; [#6798](https://github.com/UKGovernmentBEIS/inspect_ai/issues/6798)), veRL's Search-R1 exact match
-(the default for its seven `searchR1_*` datasets; [PR #8859](https://github.com/verl-project/verl/pull/8859)), SkyRL's
+(the default for its seven `searchR1_*` datasets; [PR #8859](https://github.com/verl-project/verl/pull/8859), closed by a maintainer without comment), SkyRL's
 search env ([PR #2827](https://github.com/skyrl-project/SkyRL/pull/2827)) and open-instruct's string verifiers.
 How often it can bite, counted on the dev sets ([script](../scripts/typographic_gold_answers.py)): questions where
 **every** gold answer contains such a character, so a model that types the ASCII form cannot get exact-match credit:
