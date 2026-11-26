@@ -10,10 +10,11 @@ pointed it at the graders of 15 evaluation and RL libraries.
 
 **As of November 26, 2026:**
 
-- **36 issues and 12 open pull requests** filed in 8 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
-  Hugging Face Math-Verify and lighteval, veRL, SkyRL), from these audits by hand and with the tool. Every finding was
-  reproduced on the project's current code and checked against its tracker before filing. No PR is merged yet; the
-  oldest are three weeks old. One more PR (veRL #8859) was closed by a maintainer without comment.
+- **36 issues and 12 open pull requests** filed in 9 projects (Inspect, inspect_evals, Terminal-Bench 2 and 4,
+  Hugging Face Math-Verify and lighteval, veRL, SkyRL, GitNexus), from these audits by hand and with the tool. Every
+  finding was reproduced on the project's current code and checked against its tracker before filing. No PR is merged
+  yet; the oldest are three weeks old. veRL's maintainers closed both veRL PRs (#8814, #8859) without comment, the same
+  day they closed many other outside PRs.
 - **No per-grader code.** The tool works out which output formats a grader reads, so one command audits an Inspect
   scorer, an lm-evaluation-harness task, a function in an RL library or a command-line script.
 - **It finds known bugs it was not told about:** 17/17 hand-confirmed Inspect findings and 3/3 lm-eval bugs that other
@@ -28,7 +29,7 @@ Several graders score the first one, or skip a formatted final answer and fall b
 |---|---|---|
 | Inspect `multiple_choice` ([#6534](https://github.com/UKGovernmentBEIS/inspect_ai/issues/6534)) | `ANSWER: B` … `**ANSWER: C**` | B |
 | Math-Verify `parse()` ([PR #103](https://github.com/huggingface/Math-Verify/pull/103)), same code in lighteval ([PR #1522](https://github.com/huggingface/lighteval/pull/1522)) | `ANSWER: 18` / `Wait, I made an error.` / `ANSWER: **129**` | 18 |
-| veRL GSM8K reward ([PR #8814](https://github.com/verl-project/verl/pull/8814)) | `#### 18` / `Wait, I made an error.` / `#### **129**` | reward 1 for 18 |
+| veRL GSM8K reward ([PR #8814](https://github.com/verl-project/verl/pull/8814), closed without comment) | `#### 18` / `Wait, I made an error.` / `#### **129**` | reward 1 for 18 |
 | SkyRL GSM8K env ([PR #2826](https://github.com/skyrl-project/SkyRL/pull/2826)) | `#### 18` / `Wait, I made an error.` / `#### 129` | reward 1 for 18 |
 
 In the last two, an RL run pays full reward for an answer the model withdrew. In Math-Verify, `*` is an operator in
@@ -84,6 +85,11 @@ that is wrong by the task's own words (a Coq "proof" that assumes the theorem as
 backward pass; [#92–#103](https://github.com/harbor-framework/terminal-bench-2/issues/92)), and 8 Terminal-Bench 4.0
 tasks were filed ([#2730–#2737](https://github.com/harbor-framework/terminal-bench/issues/2730)), with test fixes as PRs.
 Details: [REPORT.md](REPORT.md).
+
+**Agent benchmarks' hidden tests.** GitNexus grades its own coding-agent benchmark with hidden tests. The `list_repos`
+task asks for a filter on the repository name, but every test repository's path contains its name, so a filter on the
+path passed. Fix with a new control that requires the path filter to fail:
+[PR #4154](https://github.com/abhigyanpatwari/GitNexus/pull/4154).
 
 ## How the tool works
 
